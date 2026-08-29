@@ -22,7 +22,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             CalendarTodoTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = com.example.calendartodo.ui.theme.CreamFrosting
+                ) {
                     CalendarScreen(viewModel = viewModel)
                 }
             }

@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.example.calendartodo.app-main-51:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/font_press_start_2p.ttf.flat",
+        "source": "com.example.calendartodo.app-main-51:/font/press_start_2p.ttf"
+    }
+]
