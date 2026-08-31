@@ -31,4 +31,7 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET isDone = :done WHERE id = :id")
     suspend fun setDone(id: Long, done: Boolean)
+
+    @Query("SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0")
+    suspend fun getActiveReminders(): List<TaskEntity>
 }

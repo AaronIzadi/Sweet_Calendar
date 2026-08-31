@@ -46,6 +46,8 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
 
     fun formatIso(): String = "%04d-%02d-%02d".format(year, month, day)
 
+    fun weekdayName(): String = WEEKDAY_NAMES[weekdayIndex()]
+
     override fun compareTo(other: JalaliDate): Int {
         if (year != other.year) return year - other.year
         if (month != other.month) return month - other.month
@@ -59,6 +61,10 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
         )
 
         val WEEKDAY_NAMES_SHORT = listOf("ش", "ی", "د", "س", "چ", "پ", "ج")
+
+        val WEEKDAY_NAMES = listOf(
+            "شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"
+        )
 
         fun today(): JalaliDate {
             val cal = GregorianCalendar()

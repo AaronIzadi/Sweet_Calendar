@@ -7,18 +7,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Today
@@ -29,24 +28,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
-import com.example.calendartodo.ui.addtask.AddTaskDialog
 import com.example.calendartodo.ui.components.CandySprinklesBackground
 import com.example.calendartodo.ui.components.GummyIcon
-import com.example.calendartodo.ui.components.LollipopIcon
 import com.example.calendartodo.ui.components.PixelButton
 import com.example.calendartodo.ui.components.PixelFab
 import com.example.calendartodo.ui.components.PixelPanel
+import com.example.calendartodo.ui.components.TaskCard
 import com.example.calendartodo.ui.components.WrappedCandyIcon
 import com.example.calendartodo.ui.components.pixelCell
 import com.example.calendartodo.ui.theme.BubblegumPink
@@ -61,15 +55,21 @@ import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.SkyBlue
 
 @Composable
-fun CalendarScreen(viewModel: CalendarViewModel) {
+fun CalendarScreen(
+    viewModel: CalendarViewModel,
+    onBack: () -> Unit,
+    onAddTask: () -> Unit,
+    onEditTask: (TaskEntity) -> Unit,
+    onDeleteTask: (TaskEntity) -> Unit,
+    onCompleteTask: (TaskEntity) -> Unit
+) {
     val state by viewModel.uiState.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(CreamFrosting)) {
         CandySprinklesBackground(modifier = Modifier.fillMaxSize())
 
         Column(modifier = Modifier.fillMaxSize()) {
-            CandyTopBar(onToday = viewModel::goToToday)
+            CalendarTopBar(onBack = onBack, onToday = viewModel::goToToday)
 
             MonthHeader(
                 month = state.visibleMonth,
@@ -80,6 +80,7 @@ fun CalendarScreen(viewModel: CalendarViewModel) {
 
             PixelPanel(
                 modifier = Modifier
+                    .weight(1f)
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp),
                 backgroundColor = CottonCandyPink.copy(alpha = 0.85f)
@@ -95,39 +96,30 @@ fun CalendarScreen(viewModel: CalendarViewModel) {
 
             SelectedDayPanel(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
+                    .heightIn(max = 200.dp)
                     .padding(horizontal = 8.dp),
                 state = state,
-                onToggleDone = viewModel::toggleTaskDone,
-                onDelete = viewModel::deleteTask
+                onEdit = onEditTask,
+                onDelete = onDeleteTask,
+                onComplete = onCompleteTask
             )
         }
 
         PixelFab(
-            onClick = { showAddDialog = true },
+            onClick = onAddTask,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
             backgroundColor = BubblegumPink
         ) {
-            LollipopIcon(size = 28.dp)
+            WrappedCandyIcon(size = 28.dp)
         }
-    }
-
-    if (showAddDialog) {
-        AddTaskDialog(
-            dayLabel = "${state.selectedDate.day} ${JalaliDate.MONTH_NAMES[state.selectedDate.month - 1]}",
-            onDismiss = { showAddDialog = false },
-            onConfirm = { title, notes ->
-                viewModel.addTask(title, notes)
-                showAddDialog = false
-            }
-        )
     }
 }
 
 @Composable
-private fun CandyTopBar(onToday: () -> Unit) {
+private fun CalendarTopBar(onBack: () -> Unit, onToday: () -> Unit) {
     PixelPanel(
         modifier = Modifier
             .fillMaxWidth()
@@ -139,26 +131,20 @@ private fun CandyTopBar(onToday: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LollipopIcon(size = 28.dp)
-                Spacer(Modifier.size(8.dp))
-                Column {
-                    Text(
-                        "Sweet Calendar",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = CreamFrosting
-                    )
-                    Text(
-                        "تقویم قندی",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = CreamFrosting.copy(alpha = 0.9f)
-                    )
-                }
+            PixelButton(onClick = onBack, backgroundColor = LemonYellow) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back to tasks",
+                    tint = ChocolateBrown,
+                    modifier = Modifier.size(18.dp)
+                )
             }
-            PixelButton(
-                onClick = onToday,
-                backgroundColor = LemonYellow
-            ) {
+            Text(
+                "See all tasks",
+                style = MaterialTheme.typography.titleSmall,
+                color = CreamFrosting
+            )
+            PixelButton(onClick = onToday, backgroundColor = LemonYellow) {
                 Icon(
                     Icons.Default.Today,
                     contentDescription = "Today",
@@ -238,13 +224,25 @@ private fun MonthGrid(
                 )
             }
         }
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(7),
-            modifier = Modifier.height(((cells.size / 7 + 1) * 44).dp),
-            userScrollEnabled = false
-        ) {
-            items(cells) { cell ->
-                DayCell(cell = cell, isSelected = cell?.date == selectedDate, onClick = onDayClick)
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val cellSize = maxWidth / 7
+            val weeks = cells.chunked(7)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                weeks.forEach { week ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        week.forEach { cell ->
+                            DayCell(
+                                cell = cell,
+                                isSelected = cell?.date == selectedDate,
+                                onClick = onDayClick,
+                                modifier = Modifier.size(cellSize)
+                            )
+                        }
+                        repeat(7 - week.size) {
+                            Spacer(Modifier.size(cellSize))
+                        }
+                    }
+                }
             }
         }
     }
@@ -254,11 +252,11 @@ private fun MonthGrid(
 private fun DayCell(
     cell: DayCellInfo?,
     isSelected: Boolean,
-    onClick: (JalaliDate) -> Unit
+    onClick: (JalaliDate) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
+        modifier = modifier
             .padding(1.dp)
             .pixelCell(
                 selected = isSelected,
@@ -302,8 +300,9 @@ private fun CandyDot(color: Color, selected: Boolean) {
 private fun SelectedDayPanel(
     modifier: Modifier = Modifier,
     state: CalendarUiState,
-    onToggleDone: (TaskEntity) -> Unit,
-    onDelete: (TaskEntity) -> Unit
+    onEdit: (TaskEntity) -> Unit,
+    onDelete: (TaskEntity) -> Unit,
+    onComplete: (TaskEntity) -> Unit
 ) {
     val d = state.selectedDate
     PixelPanel(
@@ -352,58 +351,16 @@ private fun SelectedDayPanel(
                     Text(event.description, style = MaterialTheme.typography.bodySmall, color = ChocolateBrown)
                 }
             }
-            items(state.selectedDayTasks) { task ->
-                TaskRow(task = task, onToggleDone = onToggleDone, onDelete = onDelete)
-            }
-            item { Spacer(Modifier.height(72.dp)) }
-        }
-    }
-}
-
-@Composable
-private fun TaskRow(
-    task: TaskEntity,
-    onToggleDone: (TaskEntity) -> Unit,
-    onDelete: (TaskEntity) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 3.dp)
-            .background(MintGreen.copy(alpha = if (task.isDone) 0.15f else 0.35f))
-            .clickable { onToggleDone(task) }
-            .padding(6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(14.dp)
-                .background(if (task.isDone) BubblegumPink else CreamFrosting)
-                .clickable { onToggleDone(task) },
-            contentAlignment = Alignment.Center
-        ) {
-            if (task.isDone) {
-                Text("✓", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
-            }
-        }
-        Spacer(Modifier.size(8.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                task.title,
-                style = MaterialTheme.typography.bodySmall,
-                color = ChocolateBrown,
-                textDecoration = if (task.isDone) TextDecoration.LineThrough else null
-            )
-            if (task.notes.isNotBlank()) {
-                Text(
-                    task.notes,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = ChocolateBrown.copy(alpha = 0.7f)
+            items(state.selectedDayTasks, key = { it.id }) { task ->
+                TaskCard(
+                    task = task,
+                    onEdit = { onEdit(task) },
+                    onComplete = { onComplete(task) },
+                    onDelete = { onDelete(task) },
+                    modifier = Modifier.height(120.dp)
                 )
             }
-        }
-        PixelButton(onClick = { onDelete(task) }, backgroundColor = CherryRed.copy(alpha = 0.8f)) {
-            Text("X", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
+            item { Spacer(Modifier.height(72.dp)) }
         }
     }
 }

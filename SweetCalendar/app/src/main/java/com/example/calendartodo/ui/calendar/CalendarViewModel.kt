@@ -1,12 +1,16 @@
 package com.example.calendartodo.ui.calendar
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.reminder.TaskReminderScheduler
 import com.example.calendartodo.repository.EventRepository
 import com.example.calendartodo.repository.TaskRepository
+import com.example.calendartodo.ui.addtask.TaskFormData
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +32,7 @@ data class DayCellInfo(
 data class CalendarUiState(
     val visibleMonth: JalaliDate = JalaliDate.today().firstOfMonth(),
     val selectedDate: JalaliDate = JalaliDate.today(),
-    val monthCells: List<DayCellInfo?> = emptyList(), // null = padding cell before day 1
+    val monthCells: List<DayCellInfo?> = emptyList(),
     val selectedDayTasks: List<TaskEntity> = emptyList(),
     val selectedDayEvents: List<DayEvent> = emptyList(),
     val isLoadingEvents: Boolean = false
@@ -36,13 +40,18 @@ data class CalendarUiState(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CalendarViewModel(
+    application: Application,
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
+    private val reminderScheduler = TaskReminderScheduler(application)
     private val visibleMonth = MutableStateFlow(JalaliDate.today().firstOfMonth())
     private val selectedDate = MutableStateFlow(JalaliDate.today())
     private val isLoadingEvents = MutableStateFlow(false)
+
+    val allTasks: StateFlow<List<TaskEntity>> = taskRepository.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val uiState: StateFlow<CalendarUiState> = combine(
         visibleMonth,
@@ -87,8 +96,6 @@ class CalendarViewModel(
             isLoadingEvents = loading
         )
     }.let { base ->
-        // Layer in the selected day's personal tasks, which need their own
-        // observation keyed off the selected date.
         combine(base, selectedDate.flatMapLatest { taskRepository.observeForDate(it.formatIso()) }) { state, tasks ->
             state.copy(selectedDayTasks = tasks)
         }
@@ -119,19 +126,63 @@ class CalendarViewModel(
         selectedDate.value = date
     }
 
-    fun addTask(title: String, notes: String) {
-        if (title.isBlank()) return
+    fun addTask(form: TaskFormData, date: JalaliDate = selectedDate.value) {
+        if (form.title.isBlank()) return
         viewModelScope.launch {
-            taskRepository.addTask(title.trim(), notes.trim(), selectedDate.value.formatIso())
+            val jalaliDate = date.formatIso()
+            val id = taskRepository.addTask(
+                title = form.title,
+                notes = form.notes,
+                jalaliDate = jalaliDate,
+                reminderTime = form.reminderTime,
+                category = form.category
+            )
+            val task = TaskEntity(
+                id = id,
+                title = form.title,
+                notes = form.notes,
+                jalaliDate = jalaliDate,
+                reminderTime = form.reminderTime,
+                category = form.category
+            )
+            reminderScheduler.schedule(task)
+        }
+    }
+
+    fun updateTask(task: TaskEntity, form: TaskFormData) {
+        if (form.title.isBlank()) return
+        viewModelScope.launch {
+            val updated = task.copy(
+                title = form.title,
+                notes = form.notes,
+                reminderTime = form.reminderTime,
+                category = form.category
+            )
+            taskRepository.updateTask(updated)
+            reminderScheduler.cancel(task.id)
+            if (!updated.isDone) {
+                reminderScheduler.schedule(updated)
+            }
         }
     }
 
     fun toggleTaskDone(task: TaskEntity) {
-        viewModelScope.launch { taskRepository.setDone(task.id, !task.isDone) }
+        viewModelScope.launch {
+            val done = !task.isDone
+            taskRepository.setDone(task.id, done)
+            if (done) {
+                reminderScheduler.cancel(task.id)
+            } else {
+                reminderScheduler.schedule(task.copy(isDone = false))
+            }
+        }
     }
 
     fun deleteTask(task: TaskEntity) {
-        viewModelScope.launch { taskRepository.deleteTask(task) }
+        viewModelScope.launch {
+            reminderScheduler.cancel(task.id)
+            taskRepository.deleteTask(task)
+        }
     }
 
     private fun refreshEventsForVisibleMonth() {
@@ -144,12 +195,13 @@ class CalendarViewModel(
     }
 
     class Factory(
+        private val application: Application,
         private val taskRepository: TaskRepository,
         private val eventRepository: EventRepository
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             @Suppress("UNCHECKED_CAST")
-            return CalendarViewModel(taskRepository, eventRepository) as T
+            return CalendarViewModel(application, taskRepository, eventRepository) as T
         }
     }
 }

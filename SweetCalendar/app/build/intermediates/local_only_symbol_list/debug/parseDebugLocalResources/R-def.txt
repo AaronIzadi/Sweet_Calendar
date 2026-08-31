@@ -5,4 +5,6 @@ drawable ic_launcher_foreground
 font press_start_2p
 mipmap ic_launcher
 string app_name
+string reminder_channel_desc
+string reminder_channel_name
 style Theme.CalendarTodo

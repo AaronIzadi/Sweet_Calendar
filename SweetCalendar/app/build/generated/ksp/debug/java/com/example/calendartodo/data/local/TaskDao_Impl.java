@@ -1,6 +1,7 @@
 package com.example.calendartodo.data.local;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.room.CoroutinesRoom;
 import androidx.room.EntityDeletionOrUpdateAdapter;
@@ -46,7 +47,7 @@ public final class TaskDao_Impl implements TaskDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`notes`,`jalaliDate`,`isDone`,`createdAt`) VALUES (nullif(?, 0),?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`notes`,`jalaliDate`,`reminderTime`,`category`,`isDone`,`createdAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -56,9 +57,15 @@ public final class TaskDao_Impl implements TaskDao {
         statement.bindString(2, entity.getTitle());
         statement.bindString(3, entity.getNotes());
         statement.bindString(4, entity.getJalaliDate());
+        if (entity.getReminderTime() == null) {
+          statement.bindNull(5);
+        } else {
+          statement.bindString(5, entity.getReminderTime());
+        }
+        statement.bindString(6, entity.getCategory());
         final int _tmp = entity.isDone() ? 1 : 0;
-        statement.bindLong(5, _tmp);
-        statement.bindLong(6, entity.getCreatedAt());
+        statement.bindLong(7, _tmp);
+        statement.bindLong(8, entity.getCreatedAt());
       }
     };
     this.__deletionAdapterOfTaskEntity = new EntityDeletionOrUpdateAdapter<TaskEntity>(__db) {
@@ -78,7 +85,7 @@ public final class TaskDao_Impl implements TaskDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`notes` = ?,`jalaliDate` = ?,`isDone` = ?,`createdAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`notes` = ?,`jalaliDate` = ?,`reminderTime` = ?,`category` = ?,`isDone` = ?,`createdAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -88,10 +95,16 @@ public final class TaskDao_Impl implements TaskDao {
         statement.bindString(2, entity.getTitle());
         statement.bindString(3, entity.getNotes());
         statement.bindString(4, entity.getJalaliDate());
+        if (entity.getReminderTime() == null) {
+          statement.bindNull(5);
+        } else {
+          statement.bindString(5, entity.getReminderTime());
+        }
+        statement.bindString(6, entity.getCategory());
         final int _tmp = entity.isDone() ? 1 : 0;
-        statement.bindLong(5, _tmp);
-        statement.bindLong(6, entity.getCreatedAt());
-        statement.bindLong(7, entity.getId());
+        statement.bindLong(7, _tmp);
+        statement.bindLong(8, entity.getCreatedAt());
+        statement.bindLong(9, entity.getId());
       }
     };
     this.__preparedStmtOfSetDone = new SharedSQLiteStatement(__db) {
@@ -201,6 +214,8 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
+          final int _cursorIndexOfReminderTime = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTime");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
@@ -214,13 +229,21 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final String _tmpJalaliDate;
             _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
+            final String _tmpReminderTime;
+            if (_cursor.isNull(_cursorIndexOfReminderTime)) {
+              _tmpReminderTime = null;
+            } else {
+              _tmpReminderTime = _cursor.getString(_cursorIndexOfReminderTime);
+            }
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final boolean _tmpIsDone;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsDone);
             _tmpIsDone = _tmp != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpIsDone,_tmpCreatedAt);
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpIsDone,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -252,6 +275,8 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
           final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
           final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
+          final int _cursorIndexOfReminderTime = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTime");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
@@ -265,13 +290,21 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
             final String _tmpJalaliDate;
             _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
+            final String _tmpReminderTime;
+            if (_cursor.isNull(_cursorIndexOfReminderTime)) {
+              _tmpReminderTime = null;
+            } else {
+              _tmpReminderTime = _cursor.getString(_cursorIndexOfReminderTime);
+            }
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final boolean _tmpIsDone;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsDone);
             _tmpIsDone = _tmp != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpIsDone,_tmpCreatedAt);
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpIsDone,_tmpCreatedAt);
             _result.add(_item);
           }
           return _result;
@@ -314,6 +347,62 @@ public final class TaskDao_Impl implements TaskDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object getActiveReminders(final Continuation<? super List<TaskEntity>> $completion) {
+    final String _sql = "SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<TaskEntity>>() {
+      @Override
+      @NonNull
+      public List<TaskEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
+          final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
+          final int _cursorIndexOfReminderTime = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTime");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
+          final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
+          final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final TaskEntity _item;
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final String _tmpTitle;
+            _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+            final String _tmpNotes;
+            _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            final String _tmpJalaliDate;
+            _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
+            final String _tmpReminderTime;
+            if (_cursor.isNull(_cursorIndexOfReminderTime)) {
+              _tmpReminderTime = null;
+            } else {
+              _tmpReminderTime = _cursor.getString(_cursorIndexOfReminderTime);
+            }
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
+            final boolean _tmpIsDone;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfIsDone);
+            _tmpIsDone = _tmp != 0;
+            final long _tmpCreatedAt;
+            _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpIsDone,_tmpCreatedAt);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

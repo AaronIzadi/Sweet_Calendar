@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Sweet Calendar</string>
+    <string name="reminder_channel_name">Task reminders</string>
+    <string name="reminder_channel_desc">Notifications when a sweet task is due</string>
 </resources>

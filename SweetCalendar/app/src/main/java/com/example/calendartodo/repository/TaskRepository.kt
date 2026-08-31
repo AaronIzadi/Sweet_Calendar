@@ -12,11 +12,27 @@ class TaskRepository(private val dao: TaskDao) {
 
     fun observeDatesWithTasks(): Flow<List<String>> = dao.observeDatesWithTasks()
 
-    suspend fun addTask(title: String, notes: String, jalaliDate: String) {
-        dao.upsert(TaskEntity(title = title, notes = notes, jalaliDate = jalaliDate))
+    suspend fun addTask(
+        title: String,
+        notes: String,
+        jalaliDate: String,
+        reminderTime: String? = null,
+        category: String = ""
+    ): Long {
+        return dao.upsert(
+            TaskEntity(
+                title = title,
+                notes = notes,
+                jalaliDate = jalaliDate,
+                reminderTime = reminderTime,
+                category = category
+            )
+        )
     }
 
     suspend fun updateTask(task: TaskEntity) = dao.update(task)
+
+    suspend fun getActiveReminders(): List<TaskEntity> = dao.getActiveReminders()
 
     suspend fun deleteTask(task: TaskEntity) = dao.delete(task)
 

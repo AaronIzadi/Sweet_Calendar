@@ -13,6 +13,8 @@ data class TaskEntity(
     val title: String,
     val notes: String = "",
     val jalaliDate: String, // e.g. "1403-05-12"
+    val reminderTime: String? = null, // "HH:mm" in 24h format, null = no reminder
+    val category: String = "",
     val isDone: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )
