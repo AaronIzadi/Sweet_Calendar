@@ -124,9 +124,10 @@ fun MainScreen(viewModel: CalendarViewModel) {
         is SheetState.Add -> {
             val d = sheet.date
             TaskBottomSheet(
-                dayLabel = "${d.day} ${JalaliDate.MONTH_NAMES[d.month - 1]} ${d.year}",
+                dayLabel = d.formatIso(),
                 existingTask = null,
                 onDismiss = { sheetState = SheetState.Hidden },
+
                 onConfirm = { form ->
                     viewModel.addTask(form, sheet.date)
                     sheetState = SheetState.Hidden
@@ -138,9 +139,10 @@ fun MainScreen(viewModel: CalendarViewModel) {
             val task = sheet.task
             val d = JalaliDate.parseIso(task.jalaliDate)
             TaskBottomSheet(
-                dayLabel = "${d.day} ${JalaliDate.MONTH_NAMES[d.month - 1]} ${d.year}",
+                dayLabel = d.formatIso(),
                 existingTask = task,
                 onDismiss = { sheetState = SheetState.Hidden },
+
                 onConfirm = { form ->
                     viewModel.updateTask(task, form)
                     sheetState = SheetState.Hidden

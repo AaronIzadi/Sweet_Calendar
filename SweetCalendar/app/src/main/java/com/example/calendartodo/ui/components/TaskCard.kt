@@ -89,7 +89,7 @@ fun TaskCard(
                     color = BubblegumPink
                 )
                 Text(
-                    JalaliDate.MONTH_NAMES[date.month - 1],
+                    JalaliDate.MONTH_NAMES_EN[date.month - 1],
                     style = MaterialTheme.typography.labelSmall,
                     color = ChocolateBrown.copy(alpha = 0.6f),
                     maxLines = 1,
@@ -220,11 +220,11 @@ fun PixelConfirmDialog(
                 Text(message, style = MaterialTheme.typography.bodySmall, color = ChocolateBrown)
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    PixelButton(onClick = onDismiss, backgroundColor = CreamFrosting) {
+                    PixelButton(onClick = onDismiss, backgroundColor = CreamFrosting, contentDescription = dismissLabel) {
                         Text(dismissLabel, style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
                     }
                     Spacer(Modifier.size(8.dp))
-                    PixelButton(onClick = onConfirm, backgroundColor = BubblegumPink) {
+                    PixelButton(onClick = onConfirm, backgroundColor = BubblegumPink, contentDescription = confirmLabel) {
                         Text(confirmLabel, style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
                     }
                 }
@@ -256,7 +256,8 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                 PixelButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = BubblegumPink
+                    backgroundColor = BubblegumPink,
+                    contentDescription = "Done"
                 ) {
                     Text("Done", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
                 }

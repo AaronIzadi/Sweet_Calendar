@@ -135,7 +135,7 @@ private fun CalendarTopBar(onBack: () -> Unit, onToday: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PixelButton(onClick = onBack, backgroundColor = LemonYellow) {
+            PixelButton(onClick = onBack, backgroundColor = LemonYellow, contentDescription = "Back to tasks") {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back to tasks",
@@ -148,7 +148,7 @@ private fun CalendarTopBar(onBack: () -> Unit, onToday: () -> Unit) {
                 style = MaterialTheme.typography.titleSmall,
                 color = CreamFrosting
             )
-            PixelButton(onClick = onToday, backgroundColor = LemonYellow) {
+            PixelButton(onClick = onToday, backgroundColor = LemonYellow, contentDescription = "Go to today") {
                 Icon(
                     Icons.Default.Today,
                     contentDescription = "Today",
@@ -174,7 +174,7 @@ private fun MonthHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        PixelButton(onClick = onPrevious, backgroundColor = GrapePurple) {
+        PixelButton(onClick = onPrevious, backgroundColor = GrapePurple, contentDescription = "Previous month") {
             Icon(
                 Icons.Default.ChevronLeft,
                 contentDescription = "Previous month",
@@ -186,7 +186,7 @@ private fun MonthHeader(
             WrappedCandyIcon(size = 18.dp)
             Spacer(Modifier.size(6.dp))
             Text(
-                "${JalaliDate.MONTH_NAMES[month.month - 1]} ${month.year}",
+            "${JalaliDate.MONTH_NAMES_EN[month.month - 1]} ${month.year}",
                 style = MaterialTheme.typography.titleMedium,
                 color = ChocolateBrown
             )
@@ -199,7 +199,7 @@ private fun MonthHeader(
                 )
             }
         }
-        PixelButton(onClick = onNext, backgroundColor = GrapePurple) {
+        PixelButton(onClick = onNext, backgroundColor = GrapePurple, contentDescription = "Next month") {
             Icon(
                 Icons.Default.ChevronRight,
                 contentDescription = "Next month",
@@ -327,7 +327,7 @@ private fun SelectedDayPanel(
                     WrappedCandyIcon(size = 16.dp)
                     Spacer(Modifier.size(6.dp))
                     Text(
-                        "${d.day} ${JalaliDate.MONTH_NAMES[d.month - 1]} ${d.year}",
+                        d.formatIso(),
                         style = MaterialTheme.typography.titleSmall,
                         color = ChocolateBrown,
                         modifier = Modifier.padding(vertical = 4.dp)

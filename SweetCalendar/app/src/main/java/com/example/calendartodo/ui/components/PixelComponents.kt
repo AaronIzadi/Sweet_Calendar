@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -76,6 +77,7 @@ fun PixelButton(
       .clip(RoundedCornerShape(0.dp))
       .background(backgroundColor)
       .clickable(onClick = onClick)
+      .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
       .padding(horizontal = 10.dp, vertical = 8.dp),
     content = content
   )
@@ -99,6 +101,7 @@ fun PixelFab(
       .pixelBorder()
       .background(backgroundColor)
       .clickable(onClick = onClick)
+      .defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
       .padding(14.dp),
     content = content
   )

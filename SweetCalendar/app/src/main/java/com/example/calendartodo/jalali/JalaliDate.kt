@@ -44,7 +44,7 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
         return dow % 7 // Saturday(7)->0, Sunday(1)->1, ... Friday(6)->6
     }
 
-    fun formatIso(): String = "%04d-%02d-%02d".format(year, month, day)
+    fun formatIso(): String = "%04d/%02d/%02d".format(year, month, day)
 
     fun weekdayName(): String = WEEKDAY_NAMES[weekdayIndex()]
 
@@ -58,6 +58,12 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
         val MONTH_NAMES = listOf(
             "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
             "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+        )
+
+        // Transliteration in English (user-visible month names)
+        val MONTH_NAMES_EN = listOf(
+            "Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar",
+            "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"
         )
 
         val WEEKDAY_NAMES_SHORT = listOf("ش", "ی", "د", "س", "چ", "پ", "ج")
@@ -77,7 +83,7 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
         }
 
         fun parseIso(s: String): JalaliDate {
-            val parts = s.split("-")
+            val parts = s.split(Regex("[-/]")).filter { it.isNotBlank() }
             return JalaliDate(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
         }
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PIL import Image
 
-SRC_DIR = Path(__file__).resolve().parents[2] / "pixel art"
+SRC_DIR = Path(__file__).resolve().parents[1] / "resources" / "pixel-art"
 OUT_DIR = Path(__file__).resolve().parents[1] / "app" / "src" / "main" / "res" / "drawable"
 
 # source filename -> drawable resource name (without extension)

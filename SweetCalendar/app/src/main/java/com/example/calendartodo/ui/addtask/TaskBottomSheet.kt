@@ -212,7 +212,8 @@ private fun ReminderToggleRow(
         ) {
             PixelButton(
                 onClick = { onToggle(!enabled) },
-                backgroundColor = if (enabled) MintGreen else LemonYellow
+                backgroundColor = if (enabled) MintGreen else LemonYellow,
+                contentDescription = if (enabled) "Turn reminder off" else "Turn reminder on"
             ) {
                 Text(
                     if (enabled) "ON" else "OFF",
@@ -224,7 +225,8 @@ private fun ReminderToggleRow(
                 PixelButton(
                     onClick = onPickTime,
                     modifier = Modifier.weight(1f),
-                    backgroundColor = GrapePurple
+                    backgroundColor = GrapePurple,
+                    contentDescription = "Pick reminder time"
                 ) {
                     Text(reminderTime, style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
                 }
@@ -285,12 +287,13 @@ private fun RowButtons(
         PixelButton(
             onClick = onConfirm,
             modifier = Modifier.fillMaxWidth(),
-            backgroundColor = if (isValid) MintGreen else MintGreen.copy(alpha = 0.4f)
+            backgroundColor = if (isValid) MintGreen else MintGreen.copy(alpha = 0.4f),
+            contentDescription = confirmLabel
         ) {
             Text(confirmLabel, style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
         }
         Spacer(Modifier.height(8.dp))
-        PixelButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), backgroundColor = LemonYellow) {
+        PixelButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), backgroundColor = LemonYellow, contentDescription = "Cancel") {
             Text("Cancel", style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
         }
     }

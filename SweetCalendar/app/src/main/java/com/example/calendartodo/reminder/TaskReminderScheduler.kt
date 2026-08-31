@@ -78,8 +78,7 @@ class TaskReminderScheduler(private val context: Context) {
     private fun formatDateTime(task: TaskEntity): String {
         val date = JalaliDate.parseIso(task.jalaliDate)
         val time = task.reminderTime.orEmpty()
-        return "${date.day} ${JalaliDate.MONTH_NAMES[date.month - 1]} ${date.year}" +
-            if (time.isNotBlank()) ", $time" else ""
+        return date.formatIso() + if (time.isNotBlank()) ", $time" else ""
     }
 
     companion object {

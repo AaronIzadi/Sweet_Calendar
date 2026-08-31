@@ -66,7 +66,8 @@ class AlarmActivity : ComponentActivity() {
                     PixelButton(
                         onClick = { finish() },
                         modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = BubblegumPink
+                        backgroundColor = BubblegumPink,
+                        contentDescription = "Close alarm"
                     ) {
                         Text("Close", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
                     }

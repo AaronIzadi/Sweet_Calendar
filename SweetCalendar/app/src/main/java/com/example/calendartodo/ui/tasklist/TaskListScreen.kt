@@ -138,13 +138,13 @@ fun TaskListScreen(
                         color = BubblegumPink
                     )
                     Text(
-                        "${today.day} ${JalaliDate.MONTH_NAMES[today.month - 1]} ${today.year}" +
+                        today.formatIso() +
                             if (pendingCount > 0) " · $pendingCount pending" else "",
                         style = MaterialTheme.typography.bodySmall,
                         color = ChocolateBrown.copy(alpha = 0.7f)
                     )
                 }
-                PixelButton(onClick = onOpenCalendar, backgroundColor = CreamFrosting) {
+                PixelButton(onClick = onOpenCalendar, backgroundColor = CreamFrosting, contentDescription = "Open calendar") {
                     Icon(
                         Icons.Default.CalendarMonth,
                         contentDescription = "Open calendar",
@@ -203,7 +203,8 @@ fun TaskListScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
-                backgroundColor = BubblegumPink
+                backgroundColor = BubblegumPink,
+                contentDescription = "Add task"
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
@@ -274,7 +275,8 @@ private fun FilterChips(selected: TaskFilter, onSelect: (TaskFilter) -> Unit) {
                     filter == TaskFilter.Done -> MintGreen.copy(alpha = 0.6f)
                     filter == TaskFilter.Pending -> LemonYellow
                     else -> CreamFrosting
-                }
+                },
+                contentDescription = filter.label
             ) {
                 Text(
                     filter.label,
