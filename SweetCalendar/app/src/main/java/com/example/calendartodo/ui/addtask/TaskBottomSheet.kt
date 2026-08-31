@@ -34,7 +34,9 @@ import com.example.calendartodo.ui.components.LollipopIcon
 import com.example.calendartodo.ui.components.PixelButton
 import com.example.calendartodo.ui.components.PixelPanel
 import com.example.calendartodo.ui.components.pixelBorder
+import com.example.calendartodo.ui.theme.PixelBorder
 import com.example.calendartodo.ui.theme.BubblegumPink
+import com.example.calendartodo.ui.theme.CherryRed
 import com.example.calendartodo.ui.theme.ChocolateBrown
 import com.example.calendartodo.ui.theme.CottonCandyPink
 import com.example.calendartodo.ui.theme.CreamFrosting
@@ -69,6 +71,7 @@ fun TaskBottomSheet(
         mutableStateOf(existingTask?.reminderTime ?: "09:00")
     }
     var showTimePicker by remember { mutableStateOf(false) }
+    var showTitleError by remember { mutableStateOf(false) }
     val isValid = title.isNotBlank()
 
     ModalBottomSheet(
@@ -103,11 +106,41 @@ fun TaskBottomSheet(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            PixelTextField(value = title, onValueChange = { title = it }, label = "Task title", singleLine = true)
+            PixelTextField(
+                value = title,
+                onValueChange = {
+                    title = it
+                    if (it.isNotBlank()) showTitleError = false
+                },
+                label = "Task title",
+                placeholder = "What do you need to do?",
+                singleLine = true,
+                isError = showTitleError
+            )
+            if (showTitleError) {
+                Text(
+                    "Please enter a title",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = CherryRed,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
             Spacer(Modifier.height(12.dp))
-            PixelTextField(value = notes, onValueChange = { notes = it }, label = "Task description", singleLine = false)
+            PixelTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = "Notes (optional)",
+                placeholder = "Add extra details…",
+                singleLine = false
+            )
             Spacer(Modifier.height(12.dp))
-            PixelTextField(value = category, onValueChange = { category = it }, label = "Add an event", singleLine = true)
+            PixelTextField(
+                value = category,
+                onValueChange = { category = it },
+                label = "Category (optional)",
+                placeholder = "e.g. Work, Home, Study",
+                singleLine = true
+            )
             Spacer(Modifier.height(12.dp))
             ReminderToggleRow(
                 enabled = reminderEnabled,
@@ -121,6 +154,10 @@ fun TaskBottomSheet(
                 confirmLabel = if (isEdit) "Save task" else "Add task",
                 onDismiss = onDismiss,
                 onConfirm = {
+                    if (!isValid) {
+                        showTitleError = true
+                        return@RowButtons
+                    }
                     onConfirm(
                         TaskFormData(
                             title = title.trim(),
@@ -152,7 +189,7 @@ fun TaskBottomSheet(
                     Text("Cancel", color = ChocolateBrown)
                 }
             },
-            title = { Text("Task time", color = ChocolateBrown) },
+            title = { Text("Set reminder time", color = ChocolateBrown) },
             text = { TimePicker(state = timeState) }
         )
     }
@@ -166,7 +203,7 @@ private fun ReminderToggleRow(
     onPickTime: () -> Unit
 ) {
     Column {
-        Text("Task time", style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
+        Text("Reminder", style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
         Spacer(Modifier.height(4.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -201,7 +238,9 @@ private fun PixelTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    singleLine: Boolean
+    placeholder: String = "",
+    singleLine: Boolean,
+    isError: Boolean = false
 ) {
     Column {
         Text(label, style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
@@ -214,9 +253,23 @@ private fun PixelTextField(
             cursorBrush = SolidColor(BubblegumPink),
             modifier = Modifier
                 .fillMaxWidth()
-                .pixelBorder(borderWidth = 2.dp, shadowOffset = 2.dp)
-                .background(CreamFrosting)
-                .padding(10.dp)
+                .pixelBorder(
+                    borderWidth = 2.dp,
+                    shadowOffset = 2.dp,
+                    borderColor = if (isError) CherryRed else PixelBorder
+                )
+                .background(if (isError) CherryRed.copy(alpha = 0.08f) else CreamFrosting)
+                .padding(10.dp),
+            decorationBox = { inner ->
+                if (value.isEmpty() && placeholder.isNotEmpty()) {
+                    Text(
+                        placeholder,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = ChocolateBrown.copy(alpha = 0.35f)
+                    )
+                }
+                inner()
+            }
         )
     }
 }
@@ -230,7 +283,7 @@ private fun RowButtons(
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         PixelButton(
-            onClick = { if (isValid) onConfirm() },
+            onClick = onConfirm,
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = if (isValid) MintGreen else MintGreen.copy(alpha = 0.4f)
         ) {

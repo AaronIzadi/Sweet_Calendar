@@ -1,5 +1,6 @@
 package com.example.calendartodo.ui.calendar
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CandySprinklesBackground
 import com.example.calendartodo.ui.components.GummyIcon
+import com.example.calendartodo.ui.components.PeppermintCandyIcon
 import com.example.calendartodo.ui.components.PixelButton
 import com.example.calendartodo.ui.components.PixelFab
 import com.example.calendartodo.ui.components.PixelPanel
@@ -88,6 +90,7 @@ fun CalendarScreen(
                 MonthGrid(
                     cells = state.monthCells,
                     selectedDate = state.selectedDate,
+                    today = JalaliDate.today(),
                     onDayClick = viewModel::selectDate
                 )
             }
@@ -210,6 +213,7 @@ private fun MonthHeader(
 private fun MonthGrid(
     cells: List<DayCellInfo?>,
     selectedDate: JalaliDate,
+    today: JalaliDate,
     onDayClick: (JalaliDate) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -234,6 +238,7 @@ private fun MonthGrid(
                             DayCell(
                                 cell = cell,
                                 isSelected = cell?.date == selectedDate,
+                                isToday = cell?.date == today,
                                 onClick = onDayClick,
                                 modifier = Modifier.size(cellSize)
                             )
@@ -252,16 +257,22 @@ private fun MonthGrid(
 private fun DayCell(
     cell: DayCellInfo?,
     isSelected: Boolean,
+    isToday: Boolean,
     onClick: (JalaliDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
             .padding(1.dp)
+            .then(
+                if (isToday && !isSelected) {
+                    Modifier.border(2.dp, MintGreen, androidx.compose.foundation.shape.RoundedCornerShape(0.dp))
+                } else Modifier
+            )
             .pixelCell(
                 selected = isSelected,
                 selectedColor = BubblegumPink,
-                defaultColor = CreamFrosting.copy(alpha = 0.7f)
+                defaultColor = if (isToday) LemonYellow.copy(alpha = 0.45f) else CreamFrosting.copy(alpha = 0.7f)
             )
             .then(if (cell != null) Modifier.clickable { onClick(cell.date) } else Modifier),
         contentAlignment = Alignment.Center
@@ -343,9 +354,8 @@ private fun SelectedDayPanel(
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    GummyIcon(
-                        size = 12.dp,
-                        color = if (event.isHoliday) CherryRed else CaramelOrange
+                    PeppermintCandyIcon(
+                        size = 14.dp
                     )
                     Spacer(Modifier.size(6.dp))
                     Text(event.description, style = MaterialTheme.typography.bodySmall, color = ChocolateBrown)
@@ -354,6 +364,7 @@ private fun SelectedDayPanel(
             items(state.selectedDayTasks, key = { it.id }) { task ->
                 TaskCard(
                     task = task,
+                    onClick = { onEdit(task) },
                     onEdit = { onEdit(task) },
                     onComplete = { onComplete(task) },
                     onDelete = { onDelete(task) },

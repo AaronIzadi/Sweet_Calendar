@@ -1,14 +1,38 @@
 [
     {
-        "merged": "com.example.calendartodo.app-debug-49:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/mipmap-anydpi-v26/ic_launcher.xml"
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\ic_launcher_foreground.xml"
     },
     {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/ic_launcher_foreground.xml"
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_lollipop_swirl.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_lollipop_swirl.png"
     },
     {
-        "merged": "com.example.calendartodo.app-debug-49:/font_press_start_2p.ttf.flat",
-        "source": "com.example.calendartodo.app-main-51:/font/press_start_2p.ttf"
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_ice_cream.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_ice_cream.png"
+    },
+    {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\font_press_start_2p.ttf.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\font\\press_start_2p.ttf"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_lollipop.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_lollipop.png"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_chocolate.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_chocolate.png"
+    },
+    {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_peppermint.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_peppermint.png"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/drawable_pixel_wrapped_candy.png.flat",
+        "source": "com.example.calendartodo.app-main-51:/drawable/pixel_wrapped_candy.png"
     }
 ]

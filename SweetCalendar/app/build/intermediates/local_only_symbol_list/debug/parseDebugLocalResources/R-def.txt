@@ -2,6 +2,12 @@ R_DEF: Internal format may change without notice
 local
 color ic_launcher_background
 drawable ic_launcher_foreground
+drawable pixel_chocolate
+drawable pixel_ice_cream
+drawable pixel_lollipop
+drawable pixel_lollipop_swirl
+drawable pixel_peppermint
+drawable pixel_wrapped_candy
 font press_start_2p
 mipmap ic_launcher
 string app_name

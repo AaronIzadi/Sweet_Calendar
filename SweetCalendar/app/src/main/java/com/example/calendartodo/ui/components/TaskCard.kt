@@ -1,6 +1,8 @@
 package com.example.calendartodo.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
@@ -44,6 +47,7 @@ import com.example.calendartodo.ui.components.pixelBorder
 @Composable
 fun TaskCard(
     task: TaskEntity,
+    onClick: () -> Unit = {},
     onEdit: () -> Unit,
     onComplete: () -> Unit,
     onDelete: () -> Unit,
@@ -56,8 +60,9 @@ fun TaskCard(
         modifier = modifier
             .fillMaxWidth()
             .height(130.dp)
-            .padding(vertical = 4.dp),
-        backgroundColor = CreamFrosting
+            .padding(vertical = 4.dp)
+            .clickable(onClick = onClick),
+        backgroundColor = if (task.isDone) CreamFrosting.copy(alpha = 0.75f) else CreamFrosting
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -111,13 +116,17 @@ fun TaskCard(
                     Text(
                         task.title,
                         style = MaterialTheme.typography.titleSmall,
-                        color = ChocolateBrown,
+                        color = if (task.isDone) ChocolateBrown.copy(alpha = 0.5f) else ChocolateBrown,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
                         modifier = Modifier.weight(1f)
                     )
                     Box {
-                        IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(28.dp)) {
+                        IconButton(
+                            onClick = { menuOpen = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
                             Icon(
                                 Icons.Default.MoreVert,
                                 contentDescription = "Options",
@@ -133,6 +142,11 @@ fun TaskCard(
                             if (!task.isDone) {
                                 DropdownMenuItem(
                                     text = { Text("Mark complete") },
+                                    onClick = { menuOpen = false; onComplete() }
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = { Text("Mark incomplete") },
                                     onClick = { menuOpen = false; onComplete() }
                                 )
                             }
@@ -224,7 +238,7 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
         PixelPanel(modifier = Modifier.fillMaxWidth(), backgroundColor = MintGreen.copy(alpha = 0.95f)) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                LollipopIcon(size = 64.dp)
+                ChocolateIcon(size = 72.dp)
                 Spacer(Modifier.height(12.dp))
                 Text(
                     "Sweet job!",

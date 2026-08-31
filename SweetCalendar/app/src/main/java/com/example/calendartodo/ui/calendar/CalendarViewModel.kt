@@ -185,6 +185,15 @@ class CalendarViewModel(
         }
     }
 
+    fun restoreTask(task: TaskEntity) {
+        viewModelScope.launch {
+            taskRepository.restoreTask(task)
+            if (!task.isDone && task.reminderTime != null) {
+                reminderScheduler.schedule(task)
+            }
+        }
+    }
+
     private fun refreshEventsForVisibleMonth() {
         val month = visibleMonth.value
         viewModelScope.launch {
