@@ -89,12 +89,12 @@ fun TaskBottomSheet(
             LollipopIcon(size = 40.dp)
             Spacer(Modifier.height(8.dp))
             Text(
-                if (isEdit) "Edit a task" else "Add a task",
+                if (isEdit) "Edit Task" else "Add Task",
                 style = MaterialTheme.typography.titleMedium,
                 color = ChocolateBrown
             )
             Text(
-                "Fill the details below to ${if (isEdit) "update" else "add"} your sweet to-do",
+                "Enter the task details below to ${if (isEdit) "update" else "add"}.",
                 style = MaterialTheme.typography.bodySmall,
                 color = ChocolateBrown.copy(alpha = 0.8f),
                 modifier = Modifier.padding(bottom = 4.dp)

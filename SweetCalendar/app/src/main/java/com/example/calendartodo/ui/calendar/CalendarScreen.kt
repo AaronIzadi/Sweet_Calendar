@@ -114,7 +114,8 @@ fun CalendarScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp),
-            backgroundColor = BubblegumPink
+            backgroundColor = BubblegumPink,
+            contentDescription = "Add task"
         ) {
             WrappedCandyIcon(size = 28.dp)
         }
@@ -175,7 +176,7 @@ private fun MonthHeader(
     ) {
         PixelButton(onClick = onPrevious, backgroundColor = GrapePurple) {
             Icon(
-                Icons.Default.ChevronRight,
+                Icons.Default.ChevronLeft,
                 contentDescription = "Previous month",
                 tint = CreamFrosting,
                 modifier = Modifier.size(18.dp)
@@ -200,7 +201,7 @@ private fun MonthHeader(
         }
         PixelButton(onClick = onNext, backgroundColor = GrapePurple) {
             Icon(
-                Icons.Default.ChevronLeft,
+                Icons.Default.ChevronRight,
                 contentDescription = "Next month",
                 tint = CreamFrosting,
                 modifier = Modifier.size(18.dp)

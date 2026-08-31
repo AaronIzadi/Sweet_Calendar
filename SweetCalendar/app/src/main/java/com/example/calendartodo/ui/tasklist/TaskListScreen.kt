@@ -208,7 +208,7 @@ fun TaskListScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Add,
-                        contentDescription = null,
+                        contentDescription = "Add task",
                         tint = CreamFrosting,
                         modifier = Modifier.size(20.dp)
                     )
@@ -236,7 +236,7 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
     ) {
         Icon(
             Icons.Default.Search,
-            contentDescription = null,
+            contentDescription = "Search",
             tint = ChocolateBrown.copy(alpha = 0.5f),
             modifier = Modifier.size(18.dp)
         )

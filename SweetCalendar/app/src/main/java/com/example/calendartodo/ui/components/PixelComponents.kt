@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.example.calendartodo.ui.theme.PixelBorder
 import com.example.calendartodo.ui.theme.PixelShadow
 
@@ -60,10 +62,16 @@ fun PixelButton(
   modifier: Modifier = Modifier,
   backgroundColor: Color,
   borderColor: Color = PixelBorder,
+  contentDescription: String? = null,
   content: @Composable BoxScope.() -> Unit
 ) {
+  val semanticsModifier = if (contentDescription != null) {
+    modifier.semantics { this.contentDescription = contentDescription }
+  } else {
+    modifier
+  }
   Box(
-    modifier = modifier
+    modifier = semanticsModifier
       .pixelBorder(borderColor = borderColor)
       .clip(RoundedCornerShape(0.dp))
       .background(backgroundColor)
@@ -78,10 +86,16 @@ fun PixelFab(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
   backgroundColor: Color,
+  contentDescription: String? = null,
   content: @Composable BoxScope.() -> Unit
 ) {
+  val semanticsModifier = if (contentDescription != null) {
+    modifier.semantics { this.contentDescription = contentDescription }
+  } else {
+    modifier
+  }
   Box(
-    modifier = modifier
+    modifier = semanticsModifier
       .pixelBorder()
       .background(backgroundColor)
       .clickable(onClick = onClick)

@@ -21,12 +21,12 @@ fun EmptyTasksState(modifier: Modifier = Modifier) {
         IceCreamIcon(size = 160.dp)
         Spacer(Modifier.height(16.dp))
         Text(
-            "No sweets yet!",
+            "No tasks yet",
             style = MaterialTheme.typography.titleSmall,
             color = ChocolateBrown
         )
         Text(
-            "Tap Add Task below to create your first one",
+            "Tap 'Add Task' below to create your first task",
             style = MaterialTheme.typography.bodySmall,
             color = ChocolateBrown.copy(alpha = 0.7f)
         )
