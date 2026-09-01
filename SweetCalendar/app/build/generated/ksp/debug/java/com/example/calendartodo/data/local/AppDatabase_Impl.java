@@ -30,22 +30,26 @@ public final class AppDatabase_Impl extends AppDatabase {
 
   private volatile EventCacheDao _eventCacheDao;
 
+  private volatile EventMonthCacheDao _eventMonthCacheDao;
+
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(5) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `notes` TEXT NOT NULL, `jalaliDate` TEXT NOT NULL, `reminderTime` TEXT, `category` TEXT NOT NULL, `priority` TEXT NOT NULL, `repeatWeekly` INTEGER NOT NULL, `isDone` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `event_cache` (`jalaliDate` TEXT NOT NULL, `description` TEXT NOT NULL, `additionalDescription` TEXT NOT NULL, `isHoliday` INTEGER NOT NULL, PRIMARY KEY(`jalaliDate`, `description`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `event_month_cache` (`yearMonth` TEXT NOT NULL, `sourceVersion` TEXT NOT NULL, `importedAt` INTEGER NOT NULL, PRIMARY KEY(`yearMonth`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '41eff012326b0dfe0bf05ca9283e8f96')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '66fadb8f4418c0f10c338871f98c6487')");
       }
 
       @Override
       public void dropAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("DROP TABLE IF EXISTS `tasks`");
         db.execSQL("DROP TABLE IF EXISTS `event_cache`");
+        db.execSQL("DROP TABLE IF EXISTS `event_month_cache`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -123,9 +127,22 @@ public final class AppDatabase_Impl extends AppDatabase {
                   + " Expected:\n" + _infoEventCache + "\n"
                   + " Found:\n" + _existingEventCache);
         }
+        final HashMap<String, TableInfo.Column> _columnsEventMonthCache = new HashMap<String, TableInfo.Column>(3);
+        _columnsEventMonthCache.put("yearMonth", new TableInfo.Column("yearMonth", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEventMonthCache.put("sourceVersion", new TableInfo.Column("sourceVersion", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEventMonthCache.put("importedAt", new TableInfo.Column("importedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysEventMonthCache = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesEventMonthCache = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoEventMonthCache = new TableInfo("event_month_cache", _columnsEventMonthCache, _foreignKeysEventMonthCache, _indicesEventMonthCache);
+        final TableInfo _existingEventMonthCache = TableInfo.read(db, "event_month_cache");
+        if (!_infoEventMonthCache.equals(_existingEventMonthCache)) {
+          return new RoomOpenHelper.ValidationResult(false, "event_month_cache(com.example.calendartodo.data.local.EventMonthCacheEntity).\n"
+                  + " Expected:\n" + _infoEventMonthCache + "\n"
+                  + " Found:\n" + _existingEventMonthCache);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "41eff012326b0dfe0bf05ca9283e8f96", "3daea7d99ed64a273a11ca0840b78d97");
+    }, "66fadb8f4418c0f10c338871f98c6487", "cef16366a351b89479c08d273d0f1e52");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -136,7 +153,7 @@ public final class AppDatabase_Impl extends AppDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "tasks","event_cache");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "tasks","event_cache","event_month_cache");
   }
 
   @Override
@@ -147,6 +164,7 @@ public final class AppDatabase_Impl extends AppDatabase {
       super.beginTransaction();
       _db.execSQL("DELETE FROM `tasks`");
       _db.execSQL("DELETE FROM `event_cache`");
+      _db.execSQL("DELETE FROM `event_month_cache`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -163,6 +181,7 @@ public final class AppDatabase_Impl extends AppDatabase {
     final HashMap<Class<?>, List<Class<?>>> _typeConvertersMap = new HashMap<Class<?>, List<Class<?>>>();
     _typeConvertersMap.put(TaskDao.class, TaskDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(EventCacheDao.class, EventCacheDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(EventMonthCacheDao.class, EventMonthCacheDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -205,6 +224,20 @@ public final class AppDatabase_Impl extends AppDatabase {
           _eventCacheDao = new EventCacheDao_Impl(this);
         }
         return _eventCacheDao;
+      }
+    }
+  }
+
+  @Override
+  public EventMonthCacheDao eventMonthCacheDao() {
+    if (_eventMonthCacheDao != null) {
+      return _eventMonthCacheDao;
+    } else {
+      synchronized(this) {
+        if(_eventMonthCacheDao == null) {
+          _eventMonthCacheDao = new EventMonthCacheDao_Impl(this);
+        }
+        return _eventMonthCacheDao;
       }
     }
   }

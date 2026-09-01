@@ -81,7 +81,7 @@ fun OfflineScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "holidayapi.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.",
+                "time.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.muted,
                 textAlign = TextAlign.Center,

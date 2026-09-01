@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -17,8 +18,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,15 +31,31 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
-import com.example.calendartodo.ui.components.ChocolateIcon
-import com.example.calendartodo.ui.components.LollipopIcon
-import com.example.calendartodo.ui.components.PeppermintCandyIcon
-import com.example.calendartodo.ui.components.WrappedCandyIcon
+import com.example.calendartodo.ui.components.CalMiniIcon
+import com.example.calendartodo.ui.components.CheckCandyIcon
+import com.example.calendartodo.ui.components.ClockMiniIcon
+import com.example.calendartodo.ui.components.NavPeppermintIcon
+import com.example.calendartodo.ui.components.ProfileLollipopIcon
+import com.example.calendartodo.ui.components.SettingsBoxUncheckedIcon
+import com.example.calendartodo.ui.components.SettingsChocolateIcon
+import com.example.calendartodo.ui.components.SettingsGumdropIcon
+import com.example.calendartodo.ui.components.SweetSwitch
 import com.example.calendartodo.ui.today.computeStreak
+import com.example.calendartodo.ui.theme.BodyFont
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
+
+private val SettingsValueColor = Color(0xFF9A8878)
+private val SettingsGroupLabelColor = Color(0xFFB39D89)
+private val SettingsChevronColor = Color(0xFFC9B8A6)
 
 @Composable
 fun SettingsScreen(
@@ -49,9 +64,11 @@ fun SettingsScreen(
     darkMode: Boolean,
     showHolidays: Boolean,
     weekStartsOn: Int,
+    calendarSystem: CalendarSystem,
     onDarkModeChange: (Boolean) -> Unit,
     onShowHolidaysChange: (Boolean) -> Unit,
     onWeekStartsOnChange: (Int) -> Unit,
+    onCalendarSystemChange: (CalendarSystem) -> Unit,
     onUserNameChange: (String) -> Unit,
     onOpenStats: () -> Unit = {},
     onOpenArchive: () -> Unit = {},
@@ -63,106 +80,214 @@ fun SettingsScreen(
     val candiesEarned = tasks.count { it.isDone }
     var showNameDialog by remember { mutableStateOf(false) }
     var showWeekDialog by remember { mutableStateOf(false) }
+    var showCalendarDialog by remember { mutableStateOf(false) }
+    var taskRemindersEnabled by remember { mutableStateOf(true) }
+    val rowIconSlot = mockupDp(MockupDimens.SETTINGS_ROW_ICON)
+    val miniIcon = mockupDp(MockupDimens.MINI_FIELD_ICON)
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp)
+            .padding(horizontal = mockupDp(18))
     ) {
-        Spacer(Modifier.height(16.dp))
-        Text("Settings", style = MaterialTheme.typography.headlineMedium, color = colors.ink)
+        Spacer(Modifier.height(mockupDp(6)))
+        Text(
+            "Settings",
+            style = TextStyle(
+                fontFamily = BodyFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.SETTINGS_TITLE),
+                lineHeight = mockupSp(24f)
+            ),
+            color = colors.ink,
+            modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(18))
+        )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Brush.linearGradient(listOf(colors.pink, colors.purple)))
-                .clickable { showNameDialog = true }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Box(modifier = Modifier.fillMaxWidth().padding(bottom = mockupDp(4))) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .matchParentSize()
+                    .offset(y = mockupDp(3))
+                    .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
+                    .background(colors.purpleDeep)
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
+                    .background(Brush.linearGradient(listOf(colors.pink, colors.purple)))
+                    .clickable { showNameDialog = true }
+                    .padding(mockupDp(16)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+            Box(
+                modifier = Modifier
+                    .size(mockupDp(MockupDimens.SETTINGS_PROFILE_AVATAR))
+                    .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
                     .background(Color.White.copy(alpha = 0.25f)),
                 contentAlignment = Alignment.Center
             ) {
-                LollipopIcon(size = 28.dp)
+                ProfileLollipopIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
             }
-            Column(modifier = Modifier.padding(start = 12.dp)) {
-                Text(userName, style = MaterialTheme.typography.titleSmall, color = Color.White)
+            Column(modifier = Modifier.padding(start = mockupDp(12))) {
+                Text(
+                    userName,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SETTINGS_PROFILE_NAME_F),
+                        lineHeight = mockupSp(18f)
+                    ),
+                    color = Color.White
+                )
                 Text(
                     "$streak day streak · $candiesEarned candies earned",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.85f
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = mockupSp(MockupDimens.SETTINGS_PROFILE_SUB_F),
+                        lineHeight = mockupSp(14f)
                     ),
-                    color = Color.White.copy(alpha = 0.85f)
+                    color = Color.White.copy(alpha = 0.85f),
+                    modifier = Modifier.clickable(onClick = onOpenStats)
                 )
-                Text(
-                    "Tap to edit name",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize * 0.8f
-                    ),
-                    color = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.padding(top = 4.dp)
-                )
+            }
             }
         }
 
         SettingsGroupLabel("CALENDAR")
-        SettingsRow(icon = { PeppermintCandyIcon(size = 18.dp) }, label = "Calendar system", value = "Persian")
         SettingsRow(
-            icon = { PeppermintCandyIcon(size = 18.dp) },
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    CalMiniIcon(size = miniIcon, color = colors.purpleDeep)
+                }
+            },
+            label = "Calendar system",
+            value = calendarSystem.label,
+            onClick = { showCalendarDialog = true }
+        )
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    CalMiniIcon(size = miniIcon, color = colors.purpleDeep)
+                }
+            },
             label = "Week starts on",
             value = JalaliDate.WEEKDAY_NAMES_EN[weekStartsOn],
             onClick = { showWeekDialog = true }
         )
-        SettingsRow(icon = { WrappedCandyIcon(size = 18.dp) }, label = "Show local holidays", trailing = {
-            Switch(
-                checked = showHolidays,
-                onCheckedChange = onShowHolidaysChange,
-                colors = SwitchDefaults.colors(checkedTrackColor = colors.mintDeep)
-            )
-        })
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    NavPeppermintIcon(size = rowIconSlot)
+                }
+            },
+            label = "Show local holidays",
+            trailing = {
+                SweetSwitch(checked = showHolidays, onCheckedChange = onShowHolidaysChange)
+            }
+        )
 
         SettingsGroupLabel("APPEARANCE")
-        SettingsRow(icon = { WrappedCandyIcon(size = 18.dp) }, label = "Candy theme", value = "Bubblegum")
-        SettingsRow(icon = { ChocolateIcon(size = 18.dp) }, label = "Dark mode", trailing = {
-            Switch(
-                checked = darkMode,
-                onCheckedChange = onDarkModeChange,
-                colors = SwitchDefaults.colors(
-                    checkedTrackColor = colors.mintDeep,
-                    uncheckedTrackColor = colors.line
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    SettingsGumdropIcon(size = miniIcon)
+                }
+            },
+            label = "Candy theme",
+            value = "Bubblegum"
+        )
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    SettingsChocolateIcon(size = rowIconSlot)
+                }
+            },
+            label = "Dark mode",
+            trailing = {
+                SweetSwitch(checked = darkMode, onCheckedChange = onDarkModeChange)
+            }
+        )
+
+        SettingsGroupLabel("NOTIFICATIONS")
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    ClockMiniIcon(size = miniIcon, color = colors.purpleDeep)
+                }
+            },
+            label = "Task reminders",
+            trailing = {
+                SweetSwitch(
+                    checked = taskRemindersEnabled,
+                    onCheckedChange = { taskRemindersEnabled = it }
                 )
-            )
-        })
+            }
+        )
 
         SettingsGroupLabel("WIDGETS")
         SettingsRow(
-            icon = { LollipopIcon(size = 18.dp) },
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    SettingsGumdropIcon(size = miniIcon)
+                }
+            },
             label = "Today tasks widget",
             value = "Pin from launcher"
         )
         SettingsRow(
-            icon = { ChocolateIcon(size = 18.dp) },
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    SettingsChocolateIcon(size = rowIconSlot)
+                }
+            },
             label = "Jar progress widget",
             value = "Pin from launcher"
         )
 
         SettingsGroupLabel("TASKS")
-        SettingsRow(icon = { ChocolateIcon(size = 18.dp) }, label = "Completed tasks", onClick = onOpenArchive)
-        SettingsRow(icon = { PeppermintCandyIcon(size = 18.dp) }, label = "Search tasks", onClick = onOpenSearch)
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    CheckCandyIcon(size = mockupDp(MockupDimens.DETAIL_BADGE_ICON))
+                }
+            },
+            label = "Completed tasks",
+            onClick = onOpenArchive
+        )
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    CalMiniIcon(size = miniIcon, color = colors.purpleDeep)
+                }
+            },
+            label = "Search tasks",
+            onClick = onOpenSearch
+        )
 
         SettingsGroupLabel("DATA")
-        SettingsRow(icon = { ChocolateIcon(size = 18.dp) }, label = "About Sweet Calendar", value = "v1.0")
-        Spacer(Modifier.height(32.dp))
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    SettingsBoxUncheckedIcon(size = mockupDp(10))
+                }
+            },
+            label = "Backup & export"
+        )
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    CheckCandyIcon(size = mockupDp(MockupDimens.DETAIL_BADGE_ICON))
+                }
+            },
+            label = "About Sweet Calendar",
+            value = "v1.0"
+        )
+
+        Spacer(Modifier.height(mockupDp(24)))
     }
 
     if (showNameDialog) {
@@ -186,6 +311,69 @@ fun SettingsScreen(
             }
         )
     }
+
+    if (showCalendarDialog) {
+        CalendarSystemDialog(
+            selected = calendarSystem,
+            onDismiss = { showCalendarDialog = false },
+            onSelect = { system ->
+                onCalendarSystemChange(system)
+                showCalendarDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun CalendarSystemDialog(
+    selected: CalendarSystem,
+    onDismiss: () -> Unit,
+    onSelect: (CalendarSystem) -> Unit
+) {
+    val colors = SweetTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Calendar system", color = colors.ink) },
+        text = {
+            Column {
+                CalendarSystem.entries.forEach { system ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(mockupDp(10)))
+                            .background(if (system == selected) colors.purple.copy(alpha = 0.15f) else Color.Transparent)
+                            .clickable { onSelect(system) }
+                            .padding(vertical = mockupDp(10), horizontal = mockupDp(8)),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            system.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (system == selected) colors.purpleDeep else colors.ink
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Done", color = colors.pinkDeep)
+            }
+        }
+    )
+}
+
+@Composable
+private fun SettingsIconSlot(
+    size: androidx.compose.ui.unit.Dp,
+    icon: @Composable () -> Unit
+) {
+    Box(
+        modifier = Modifier.size(size),
+        contentAlignment = Alignment.Center
+    ) {
+        icon()
+    }
 }
 
 @Composable
@@ -208,9 +396,9 @@ private fun NameEditDialog(
                 cursorBrush = SolidColor(colors.pink),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(mockupDp(10)))
                     .background(colors.paper)
-                    .padding(12.dp)
+                    .padding(mockupDp(12))
             )
         },
         confirmButton = {
@@ -242,10 +430,10 @@ private fun WeekStartDialog(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(mockupDp(10)))
                             .background(if (index == selected) colors.purple.copy(alpha = 0.15f) else Color.Transparent)
                             .clickable { onSelect(index) }
-                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                            .padding(vertical = mockupDp(10), horizontal = mockupDp(8)),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -269,9 +457,14 @@ private fun WeekStartDialog(
 private fun SettingsGroupLabel(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.labelSmall,
-        color = SweetTheme.colors.muted,
-        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+        style = TextStyle(
+            fontFamily = PixelFont,
+            fontSize = mockupSp(MockupDimens.SETTINGS_GROUP_LABEL),
+            lineHeight = mockupSp(12f),
+            letterSpacing = mockupSp(0.5f)
+        ),
+        color = SettingsGroupLabelColor,
+        modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
     )
 }
 
@@ -284,33 +477,67 @@ private fun SettingsRow(
     trailing: (@Composable () -> Unit)? = null
 ) {
     val colors = SweetTheme.colors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(colors.paper)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(12.dp, 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        icon()
-        Text(
-            label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.ink,
+    val shape = RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_ROW_RADIUS))
+
+    Box(modifier = Modifier.padding(bottom = mockupDp(8))) {
+        Box(
             modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp)
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.SETTINGS_ROW_SHADOW))
+                .clip(shape)
+                .background(colors.line)
         )
-        if (value != null) {
-            Text(value, style = MaterialTheme.typography.bodySmall, color = colors.muted)
-        }
-        trailing?.invoke()
-        if (value != null && trailing == null) {
-            Text("›", color = colors.muted, modifier = Modifier.padding(start = 8.dp))
-        } else if (onClick != null && trailing == null && value == null) {
-            Text("›", color = colors.muted, modifier = Modifier.padding(start = 8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(colors.paper)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .padding(
+                    horizontal = mockupDp(MockupDimens.SETTINGS_ROW_PAD_H),
+                    vertical = mockupDp(MockupDimens.SETTINGS_ROW_PAD_V)
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            icon()
+            Text(
+                label,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.SETTINGS_ROW_LABEL_F),
+                    lineHeight = mockupSp(17f)
+                ),
+                color = colors.ink,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = mockupDp(MockupDimens.SETTINGS_ROW_GAP))
+            )
+            if (value != null) {
+                Text(
+                    value,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = mockupSp(MockupDimens.SETTINGS_ROW_VALUE_F),
+                        lineHeight = mockupSp(15f)
+                    ),
+                    color = SettingsValueColor
+                )
+            }
+            trailing?.invoke()
+            if (trailing == null && (value != null || onClick != null)) {
+                Text(
+                    "›",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SETTINGS_CHEVRON_F)
+                    ),
+                    color = SettingsChevronColor,
+                    modifier = Modifier.padding(start = mockupDp(8))
+                )
+            }
         }
     }
 }

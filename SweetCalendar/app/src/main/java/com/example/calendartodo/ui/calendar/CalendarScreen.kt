@@ -36,6 +36,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
+import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.TaskCategory
 import com.example.calendartodo.ui.theme.MockupDimens
@@ -107,26 +109,52 @@ fun MonthScreen(
         ) {
             MonthChevron("‹", onClick = viewModel::goToPreviousMonth)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    "${JalaliDate.MONTH_NAMES_EN[state.visibleMonth.month - 1]} ${state.visibleMonth.year}",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = mockupSp(MockupDimens.MONTH_TITLE),
-                        lineHeight = mockupSp(21f)
-                    ),
-                    color = colors.ink
-                )
-                val gregorianMonth = state.visibleMonth.toGregorianCalendar()
-                val monthName = DateFormatSymbols(Locale.ENGLISH).months[gregorianMonth.get(java.util.Calendar.MONTH)]
-                Text(
-                    "$monthName ${gregorianMonth.get(java.util.Calendar.YEAR)}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = mockupSp(MockupDimens.MONTH_SUB),
-                        lineHeight = mockupSp(15f)
-                    ),
-                    color = colors.muted
-                )
+                when (state.calendarSystem) {
+                    CalendarSystem.PERSIAN -> {
+                        Text(
+                            "${JalaliDate.MONTH_NAMES_EN[state.visibleMonth.month - 1]} ${state.visibleMonth.year}",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = mockupSp(MockupDimens.MONTH_TITLE),
+                                lineHeight = mockupSp(21f)
+                            ),
+                            color = colors.ink
+                        )
+                        val gregorianMonth = state.visibleMonth.toGregorianCalendar()
+                        val monthName = DateFormatSymbols(Locale.ENGLISH).months[gregorianMonth.get(java.util.Calendar.MONTH)]
+                        Text(
+                            "$monthName ${gregorianMonth.get(java.util.Calendar.YEAR)}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = mockupSp(MockupDimens.MONTH_SUB),
+                                lineHeight = mockupSp(15f)
+                            ),
+                            color = colors.muted
+                        )
+                    }
+                    CalendarSystem.GREGORIAN -> {
+                        val gMonth = state.visibleGregorianMonth
+                        Text(
+                            "${GregorianDate.MONTH_NAMES_EN[gMonth.month - 1]} ${gMonth.year}",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = mockupSp(MockupDimens.MONTH_TITLE),
+                                lineHeight = mockupSp(21f)
+                            ),
+                            color = colors.ink
+                        )
+                        val jalali = gMonth.toJalali()
+                        Text(
+                            "${JalaliDate.MONTH_NAMES_EN[jalali.month - 1]} ${jalali.year}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = mockupSp(MockupDimens.MONTH_SUB),
+                                lineHeight = mockupSp(15f)
+                            ),
+                            color = colors.muted
+                        )
+                    }
+                }
             }
             MonthChevron("›", onClick = viewModel::goToNextMonth)
         }
@@ -283,7 +311,7 @@ private fun MonthDayCell(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                cell.date.day.toString(),
+                cell.displayDay.toString(),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.MONTH_DAY_NUM_F),

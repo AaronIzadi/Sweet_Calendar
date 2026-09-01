@@ -120,4 +120,22 @@ object MockupDimens {
     const val DAY_DETAIL_SUB_F = 11f
     const val DAY_DETAIL_HEADER_GAP = 12
     const val HOLIDAY_EVENT_ICON = 24
+
+    // Settings
+    const val SETTINGS_TITLE = 18
+    const val SETTINGS_GROUP_LABEL = 8
+    const val SETTINGS_ROW_LABEL_F = 12.5f
+    const val SETTINGS_ROW_VALUE_F = 11f
+    const val SETTINGS_ROW_GAP = 12
+    const val SETTINGS_ROW_PAD_H = 14
+    const val SETTINGS_ROW_PAD_V = 12
+    const val SETTINGS_ROW_RADIUS = 12
+    const val SETTINGS_ROW_SHADOW = 2
+    const val SETTINGS_ROW_ICON = 16
+    const val SETTINGS_PROFILE_AVATAR = 44
+    const val SETTINGS_PROFILE_RADIUS = 12
+    const val SETTINGS_PROFILE_NAME_F = 13.5f
+    const val SETTINGS_PROFILE_SUB_F = 10f
+    const val SETTINGS_PROFILE_ICON = 24
+    const val SETTINGS_CHEVRON_F = 13f
 }

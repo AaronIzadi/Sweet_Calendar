@@ -265,6 +265,12 @@ fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color 
 /** FAB gumdrop — mockup `buildGumdrop(3)`. */
 @Composable
 fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
+    SettingsGumdropIcon(modifier = modifier, size = size)
+}
+
+/** Settings row / small UI — mockup `buildGumdrop(2)`. */
+@Composable
+fun SettingsGumdropIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
     PixelIcon(
         rows = listOf(
             ".yppppppy.",
@@ -284,6 +290,54 @@ fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
         modifier = modifier
     )
 }
+
+private val ChocBrown = Color(0xFF8A5A38)
+private val ChocBrownDark = Color(0xFF5A3A22)
+
+/** Settings row — mockup `buildChocolate(2)`. */
+@Composable
+fun SettingsChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = chocolatePixelRows(),
+        palette = mapOf('o' to ChocBrownDark, 'd' to ChocBrownDark, 'b' to ChocBrown),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Settings row — mockup `buildBoxUnchecked(2)`. */
+@Composable
+fun SettingsBoxUncheckedIcon(modifier: Modifier = Modifier, size: Dp = 10.dp) {
+    PixelIcon(
+        rows = listOf(
+            "11111",
+            "1...1",
+            "1...1",
+            "1...1",
+            "11111"
+        ),
+        palette = mapOf('1' to Color(0xFFEAD9C4)),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Profile avatar — mockup `buildLollipop(3)`. */
+@Composable
+fun ProfileLollipopIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
+    NavLollipopIcon(modifier = modifier, size = size)
+}
+
+private fun chocolatePixelRows(): List<String> =
+    List(8) { row ->
+        List(8) { col ->
+            when {
+                row == 0 || row == 7 || col == 0 || col == 7 -> 'o'
+                row == 3 || row == 4 || col == 3 || col == 4 -> 'd'
+                else -> 'b'
+            }
+        }.joinToString("")
+    }
 
 private val LollipopTan = Color(0xFFD4A574)
 

@@ -45,11 +45,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
 import com.example.calendartodo.ui.components.ClockMiniIcon
 import com.example.calendartodo.ui.components.SparkleIcon
 import com.example.calendartodo.ui.components.SweetBigSaveButton
+import com.example.calendartodo.ui.components.SweetSwitch
 import com.example.calendartodo.ui.components.TaskCategory
 import com.example.calendartodo.ui.components.TaskGemIcon
 import com.example.calendartodo.ui.components.TaskHeartIcon
@@ -83,6 +85,7 @@ data class TaskFormData(
 fun TaskBottomSheet(
     date: JalaliDate,
     existingTask: TaskEntity?,
+    calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onDismiss: () -> Unit,
     onConfirm: (TaskFormData) -> Unit,
     modifier: Modifier = Modifier
@@ -226,7 +229,7 @@ fun TaskBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
                 ) {
                     SweetField(
-                        value = selectedDate.formatDisplayShort(),
+                        value = selectedDate.formatDisplayShort(calendarSystem),
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier
@@ -359,14 +362,24 @@ fun TaskBottomSheet(
     }
 
     if (showDatePicker) {
-        JalaliDatePickerDialog(
-            initialDate = selectedDate,
-            onDismiss = { showDatePicker = false },
-            onConfirm = { picked ->
-                selectedDate = picked
-                showDatePicker = false
-            }
-        )
+        when (calendarSystem) {
+            CalendarSystem.PERSIAN -> JalaliDatePickerDialog(
+                initialDate = selectedDate,
+                onDismiss = { showDatePicker = false },
+                onConfirm = { picked ->
+                    selectedDate = picked
+                    showDatePicker = false
+                }
+            )
+            CalendarSystem.GREGORIAN -> GregorianDatePickerDialog(
+                initialDate = selectedDate,
+                onDismiss = { showDatePicker = false },
+                onConfirm = { picked ->
+                    selectedDate = picked
+                    showDatePicker = false
+                }
+            )
+        }
     }
 
     if (showTimePicker) {
@@ -669,26 +682,5 @@ private fun PriorityChip(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun SweetSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    val colors = SweetTheme.colors
-    Box(
-        modifier = Modifier
-            .size(width = mockupDp(36), height = mockupDp(20))
-            .clip(RoundedCornerShape(mockupDp(10)))
-            .background(if (checked) colors.mintDeep else colors.line)
-            .clickable { onCheckedChange(!checked) }
-            .padding(mockupDp(2))
-    ) {
-        Box(
-            modifier = Modifier
-                .size(mockupDp(16))
-                .align(if (checked) Alignment.CenterEnd else Alignment.CenterStart)
-                .clip(CircleShape)
-                .background(Color.White)
-        )
     }
 }

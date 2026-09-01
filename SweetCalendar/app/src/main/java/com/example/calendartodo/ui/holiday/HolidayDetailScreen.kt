@@ -114,7 +114,7 @@ fun HolidayDetailScreen(
             }
             Spacer(Modifier.height(18.dp))
             Text(
-                "Synced from time.ir via holidayapi.ir",
+                "Synced from time.ir",
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.muted
             )

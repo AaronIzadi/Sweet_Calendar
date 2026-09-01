@@ -27,6 +27,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.calendar.DayEvent
 import com.example.calendartodo.ui.components.JarProgressCard
@@ -36,13 +37,12 @@ import com.example.calendartodo.ui.components.SweetIconButton
 import com.example.calendartodo.ui.components.SweetSectionLabel
 import com.example.calendartodo.ui.components.SweetTaskCard
 import com.example.calendartodo.ui.components.TaskCardStyle
+import com.example.calendartodo.ui.components.formatAlternateCalendarLine
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
-import java.text.DateFormatSymbols
-import java.util.Locale
 
 private val DayDetailSubColor = Color(0xFF8A7867)
 private val TaskMetaColor = Color(0xFF9A8878)
@@ -52,6 +52,7 @@ fun DayDetailScreen(
     date: JalaliDate,
     tasks: List<TaskEntity>,
     events: List<DayEvent>,
+    calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
     onAddTask: () -> Unit,
@@ -60,10 +61,14 @@ fun DayDetailScreen(
 ) {
     val colors = SweetTheme.colors
     val weekday = JalaliDate.WEEKDAY_NAMES_EN[date.weekdayIndex()]
-    val month = JalaliDate.MONTH_NAMES_EN[date.month - 1]
-    val gregorian = remember(date) { date.toGregorianCalendar() }
-    val gregMonth = DateFormatSymbols(Locale.ENGLISH).months[gregorian.get(java.util.Calendar.MONTH)]
-    val gregDay = gregorian.get(java.util.Calendar.DAY_OF_MONTH)
+    val primaryTitle = when (calendarSystem) {
+        CalendarSystem.PERSIAN -> "${JalaliDate.MONTH_NAMES_EN[date.month - 1]} ${date.day}"
+        CalendarSystem.GREGORIAN -> {
+            val g = com.example.calendartodo.jalali.GregorianDate.fromJalali(date)
+            "${com.example.calendartodo.jalali.GregorianDate.MONTH_NAMES_EN[g.month - 1]} ${g.day}"
+        }
+    }
+    val secondaryLine = "${weekday} · ${date.formatAlternateCalendarLine(calendarSystem)}"
     val done = tasks.count { it.isDone }
     val holidays = events.filter { it.isHoliday && it.description.isNotBlank() }
     val occasions = events.filter { !it.isHoliday && it.description.isNotBlank() }
@@ -85,7 +90,7 @@ fun DayDetailScreen(
                 SweetIconButton(label = "←", onClick = onBack)
                 Column(modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP))) {
                     Text(
-                        "$month ${date.day}",
+                        primaryTitle,
                         style = TextStyle(
                             fontFamily = BodyFont,
                             fontWeight = FontWeight.Bold,
@@ -95,7 +100,7 @@ fun DayDetailScreen(
                         color = colors.ink
                     )
                     Text(
-                        "$weekday · $gregMonth $gregDay",
+                        secondaryLine,
                         style = TextStyle(
                             fontFamily = BodyFont,
                             fontWeight = FontWeight.SemiBold,

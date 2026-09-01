@@ -1,6 +1,7 @@
 package com.example.calendartodo.data.prefs
 
 import android.content.Context
+import com.example.calendartodo.calendar.CalendarSystem
 
 class AppPreferences(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -30,6 +31,10 @@ class AppPreferences(context: Context) {
         get() = prefs.getInt(KEY_WEEK_STARTS_ON, 0).coerceIn(0, 6)
         set(value) = prefs.edit().putInt(KEY_WEEK_STARTS_ON, value.coerceIn(0, 6)).apply()
 
+    var calendarSystem: CalendarSystem
+        get() = CalendarSystem.fromPref(prefs.getString(KEY_CALENDAR_SYSTEM, CalendarSystem.PERSIAN.name) ?: "")
+        set(value) = prefs.edit().putString(KEY_CALENDAR_SYSTEM, value.name).apply()
+
     var recentSearches: List<String>
         get() = prefs.getString(KEY_RECENT_SEARCHES, "")
             ?.split("|")
@@ -54,6 +59,7 @@ class AppPreferences(context: Context) {
         private const val KEY_NOTIF_RATIONALE = "has_seen_notification_rationale"
         private const val KEY_SHOW_HOLIDAYS = "show_holidays"
         private const val KEY_WEEK_STARTS_ON = "week_starts_on"
+        private const val KEY_CALENDAR_SYSTEM = "calendar_system"
         private const val KEY_RECENT_SEARCHES = "recent_searches"
     }
 }

@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,6 +33,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
+import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.navigation.AppDestination
 import com.example.calendartodo.ui.theme.BodyFont
@@ -403,13 +407,34 @@ fun formatTime12h(time24: String): String {
     return if (m == 0) "$h12:00 $amPm" else "%d:%02d %s".format(h12, m, amPm)
 }
 
-fun JalaliDate.formatDisplayShort(): String =
-    "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day"
+fun JalaliDate.formatDisplayShort(calendarSystem: CalendarSystem = CalendarSystem.PERSIAN): String =
+    when (calendarSystem) {
+        CalendarSystem.PERSIAN -> "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day"
+        CalendarSystem.GREGORIAN -> {
+            val g = GregorianDate.fromJalali(this)
+            "${GregorianDate.MONTH_NAMES_EN[g.month - 1]} ${g.day}"
+        }
+    }
 
-fun JalaliDate.formatDisplayWithWeekday(): String {
+fun JalaliDate.formatDisplayWithWeekday(calendarSystem: CalendarSystem = CalendarSystem.PERSIAN): String {
     val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[weekdayIndex()]
-    return "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day, $year · $weekday"
+    return when (calendarSystem) {
+        CalendarSystem.PERSIAN -> "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day, $year · $weekday"
+        CalendarSystem.GREGORIAN -> {
+            val g = GregorianDate.fromJalali(this)
+            "${GregorianDate.MONTH_NAMES_EN[g.month - 1]} ${g.day}, ${g.year} · $weekday"
+        }
+    }
 }
+
+fun JalaliDate.formatAlternateCalendarLine(calendarSystem: CalendarSystem): String =
+    when (calendarSystem) {
+        CalendarSystem.PERSIAN -> {
+            val g = GregorianDate.fromJalali(this)
+            "${GregorianDate.MONTH_NAMES_EN[g.month - 1]} ${g.day}, ${g.year}"
+        }
+        CalendarSystem.GREGORIAN -> "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day, $year"
+    }
 
 /** Square paper icon button matching mockup `.icon-btn` (detail headers, etc.). */
 @Composable
@@ -684,5 +709,31 @@ fun SweetBigSaveButton(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+/** Mockup `.switch` toggle used on settings and add-task rows. */
+@Composable
+fun SweetSwitch(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    Box(
+        modifier = modifier
+            .size(width = mockupDp(36), height = mockupDp(20))
+            .clip(RoundedCornerShape(mockupDp(10)))
+            .background(if (checked) colors.mintDeep else colors.line)
+            .clickable { onCheckedChange(!checked) }
+            .padding(mockupDp(2))
+    ) {
+        Box(
+            modifier = Modifier
+                .size(mockupDp(16))
+                .align(if (checked) Alignment.CenterEnd else Alignment.CenterStart)
+                .clip(CircleShape)
+                .background(Color.White)
+        )
     }
 }

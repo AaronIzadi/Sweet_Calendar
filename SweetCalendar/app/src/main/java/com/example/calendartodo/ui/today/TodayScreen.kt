@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CheckCandyIcon
 import com.example.calendartodo.ui.components.IceCreamIcon
@@ -74,6 +75,7 @@ fun computeStreak(tasks: List<TaskEntity>): Int {
 fun TodayScreen(
     tasks: List<TaskEntity>,
     userName: String,
+    calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onEditTask: (TaskEntity) -> Unit,
     onCompleteTask: (TaskEntity) -> Unit = {},
     onDeleteTask: (TaskEntity) -> Unit = {},
@@ -118,7 +120,7 @@ fun TodayScreen(
                             color = colors.ink
                         )
                         Text(
-                            today.formatDisplayWithWeekday(),
+                            today.formatDisplayWithWeekday(calendarSystem),
                             style = MaterialTheme.typography.bodySmall.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = mockupSp(MockupDimens.GREET_DATE_F),

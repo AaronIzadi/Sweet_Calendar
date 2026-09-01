@@ -94,8 +94,12 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf(preferences.userName) }
 
-    LaunchedEffect(preferences.showHolidays, preferences.weekStartsOn) {
-        viewModel.applyPreferences(preferences.showHolidays, preferences.weekStartsOn)
+    LaunchedEffect(preferences.showHolidays, preferences.weekStartsOn, preferences.calendarSystem) {
+        viewModel.applyPreferences(
+            preferences.showHolidays,
+            preferences.weekStartsOn,
+            preferences.calendarSystem
+        )
     }
 
     fun deleteWithUndo(task: TaskEntity) {
@@ -229,6 +233,7 @@ fun MainScreen(
                             AppDestination.Today -> TodayScreen(
                                 tasks = allTasks,
                                 userName = userName,
+                                calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
                                 onCompleteTask = { completeTask(it) },
                                 onDeleteTask = { deleteWithUndo(it) },
@@ -240,6 +245,7 @@ fun MainScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 tasks = allTasks,
                                 weekStartsOn = calendarState.weekStartsOn,
+                                calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
                                 onCompleteTask = { completeTask(it) },
                                 onDeleteTask = { deleteWithUndo(it) }
@@ -258,6 +264,7 @@ fun MainScreen(
                                 darkMode = darkMode,
                                 showHolidays = preferences.showHolidays,
                                 weekStartsOn = preferences.weekStartsOn,
+                                calendarSystem = preferences.calendarSystem,
                                 onDarkModeChange = { enabled ->
                                     preferences.darkMode = enabled
                                     onDarkModeChange(enabled)
@@ -269,6 +276,10 @@ fun MainScreen(
                                 onWeekStartsOnChange = { day ->
                                     preferences.weekStartsOn = day
                                     viewModel.setWeekStartsOn(day)
+                                },
+                                onCalendarSystemChange = { system ->
+                                    preferences.calendarSystem = system
+                                    viewModel.setCalendarSystem(system)
                                 },
                                 onUserNameChange = { name ->
                                     preferences.userName = name
@@ -339,6 +350,7 @@ fun MainScreen(
                             date = current.date,
                             tasks = dayTasks,
                             events = dayEvents,
+                            calendarSystem = calendarState.calendarSystem,
                             onBack = { overlay = OverlayState.None },
                             onTaskClick = { openTaskDetail(it) },
                             onAddTask = { sheetState = SheetState.Add(current.date) },
@@ -386,6 +398,7 @@ fun MainScreen(
                 TaskBottomSheet(
                     date = sheet.date,
                     existingTask = null,
+                    calendarSystem = calendarState.calendarSystem,
                     onDismiss = { sheetState = SheetState.Hidden },
                     onConfirm = { form ->
                         viewModel.addTask(form)
@@ -401,6 +414,7 @@ fun MainScreen(
                 TaskBottomSheet(
                     date = d,
                     existingTask = task,
+                    calendarSystem = calendarState.calendarSystem,
                     onDismiss = { sheetState = SheetState.Hidden },
                     onConfirm = { form ->
                         viewModel.updateTask(task, form)

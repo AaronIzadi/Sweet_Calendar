@@ -9,9 +9,8 @@ import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 
 /**
- * A cached official/occasion event for a given Jalali day, sourced from
- * time.ir (via the holidayapi.ir JSON mirror). Cached locally so the app
- * only needs network access once per day, not every time the calendar opens.
+ * A cached official/occasion event for a given Jalali day, sourced from time.ir.
+ * Months are fetched in one API call and stored locally.
  */
 @Entity(tableName = "event_cache", primaryKeys = ["jalaliDate", "description"])
 data class EventCacheEntity(
@@ -32,6 +31,9 @@ interface EventCacheDao {
 
     @Query("SELECT DISTINCT jalaliDate FROM event_cache WHERE jalaliDate LIKE :yearMonthPrefix || '%'")
     suspend fun cachedDatesForMonth(yearMonthPrefix: String): List<String>
+
+    @Query("DELETE FROM event_cache WHERE jalaliDate LIKE :yearMonthPrefix || '%'")
+    suspend fun deleteForMonth(yearMonthPrefix: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(events: List<EventCacheEntity>)

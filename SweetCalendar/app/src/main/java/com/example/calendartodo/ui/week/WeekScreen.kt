@@ -36,6 +36,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.calendar.CalendarSystem
+import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.SweetTaskCard
 import com.example.calendartodo.ui.components.TaskCardStyle
@@ -53,6 +55,7 @@ private val ChipSelectedDowColor = Color(0xFFEFE6FA)
 fun WeekScreen(
     tasks: List<TaskEntity>,
     weekStartsOn: Int = 0,
+    calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onEditTask: (TaskEntity) -> Unit,
     onCompleteTask: (TaskEntity) -> Unit = {},
     onDeleteTask: (TaskEntity) -> Unit = {},
@@ -111,7 +114,14 @@ fun WeekScreen(
                 modifier = Modifier.padding(top = mockupDp(4))
             )
             Text(
-                JalaliDate.weekRange(weekStart, weekEnd),
+                when (calendarSystem) {
+                    CalendarSystem.PERSIAN -> JalaliDate.weekRange(weekStart, weekEnd)
+                    CalendarSystem.GREGORIAN -> {
+                        val gStart = GregorianDate.fromJalali(weekStart)
+                        val gEnd = GregorianDate.fromJalali(weekEnd)
+                        GregorianDate.weekRange(gStart, gEnd)
+                    }
+                },
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = mockupSp(MockupDimens.WEEK_RANGE),
@@ -138,6 +148,7 @@ fun WeekScreen(
                 val pendingCount = dayTasks.count { !it.isDone }
                 DayChip(
                     day = day,
+                    calendarSystem = calendarSystem,
                     pendingCount = pendingCount,
                     selected = day == selectedDay,
                     onClick = {
@@ -171,7 +182,7 @@ fun WeekScreen(
                 daysWithTasks.forEach { day ->
                     val dayTasks = tasksByDay[day].orEmpty()
                     item(key = "label-${day.formatIso()}") {
-                        WeekDayLabel(day)
+                        WeekDayLabel(day, calendarSystem)
                     }
                     items(dayTasks, key = { it.id }) { task ->
                         SweetTaskCard(
@@ -188,12 +199,22 @@ fun WeekScreen(
 }
 
 @Composable
-private fun WeekDayLabel(day: JalaliDate) {
+private fun WeekDayLabel(day: JalaliDate, calendarSystem: CalendarSystem) {
     val colors = SweetTheme.colors
     val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[day.weekdayIndex()].uppercase()
-    val month = JalaliDate.MONTH_NAMES_EN[day.month - 1].uppercase()
+    val label = when (calendarSystem) {
+        CalendarSystem.PERSIAN -> {
+            val month = JalaliDate.MONTH_NAMES_EN[day.month - 1].uppercase()
+            "$weekday · $month ${day.day}"
+        }
+        CalendarSystem.GREGORIAN -> {
+            val g = GregorianDate.fromJalali(day)
+            val month = GregorianDate.MONTH_NAMES_EN[g.month - 1].uppercase()
+            "$weekday · $month ${g.day}"
+        }
+    }
     Text(
-        "$weekday · $month ${day.day}",
+        label,
         style = TextStyle(
             fontFamily = PixelFont,
             fontSize = mockupSp(MockupDimens.WEEK_DAY_LABEL),
@@ -207,11 +228,16 @@ private fun WeekDayLabel(day: JalaliDate) {
 @Composable
 private fun DayChip(
     day: JalaliDate,
+    calendarSystem: CalendarSystem,
     pendingCount: Int,
     selected: Boolean,
     onClick: () -> Unit
 ) {
     val colors = SweetTheme.colors
+    val displayDay = when (calendarSystem) {
+        CalendarSystem.PERSIAN -> day.day
+        CalendarSystem.GREGORIAN -> GregorianDate.fromJalali(day).day
+    }
     val dow = JalaliDate.WEEKDAY_NAMES_EN_SHORT[day.weekdayIndex()].uppercase()
     val shape = RoundedCornerShape(mockupDp(14))
     val chipWidth = mockupDp(MockupDimens.DAY_CHIP_MIN_W)
@@ -253,7 +279,7 @@ private fun DayChip(
                 textAlign = TextAlign.Center
             )
             Text(
-                day.day.toString(),
+                displayDay.toString(),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.DAY_CHIP_NUM),

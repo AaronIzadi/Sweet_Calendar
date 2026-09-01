@@ -7,6 +7,7 @@ import androidx.room.CoroutinesRoom;
 import androidx.room.EntityInsertionAdapter;
 import androidx.room.RoomDatabase;
 import androidx.room.RoomSQLiteQuery;
+import androidx.room.SharedSQLiteStatement;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
@@ -32,6 +33,8 @@ public final class EventCacheDao_Impl implements EventCacheDao {
 
   private final EntityInsertionAdapter<EventCacheEntity> __insertionAdapterOfEventCacheEntity;
 
+  private final SharedSQLiteStatement __preparedStmtOfDeleteForMonth;
+
   public EventCacheDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfEventCacheEntity = new EntityInsertionAdapter<EventCacheEntity>(__db) {
@@ -51,6 +54,14 @@ public final class EventCacheDao_Impl implements EventCacheDao {
         statement.bindLong(4, _tmp);
       }
     };
+    this.__preparedStmtOfDeleteForMonth = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM event_cache WHERE jalaliDate LIKE ? || '%'";
+        return _query;
+      }
+    };
   }
 
   @Override
@@ -67,6 +78,32 @@ public final class EventCacheDao_Impl implements EventCacheDao {
           return Unit.INSTANCE;
         } finally {
           __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object deleteForMonth(final String yearMonthPrefix,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteForMonth.acquire();
+        int _argIndex = 1;
+        _stmt.bindString(_argIndex, yearMonthPrefix);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteForMonth.release(_stmt);
         }
       }
     }, $completion);

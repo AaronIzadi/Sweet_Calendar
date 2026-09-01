@@ -5,7 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.reminder.TaskReminderScheduler
 import com.example.calendartodo.repository.EventRepository
@@ -30,6 +32,7 @@ data class DayEvent(
 
 data class DayCellInfo(
     val date: JalaliDate,
+    val displayDay: Int,
     val hasTask: Boolean,
     val hasOccasion: Boolean,
     val isHoliday: Boolean,
@@ -37,7 +40,9 @@ data class DayCellInfo(
 )
 
 data class CalendarUiState(
+    val calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     val visibleMonth: JalaliDate = JalaliDate.today().firstOfMonth(),
+    val visibleGregorianMonth: GregorianDate = GregorianDate.today().firstOfMonth(),
     val selectedDate: JalaliDate = JalaliDate.today(),
     val monthCells: List<DayCellInfo?> = emptyList(),
     val selectedDayTasks: List<TaskEntity> = emptyList(),
@@ -56,68 +61,86 @@ class CalendarViewModel(
 ) : AndroidViewModel(application) {
 
     private val reminderScheduler = TaskReminderScheduler(application)
-    private val visibleMonth = MutableStateFlow(JalaliDate.today().firstOfMonth())
+    private val visiblePersianMonth = MutableStateFlow(JalaliDate.today().firstOfMonth())
+    private val visibleGregorianMonth = MutableStateFlow(GregorianDate.today().firstOfMonth())
     private val selectedDate = MutableStateFlow(JalaliDate.today())
     private val isLoadingEvents = MutableStateFlow(false)
     private val eventsLoadFailed = MutableStateFlow(false)
     private val showHolidays = MutableStateFlow(true)
     private val weekStartsOn = MutableStateFlow(0)
-    private val calendarMeta = combine(isLoadingEvents, eventsLoadFailed, showHolidays, weekStartsOn) { loading, failed, show, week ->
-        CalendarMeta(loading, failed, show, week)
+    private val calendarSystem = MutableStateFlow(CalendarSystem.PERSIAN)
+
+    private val calendarMeta = combine(
+        isLoadingEvents,
+        eventsLoadFailed,
+        showHolidays,
+        weekStartsOn,
+        calendarSystem
+    ) { loading, failed, show, week, system ->
+        CalendarMeta(loading, failed, show, week, system)
     }
 
     private data class CalendarMeta(
         val loading: Boolean,
         val failed: Boolean,
         val showHolidays: Boolean,
-        val weekStartsOn: Int
+        val weekStartsOn: Int,
+        val calendarSystem: CalendarSystem
     )
+
+    private data class MonthContext(
+        val persianMonth: JalaliDate,
+        val gregorianMonth: GregorianDate,
+        val selected: JalaliDate,
+        val meta: CalendarMeta
+    )
+
+    private val monthContextFlow = combine(
+        visiblePersianMonth,
+        visibleGregorianMonth,
+        selectedDate,
+        calendarMeta
+    ) { pMonth, gMonth, selected, meta ->
+        MonthContext(pMonth, gMonth, selected, meta)
+    }
+
+    private val monthEventsFlow = combine(visiblePersianMonth, visibleGregorianMonth, calendarSystem) { pMonth, gMonth, system ->
+        Triple(system, pMonth, gMonth)
+    }.flatMapLatest { (system, pMonth, gMonth) ->
+        when (system) {
+            CalendarSystem.PERSIAN -> eventRepository.observeForMonth(pMonth.year, pMonth.month)
+            CalendarSystem.GREGORIAN -> eventRepository.observeForGregorianMonth(gMonth.year, gMonth.month)
+        }
+    }
 
     val allTasks: StateFlow<List<TaskEntity>> = taskRepository.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val uiState: StateFlow<CalendarUiState> = combine(
-        visibleMonth,
-        selectedDate,
-        calendarMeta,
+        monthContextFlow,
         taskRepository.observeAll(),
-        visibleMonth.flatMapLatest { month ->
-            eventRepository.observeForMonth(month.year, month.month)
-        }
-    ) { month, selected, meta, allTasks, monthEvents ->
+        monthEventsFlow
+    ) { context, allTasks, monthEvents ->
+        val pMonth = context.persianMonth
+        val gMonth = context.gregorianMonth
+        val selected = context.selected
+        val meta = context.meta
         val eventDatesInfo = if (meta.showHolidays) {
-            monthEvents.filter { it.description.isNotEmpty() }.groupBy { it.jalaliDate }
+            monthEvents
+                .filter { it.description.isNotEmpty() }
+                .groupBy { normalizeEventDateKey(it.jalaliDate) }
         } else {
             emptyMap()
         }
-        val tasksByDate = allTasks.groupBy { it.jalaliDate }
+        val tasksByDate = allTasks.groupBy { JalaliDate.parseIso(it.jalaliDate).formatIso() }
 
-        val daysInMonth = month.daysInMonth()
-        val leadingBlanks = (month.firstOfMonth().weekdayIndex() - meta.weekStartsOn + 7) % 7
-        val cells = mutableListOf<DayCellInfo?>()
-        repeat(leadingBlanks) { cells.add(null) }
-        for (d in 1..daysInMonth) {
-            val date = JalaliDate(month.year, month.month, d)
-            val iso = date.formatIso()
-            val dayEvents = eventDatesInfo[iso].orEmpty()
-            val dayTasks = tasksByDate[iso].orEmpty()
-            val categories = dayTasks
-                .map { TaskCategory.fromString(it.category) }
-                .distinct()
-                .take(3)
-            cells.add(
-                DayCellInfo(
-                    date = date,
-                    hasTask = dayTasks.isNotEmpty(),
-                    hasOccasion = dayEvents.any { !it.isHoliday },
-                    isHoliday = dayEvents.any { it.isHoliday },
-                    taskCategories = categories
-                )
-            )
+        val cells = when (meta.calendarSystem) {
+            CalendarSystem.PERSIAN -> buildPersianMonthCells(pMonth, meta.weekStartsOn, eventDatesInfo, tasksByDate)
+            CalendarSystem.GREGORIAN -> buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventDatesInfo, tasksByDate)
         }
 
         val selectedIso = selected.formatIso()
-        val selectedEvents = eventDatesInfo[selectedIso].orEmpty().map {
+        val selectedEvents = eventDatesInfo[normalizeEventDateKey(selectedIso)].orEmpty().map {
             DayEvent(
                 description = it.description,
                 additionalDescription = it.additionalDescription,
@@ -126,7 +149,9 @@ class CalendarViewModel(
         }
 
         CalendarUiState(
-            visibleMonth = month,
+            calendarSystem = meta.calendarSystem,
+            visibleMonth = pMonth,
+            visibleGregorianMonth = gMonth,
             selectedDate = selected,
             monthCells = cells,
             selectedDayEvents = selectedEvents,
@@ -154,19 +179,26 @@ class CalendarViewModel(
     }
 
     fun goToPreviousMonth() {
-        visibleMonth.value = visibleMonth.value.plusMonths(-1)
+        when (calendarSystem.value) {
+            CalendarSystem.PERSIAN -> visiblePersianMonth.value = visiblePersianMonth.value.plusMonths(-1)
+            CalendarSystem.GREGORIAN -> visibleGregorianMonth.value = visibleGregorianMonth.value.plusMonths(-1)
+        }
         refreshEventsForVisibleMonth()
     }
 
     fun goToNextMonth() {
-        visibleMonth.value = visibleMonth.value.plusMonths(1)
+        when (calendarSystem.value) {
+            CalendarSystem.PERSIAN -> visiblePersianMonth.value = visiblePersianMonth.value.plusMonths(1)
+            CalendarSystem.GREGORIAN -> visibleGregorianMonth.value = visibleGregorianMonth.value.plusMonths(1)
+        }
         refreshEventsForVisibleMonth()
     }
 
     fun goToToday() {
         val today = JalaliDate.today()
-        visibleMonth.value = today.firstOfMonth()
         selectedDate.value = today
+        visiblePersianMonth.value = today.firstOfMonth()
+        visibleGregorianMonth.value = GregorianDate.fromJalali(today).firstOfMonth()
         refreshEventsForVisibleMonth()
     }
 
@@ -183,14 +215,30 @@ class CalendarViewModel(
         weekStartsOn.value = dayIndex.coerceIn(0, 6)
     }
 
-    fun applyPreferences(showHolidaysPref: Boolean, weekStartsOnPref: Int) {
+    fun setCalendarSystem(system: CalendarSystem) {
+        if (calendarSystem.value == system) return
+        calendarSystem.value = system
+        val selected = selectedDate.value
+        if (system == CalendarSystem.GREGORIAN) {
+            visibleGregorianMonth.value = GregorianDate.fromJalali(selected).firstOfMonth()
+        } else {
+            visiblePersianMonth.value = selected.firstOfMonth()
+        }
+        refreshEventsForVisibleMonth()
+    }
+
+    fun applyPreferences(showHolidaysPref: Boolean, weekStartsOnPref: Int, calendarSystemPref: CalendarSystem) {
         showHolidays.value = showHolidaysPref
         weekStartsOn.value = weekStartsOnPref.coerceIn(0, 6)
-        if (showHolidaysPref) refreshEventsForVisibleMonth()
+        if (calendarSystem.value != calendarSystemPref) {
+            setCalendarSystem(calendarSystemPref)
+        } else if (showHolidaysPref) {
+            refreshEventsForVisibleMonth()
+        }
     }
 
     fun retryEventsLoad() {
-        refreshEventsForVisibleMonth()
+        refreshEventsForVisibleMonth(forceRefresh = true)
     }
 
     private fun refreshWidgets() {
@@ -301,16 +349,89 @@ class CalendarViewModel(
         }
     }
 
-    private fun refreshEventsForVisibleMonth() {
+    private fun refreshEventsForVisibleMonth(forceRefresh: Boolean = false) {
         if (!showHolidays.value) return
-        val month = visibleMonth.value
         viewModelScope.launch {
             isLoadingEvents.value = true
             eventsLoadFailed.value = false
-            val result = runCatching { eventRepository.ensureMonthCached(month.year, month.month) }
+            val result = runCatching {
+                when (calendarSystem.value) {
+                    CalendarSystem.PERSIAN -> {
+                        val month = visiblePersianMonth.value
+                        eventRepository.ensureMonthCached(month.year, month.month, forceRefresh)
+                    }
+                    CalendarSystem.GREGORIAN -> {
+                        val month = visibleGregorianMonth.value
+                        eventRepository.ensureGregorianMonthCached(month.year, month.month, forceRefresh)
+                    }
+                }
+            }
             eventsLoadFailed.value = result.isFailure
             isLoadingEvents.value = false
         }
+    }
+
+    private fun buildPersianMonthCells(
+        month: JalaliDate,
+        weekStartsOn: Int,
+        eventDatesInfo: Map<String, List<com.example.calendartodo.data.local.EventCacheEntity>>,
+        tasksByDate: Map<String, List<TaskEntity>>
+    ): List<DayCellInfo?> {
+        val daysInMonth = month.daysInMonth()
+        val leadingBlanks = (month.firstOfMonth().weekdayIndex() - weekStartsOn + 7) % 7
+        val cells = mutableListOf<DayCellInfo?>()
+        repeat(leadingBlanks) { cells.add(null) }
+        for (d in 1..daysInMonth) {
+            val date = JalaliDate(month.year, month.month, d)
+            cells.add(buildDayCell(date, d, eventDatesInfo, tasksByDate))
+        }
+        return cells
+    }
+
+    private fun buildGregorianMonthCells(
+        month: GregorianDate,
+        weekStartsOn: Int,
+        eventDatesInfo: Map<String, List<com.example.calendartodo.data.local.EventCacheEntity>>,
+        tasksByDate: Map<String, List<TaskEntity>>
+    ): List<DayCellInfo?> {
+        val daysInMonth = month.daysInMonth()
+        val leadingBlanks = (month.firstOfMonth().weekdayIndex() - weekStartsOn + 7) % 7
+        val cells = mutableListOf<DayCellInfo?>()
+        repeat(leadingBlanks) { cells.add(null) }
+        for (d in 1..daysInMonth) {
+            val gregorian = GregorianDate(month.year, month.month, d)
+            val jalali = gregorian.toJalali()
+            cells.add(buildDayCell(jalali, d, eventDatesInfo, tasksByDate))
+        }
+        return cells
+    }
+
+    private fun buildDayCell(
+        date: JalaliDate,
+        displayDay: Int,
+        eventDatesInfo: Map<String, List<com.example.calendartodo.data.local.EventCacheEntity>>,
+        tasksByDate: Map<String, List<TaskEntity>>
+    ): DayCellInfo {
+        val iso = date.formatIso()
+        val dayEvents = eventDatesInfo[normalizeEventDateKey(iso)].orEmpty()
+        val dayTasks = tasksByDate[iso].orEmpty()
+        val categories = dayTasks
+            .map { TaskCategory.fromString(it.category) }
+            .distinct()
+            .take(3)
+        return DayCellInfo(
+            date = date,
+            displayDay = displayDay,
+            hasTask = dayTasks.isNotEmpty(),
+            hasOccasion = dayEvents.any { !it.isHoliday },
+            isHoliday = dayEvents.any { it.isHoliday },
+            taskCategories = categories
+        )
+    }
+
+    private fun normalizeEventDateKey(raw: String): String {
+        val parsed = JalaliDate.parseIso(raw)
+        return "%04d-%02d-%02d".format(parsed.year, parsed.month, parsed.day)
     }
 
     class Factory(
