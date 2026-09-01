@@ -34,4 +34,7 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0")
     suspend fun getActiveReminders(): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks WHERE jalaliDate = :jalaliDate ORDER BY isDone ASC, createdAt ASC")
+    suspend fun getForDate(jalaliDate: String): List<TaskEntity>
 }

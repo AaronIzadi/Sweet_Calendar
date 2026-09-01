@@ -48,6 +48,18 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
 
     fun weekdayName(): String = WEEKDAY_NAMES[weekdayIndex()]
 
+    fun plusDays(days: Int): JalaliDate {
+        val cal = toGregorianCalendar()
+        cal.add(Calendar.DAY_OF_MONTH, days)
+        return fromGregorian(
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH) + 1,
+            cal.get(Calendar.DAY_OF_MONTH)
+        )
+    }
+
+    fun minusDays(days: Int): JalaliDate = plusDays(-days)
+
     override fun compareTo(other: JalaliDate): Int {
         if (year != other.year) return year - other.year
         if (month != other.month) return month - other.month
@@ -68,9 +80,35 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
 
         val WEEKDAY_NAMES_SHORT = listOf("ش", "ی", "د", "س", "چ", "پ", "ج")
 
+        val WEEKDAY_NAMES_EN_SHORT = listOf("Sat", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri")
+
+        val WEEKDAY_NAMES_EN = listOf(
+            "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+        )
+
         val WEEKDAY_NAMES = listOf(
             "شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه", "جمعه"
         )
+
+        fun weekRange(start: JalaliDate, end: JalaliDate): String {
+            val startMonth = MONTH_NAMES_EN[start.month - 1]
+            val endMonth = MONTH_NAMES_EN[end.month - 1]
+            return if (start.month == end.month && start.year == end.year) {
+                "$startMonth ${start.day} – ${end.day}, ${start.year}"
+            } else {
+                "$startMonth ${start.day} – $endMonth ${end.day}, ${end.year}"
+            }
+        }
+
+        fun weekContaining(date: JalaliDate, weekStartsOn: Int = 0): List<JalaliDate> {
+            val normalizedStart = weekStartsOn.coerceIn(0, 6)
+            val startOffset = (date.weekdayIndex() - normalizedStart + 7) % 7
+            val start = date.minusDays(startOffset)
+            return (0..6).map { start.plusDays(it) }
+        }
+
+        fun weekdayLabels(weekStartsOn: Int = 0): List<String> =
+            (0..6).map { WEEKDAY_NAMES_EN_SHORT[(weekStartsOn + it) % 7] }
 
         fun today(): JalaliDate {
             val cal = GregorianCalendar()

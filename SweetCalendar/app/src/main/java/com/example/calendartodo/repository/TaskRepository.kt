@@ -17,7 +17,9 @@ class TaskRepository(private val dao: TaskDao) {
         notes: String,
         jalaliDate: String,
         reminderTime: String? = null,
-        category: String = ""
+        category: String = "",
+        priority: String = "Medium",
+        repeatWeekly: Boolean = false
     ): Long {
         return dao.upsert(
             TaskEntity(
@@ -25,7 +27,9 @@ class TaskRepository(private val dao: TaskDao) {
                 notes = notes,
                 jalaliDate = jalaliDate,
                 reminderTime = reminderTime,
-                category = category
+                category = category,
+                priority = priority,
+                repeatWeekly = repeatWeekly
             )
         )
     }

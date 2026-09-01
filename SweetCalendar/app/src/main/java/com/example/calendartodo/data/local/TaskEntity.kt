@@ -15,6 +15,8 @@ data class TaskEntity(
     val jalaliDate: String, // e.g. "1403-05-12"
     val reminderTime: String? = null, // "HH:mm" in 24h format, null = no reminder
     val category: String = "",
+    val priority: String = "Medium",
+    val repeatWeekly: Boolean = false,
     val isDone: Boolean = false,
     val createdAt: Long = System.currentTimeMillis()
 )

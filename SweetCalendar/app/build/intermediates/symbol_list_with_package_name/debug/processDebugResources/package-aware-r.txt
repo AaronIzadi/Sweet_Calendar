@@ -53,7 +53,6 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
-drawable ic_launcher_foreground
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -73,7 +72,11 @@ drawable pixel_lollipop
 drawable pixel_lollipop_swirl
 drawable pixel_peppermint
 drawable pixel_wrapped_candy
+drawable sweet_calendar_icon
+drawable widget_background
+drawable widget_progress_bar
 font press_start_2p
+font quicksand_variable
 id accessibility_action_clickable_span
 id accessibility_custom_action_0
 id accessibility_custom_action_1
@@ -160,6 +163,18 @@ id view_tree_lifecycle_owner
 id view_tree_on_back_pressed_dispatcher_owner
 id view_tree_saved_state_registry_owner
 id view_tree_view_model_store_owner
+id widget_date
+id widget_jar_big_num
+id widget_jar_count
+id widget_jar_emoji
+id widget_jar_label
+id widget_jar_root
+id widget_progress
+id widget_root
+id widget_task_1
+id widget_task_2
+id widget_task_3
+id widget_title
 id wrapped_composition_tag
 integer status_bar_notification_info_maxnum
 layout custom_dialog
@@ -171,7 +186,10 @@ layout notification_template_custom_big
 layout notification_template_icon_group
 layout notification_template_part_chronometer
 layout notification_template_part_time
+layout widget_jar_small
+layout widget_today
 mipmap ic_launcher
+mipmap ic_launcher_round
 string androidx_startup
 string app_name
 string call_notification_answer_action
@@ -259,6 +277,9 @@ string tab
 string template_percent
 string tooltip_description
 string tooltip_label
+string widget_description
+string widget_jar_description
+string widget_jar_label
 style DialogWindowTheme
 style FloatingDialogTheme
 style FloatingDialogWindowTheme
@@ -276,3 +297,5 @@ styleable FontFamily fontProviderAuthority fontProviderCerts fontProviderFetchSt
 styleable FontFamilyFont android_font android_fontWeight android_fontStyle android_ttcIndex android_fontVariationSettings font fontStyle fontVariationSettings fontWeight ttcIndex
 styleable GradientColor android_startColor android_endColor android_type android_centerX android_centerY android_gradientRadius android_tileMode android_centerColor android_startX android_startY android_endX android_endY
 styleable GradientColorItem android_color android_offset
+xml widget_jar_small_info
+xml widget_today_info

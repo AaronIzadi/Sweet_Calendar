@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 data class EventCacheEntity(
     val jalaliDate: String, // "1403-05-12"
     val description: String,
+    val additionalDescription: String = "",
     val isHoliday: Boolean
 )
 

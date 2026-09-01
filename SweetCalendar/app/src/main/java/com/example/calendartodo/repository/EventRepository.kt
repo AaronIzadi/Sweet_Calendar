@@ -53,6 +53,7 @@ class EventRepository(
                     EventCacheEntity(
                         jalaliDate = dateStr,
                         description = evt.description,
+                        additionalDescription = evt.additional_description.orEmpty(),
                         isHoliday = evt.is_holiday
                     )
                 }

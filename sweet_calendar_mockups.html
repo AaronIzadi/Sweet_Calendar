@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sweet Calendar — UI Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF6EA;
+    --pink:#FF6FA5;
+    --pink-deep:#E0487F;
+    --purple:#7B5EA7;
+    --purple-deep:#5B3F82;
+    --mint:#7FDCB8;
+    --mint-deep:#4FB894;
+    --lemon:#FFD23F;
+    --lemon-deep:#E8B32A;
+    --choc:#6B4226;
+    --choc-deep:#4A2C18;
+    --ink:#3A2317;
+    --paper:#FFFDF9;
+    --line:#EAD9C4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: linear-gradient(160deg,#FCE8F1 0%, #F1E6FB 50%, #E4F6EE 100%);
+    font-family:'Quicksand',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    padding:32px 16px 64px;
+  }
+  .pixelated{image-rendering:pixelated;}
+
+  /* ---------- DARK MODE — "midnight candy shop" palette ---------- */
+  body.dark{
+    --cream:#241A30;
+    --paper:#2F2340;
+    --ink:#F2E9F5;
+    --line:#40314F;
+    --pink:#FF8CBE;
+    --pink-deep:#FF6FA5;
+    --purple:#B79BEB;
+    --purple-deep:#D4C2FA;
+    --mint:#6FE0B4;
+    --mint-deep:#4FD9A0;
+    --lemon:#FFDB70;
+    --lemon-deep:#FFC93C;
+    --choc:#D8B08A;
+    --choc-deep:#EFD3AE;
+    --paper2:#3A2C4C;
+    background: linear-gradient(160deg,#161020 0%, #1C1428 50%, #101A20 100%);
+  }
+  body.dark .phone{ box-shadow:0 20px 50px rgba(0,0,0,0.55), 0 0 0 2px #120C1A inset; }
+  body.dark .brand span.a{color:var(--pink);}
+  body.dark .brand span.b{color:var(--purple-deep);}
+  body.dark p.sub{color:#B3A0C9;}
+  /* secondary/muted text used across many screens */
+  body.dark .greet-date, body.dark .task-meta, body.dark .week-range, body.dark .month-sub,
+  body.dark .day-detail-sub, body.dark .stats-sub, body.dark .empty-sub, body.dark .error-sub,
+  body.dark .permission-sub, body.dark .welcome-tag, body.dark .field-label, body.dark .stat-lbl,
+  body.dark .settings-row .value, body.dark .bar-day, body.dark .day-chip .dow,
+  body.dark .weekday-row div, body.dark .completed-row, body.dark .source-row,
+  body.dark .chev-right, body.dark .btn-secondary, body.dark .holiday-date{ color:#B3A0C9; }
+  body.dark .navitem{color:#7A6A94;}
+  body.dark .navitem.active{background:#472F52; color:var(--pink);}
+  body.dark .jar-track{background:#1E1628; border-color:var(--line);}
+  body.dark .streak-pill{background:#3A2A46; color:var(--lemon);}
+  body.dark .day-cell.weekend{background:#3A2A22;}
+  body.dark .day-cell.holiday{background:#1E3A32;}
+  body.dark .welcome-bg{background:linear-gradient(180deg,#2E1E3B 0%, #241C36 55%, #16281F 100%);}
+  body.dark .permission-wrap{background:linear-gradient(180deg,#241A30 0%,#1B1526 100%);}
+  body.dark .holiday-hero{background:linear-gradient(160deg,#1E3A32 0%, #241C36 100%);}
+  body.dark .holiday-tag{background:#1E3A32; color:var(--mint);}
+  body.dark .recent-chip{background:#3A2C4C; color:var(--purple-deep);}
+  body.dark .error-banner{background:#3A2A22; color:var(--lemon);}
+  body.dark .filter-chip.active{background:var(--purple); color:#1B1424;}
+  body.dark mark.hl{color:#1B1424;}
+  body.dark .priority-chip.selected{color:#1B1424;}
+  body.dark .feat-chip{color:var(--ink);}
+  body.dark .skip-link{color:var(--purple-deep);}
+  body.dark .dot{background:#40314F;}
+  body.dark .heat-cell{background:#241A30;}
+  body.dark .heat-cell.l1{background:#1E3A32;}
+  body.dark .heat-cell.l2{background:#245E4C;}
+  body.dark .heat-cell.l3{background:#2F8A6A;}
+  body.dark .heat-cell.l4{background:var(--mint-deep);}
+  body.dark .swatch.selected{outline-color:var(--pink);}
+  body.dark .profile-avatar{background:rgba(0,0,0,0.2);}
+  h1.brand{
+    font-family:'Press Start 2P',monospace;
+    text-align:center;
+    font-size:15px;
+    line-height:1.9;
+    margin:0 0 4px;
+  }
+  h1.brand span.a{color:var(--pink-deep);}
+  h1.brand span.b{color:var(--purple-deep);}
+  p.sub{
+    text-align:center;
+    margin:0 0 28px;
+    color:#7A6A5C;
+    font-weight:600;
+    font-size:14px;
+  }
+  /* tab switcher */
+  .tabs{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .tab-btn{
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;
+    padding:10px 14px;
+    border:none;
+    border-radius:10px;
+    background:var(--paper);
+    color:var(--purple-deep);
+    cursor:pointer;
+    box-shadow:0 3px 0 var(--line), 0 3px 6px rgba(0,0,0,0.08);
+    transition:transform .08s ease;
+  }
+  .tab-btn:hover{transform:translateY(-2px);}
+  .tab-btn:active{transform:translateY(1px); box-shadow:0 2px 0 var(--line);}
+  .tab-btn.active{
+    background:var(--pink);
+    color:#fff;
+    box-shadow:0 3px 0 var(--pink-deep);
+  }
+  /* stage */
+  .stage{
+    display:flex;
+    justify-content:center;
+  }
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* phone frame */
+  .phone{
+    width:360px;
+    height:740px;
+    background:var(--bezel, #3A2317);
+    border-radius:44px;
+    padding:14px;
+    box-shadow:0 20px 50px rgba(60,30,20,0.25), 0 0 0 2px #2a180f inset;
+    position:relative;
+  }
+  .phone .notch{
+    position:absolute;
+    top:14px;left:50%;
+    transform:translateX(-50%);
+    width:120px;height:20px;
+    background:var(--bezel, #3A2317);
+    border-radius:0 0 14px 14px;
+    z-index:5;
+  }
+  .screen-body{
+    width:100%;height:100%;
+    background:var(--cream);
+    border-radius:32px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 20px 4px;
+    font-family:'Press Start 2P',monospace;
+    font-size:8px;
+    color:var(--ink);
+  }
+  .statusbar .icons{display:flex;gap:5px;align-items:center;}
+
+  .content{flex:1;overflow:hidden;position:relative;}
+
+  /* bottom nav */
+  .bottomnav{
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    padding:10px 6px 16px;
+    background:var(--paper);
+    border-top:3px solid var(--line);
+  }
+  .navitem{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    font-family:'Press Start 2P',monospace;
+    font-size:6.5px;
+    color:#B7A493;
+    padding:6px 10px;
+    border-radius:12px;
+  }
+  .navitem.active{
+    color:var(--pink-deep);
+    background:#FFE6EF;
+  }
+
+  /* fab */
+  .fab{
+    position:absolute;
+    right:18px;
+    bottom:18px;
+    width:54px;height:54px;
+    border-radius:16px;
+    background:var(--purple);
+    box-shadow:0 4px 0 var(--purple-deep), 0 8px 16px rgba(91,63,130,0.35);
+    display:flex;align-items:center;justify-content:center;
+    z-index:4;
+  }
+
+  /* generic pixel chip / button */
+  .pixel-btn{
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;
+    color:#fff;
+    background:var(--purple);
+    border:none;
+    padding:14px 20px;
+    border-radius:12px;
+    box-shadow:0 4px 0 var(--purple-deep);
+    cursor:pointer;
+    letter-spacing:0.5px;
+  }
+
+  /* ---------- WELCOME SCREEN ---------- */
+  .welcome-bg{
+    height:100%;
+    background:linear-gradient(180deg,#FFE1EE 0%, #F3E3FB 55%, #E3F7EE 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:28px 26px;
+    position:relative;
+  }
+  .deco{position:absolute;opacity:0.85;}
+  .welcome-word{
+    font-family:'Press Start 2P',monospace;
+    font-size:17px;
+    line-height:1.7;
+    text-align:center;
+    margin:18px 0 8px;
+  }
+  .welcome-word .l1{color:var(--pink-deep);}
+  .welcome-word .l2{color:var(--purple-deep);}
+  .welcome-tag{
+    text-align:center;
+    font-weight:700;
+    font-size:13px;
+    color:#6B5A4B;
+    margin:0 10px 22px;
+    line-height:1.5;
+  }
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:26px;}
+  .feat-chip{
+    display:flex;align-items:center;gap:6px;
+    background:var(--paper);
+    padding:7px 10px;
+    border-radius:10px;
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--ink);
+    box-shadow:0 2px 0 var(--line);
+  }
+  .dots-row{display:flex;gap:6px;margin-top:20px;}
+  .dot{width:7px;height:7px;border-radius:2px;background:#E9D3C0;}
+  .dot.on{background:var(--pink-deep);}
+  .skip-link{margin-top:14px;font-size:11px;font-weight:700;color:var(--purple-deep);text-decoration:underline;cursor:pointer;}
+
+  /* ---------- HOME SCREEN ---------- */
+  .home-scroll{padding:6px 18px 90px;height:100%;overflow-y:auto;}
+  .greet-row{display:flex;justify-content:space-between;align-items:flex-start;margin-top:6px;}
+  .greet-h{font-size:17px;font-weight:700;margin:0;}
+  .greet-date{font-size:11.5px;color:#8A7867;font-weight:600;margin-top:2px;}
+  .streak-pill{
+    display:flex;align-items:center;gap:5px;
+    background:#FFF1DC;border-radius:10px;padding:6px 9px;
+    font-size:10px;font-weight:700;color:var(--choc-deep);
+    box-shadow:0 2px 0 var(--line);
+  }
+  .jar-card{
+    margin-top:16px;
+    background:var(--paper);
+    border-radius:16px;
+    padding:14px 16px;
+    box-shadow:0 3px 0 var(--line);
+  }
+  .jar-top{display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:8px;}
+  .jar-track{height:14px;border-radius:8px;background:#F1E6D8;border:2px solid var(--line);overflow:hidden;}
+  .jar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--mint));border-radius:6px 0 0 6px;}
+
+  .section-label{
+    font-family:'Press Start 2P',monospace;
+    font-size:9.5px;
+    color:var(--purple-deep);
+    margin:20px 0 10px;
+  }
+  .task-card{
+    display:flex;align-items:center;gap:10px;
+    background:var(--paper);
+    border-radius:14px;
+    padding:10px 12px;
+    margin-bottom:10px;
+    border-left:6px solid var(--pink);
+    box-shadow:0 2px 0 var(--line);
+  }
+  .task-card.mint{border-left-color:var(--mint-deep);}
+  .task-card.lemon{border-left-color:var(--lemon-deep);}
+  .task-card.purple{border-left-color:var(--purple-deep);}
+  .task-card.done{opacity:0.55;}
+  .task-card.done .task-title{text-decoration:line-through;}
+  .task-title{font-size:12.5px;font-weight:700;margin:0;}
+  .task-meta{font-size:9.5px;color:#9A8878;font-weight:600;margin-top:2px;}
+  .task-right{margin-left:auto;}
+
+  .completed-row{
+    display:flex;align-items:center;gap:6px;
+    font-size:10.5px;font-weight:700;color:#9A8878;
+    margin-top:6px; margin-bottom:6px;
+  }
+
+  /* ---------- WEEK SCREEN ---------- */
+  .week-header{padding:14px 18px 4px;}
+  .week-title{font-size:16px;font-weight:700;margin:4px 0 0;}
+  .week-range{font-size:11px;color:#8A7867;font-weight:600;}
+  .day-strip{
+    display:flex;gap:8px;
+    padding:14px 14px 8px;
+    overflow-x:auto;
+  }
+  .day-chip{
+    min-width:44px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:10px 4px 8px;
+    border-radius:14px;
+    background:var(--paper);
+    box-shadow:0 2px 0 var(--line);
+    flex-shrink:0;
+  }
+  .day-chip .dow{font-size:8px;font-family:'Press Start 2P',monospace;color:#9A8878;}
+  .day-chip .num{font-size:14px;font-weight:700;}
+  .day-chip .pips{display:flex;gap:2px;}
+  .pip{width:5px;height:5px;border-radius:1px;background:var(--line);}
+  .pip.on{background:var(--pink-deep);}
+  .day-chip.selected{
+    background:var(--purple);
+    box-shadow:0 3px 0 var(--purple-deep);
+    transform:translateY(-2px);
+  }
+  .day-chip.selected .dow{color:#EFE6FA;}
+  .day-chip.selected .num{color:#fff;}
+  .week-list{padding:8px 18px 90px;height:100%;overflow-y:auto;}
+  .week-day-label{
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;color:var(--purple-deep);
+    margin:14px 0 8px;
+  }
+
+  /* ---------- MONTH SCREEN ---------- */
+  .month-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px 6px;
+  }
+  .month-title{font-size:15px;font-weight:700;margin:0;}
+  .month-sub{font-size:10px;color:#8A7867;font-weight:600;}
+  .chev{
+    width:26px;height:26px;border-radius:8px;background:var(--paper);
+    box-shadow:0 2px 0 var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:var(--purple-deep);
+    font-size:13px;
+  }
+  .weekday-row{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    padding:10px 14px 2px;
+  }
+  .weekday-row div{
+    text-align:center;font-size:8.5px;font-weight:700;color:#B39D89;
+    font-family:'Press Start 2P',monospace;
+  }
+  .month-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    gap:5px;
+    padding:6px 14px 12px;
+  }
+  .day-cell{
+    aspect-ratio:1/1;
+    border-radius:9px;
+    background:var(--paper);
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    position:relative;
+    box-shadow:0 2px 0 var(--line);
+    font-size:10.5px;font-weight:700;
+  }
+  .day-cell.muted{opacity:0.35;box-shadow:none;background:transparent;}
+  .day-cell.weekend{background:#FFF1DC;}
+  .day-cell.today{
+    background:var(--pink);
+    color:#fff;
+    box-shadow:0 3px 0 var(--pink-deep);
+  }
+  .day-cell.holiday{background:#E3F7EE;}
+  .cell-dots{position:absolute;bottom:4px;display:flex;gap:2px;}
+  .cell-dot{width:4px;height:4px;}
+  .cell-dot.shape-circle{border-radius:50%;}
+  .cell-dot.shape-diamond{border-radius:1px;transform:rotate(45deg);}
+  .cell-dot.shape-leaf{border-radius:0 50% 0 50%;}
+  .cell-dot.shape-ring{background:transparent!important;border:1.5px solid var(--mint-deep);border-radius:50%;}
+  .legend-row{
+    display:flex;gap:14px;flex-wrap:wrap;
+    padding:8px 18px 90px;
+    font-size:9.5px;font-weight:700;color:#7A6A5C;
+  }
+  .legend-item{display:flex;align-items:center;gap:5px;}
+  .legend-dot{width:9px;height:9px;display:inline-block;}
+
+  /* ---------- ADD/EDIT TASK ---------- */
+  .sheet-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 18px 8px;
+  }
+  .sheet-header .close, .sheet-header .save{
+    font-family:'Press Start 2P',monospace;
+    font-size:10px;
+    color:var(--purple-deep);
+    background:none;border:none;cursor:pointer;
+  }
+  .sheet-header .save{color:var(--pink-deep);}
+  .sheet-title{font-size:16px;font-weight:700;text-align:center;margin:0;}
+  .form-scroll{padding:8px 18px 24px;height:100%;overflow-y:auto;}
+  .field-label{font-size:10px;font-weight:700;color:#9A8878;margin:14px 0 6px;letter-spacing:0.3px;}
+  .field{
+    background:var(--paper);
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:13px;font-weight:600;
+    color:var(--ink);
+    box-shadow:0 2px 0 var(--line);
+  }
+  .field.placeholder{color:#B7A493;}
+  textarea.field{width:100%;border:none;resize:none;font-family:'Quicksand',sans-serif;background:var(--paper);}
+  .row-2{display:flex;gap:10px;}
+  .row-2 .field{flex:1;display:flex;align-items:center;gap:8px;}
+  .swatch-row{display:flex;gap:10px;}
+  .swatch{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:12px 6px;
+    border-radius:12px;
+    background:var(--paper);
+    box-shadow:0 2px 0 var(--line);
+    font-size:9.5px;font-weight:700;color:#9A8878;
+  }
+  .swatch.selected{box-shadow:0 3px 0 var(--line); outline:2px solid var(--ink); outline-offset:-2px;}
+  .swatch .dot{width:18px;height:18px;border-radius:6px;}
+  .swatch.selected span{color:var(--ink);}
+  .priority-row{display:flex;gap:10px;}
+  .priority-chip{
+    flex:1;text-align:center;
+    padding:10px 4px;
+    border-radius:12px;
+    background:var(--paper);
+    box-shadow:0 2px 0 var(--line);
+    font-size:10px;font-weight:700;color:#9A8878;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .priority-chip.selected{background:var(--lemon); color:var(--choc-deep); box-shadow:0 3px 0 var(--lemon-deep);}
+  .switch-row{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border-radius:12px;padding:12px 14px;box-shadow:0 2px 0 var(--line);}
+  .switch-row .lbl{font-size:12.5px;font-weight:700;}
+  .switch{width:36px;height:20px;border-radius:10px;background:var(--line);position:relative;flex-shrink:0;}
+  .switch.on{background:var(--mint-deep);}
+  .switch .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.25);}
+  .switch.on .knob{left:18px;}
+  .big-save-btn{
+    width:100%;
+    font-family:'Press Start 2P',monospace;
+    font-size:11px;color:#fff;
+    background:var(--pink);
+    border:none;padding:16px;border-radius:14px;
+    box-shadow:0 4px 0 var(--pink-deep);
+    margin-top:22px;
+  }
+
+  /* ---------- TASK DETAIL ---------- */
+  .detail-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 4px;}
+  .icon-btn{
+    width:30px;height:30px;border-radius:9px;background:var(--paper);
+    box-shadow:0 2px 0 var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;color:var(--purple-deep);font-weight:700;
+  }
+  .detail-scroll{padding:10px 18px 24px;height:100%;overflow-y:auto;}
+  .cat-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 10px;border-radius:10px;
+    font-size:9.5px;font-weight:700;color:#fff;
+    margin-bottom:12px;
+  }
+  .detail-title{font-size:19px;font-weight:700;margin:0 0 14px;line-height:1.35;}
+  .meta-grid{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+  .meta-row{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;color:#6B5A4B;}
+  .subtask-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:2px solid var(--line);font-size:12.5px;font-weight:600;}
+  .subtask-row.done{color:#B7A493;text-decoration:line-through;}
+  .notes-box{background:var(--paper);border-radius:12px;padding:12px 14px;font-size:12.5px;line-height:1.6;color:#6B5A4B;font-weight:600;box-shadow:0 2px 0 var(--line);}
+  .delete-link{text-align:center;margin-top:18px;font-size:11px;font-weight:700;color:#D9455E;text-decoration:underline;cursor:pointer;}
+  .complete-btn{
+    width:100%;font-family:'Press Start 2P',monospace;font-size:10.5px;color:#fff;
+    background:var(--mint-deep); border:none;padding:15px;border-radius:14px;
+    box-shadow:0 4px 0 #3C9679; margin-top:18px;
+  }
+
+  /* ---------- DAY DETAIL ---------- */
+  .day-detail-header{display:flex;align-items:center;gap:12px;padding:16px 18px 6px;}
+  .day-detail-header .datewrap{}
+  .day-detail-title{font-size:16px;font-weight:700;margin:0;}
+  .day-detail-sub{font-size:11px;color:#8A7867;font-weight:600;}
+
+  /* ---------- SETTINGS ---------- */
+  .settings-scroll{padding:6px 18px 24px;height:100%;overflow-y:auto;}
+  .settings-title{font-size:18px;font-weight:700;margin:16px 0 18px;}
+  .settings-group-label{font-size:9.5px;font-weight:700;color:#B39D89;letter-spacing:0.5px;margin:16px 0 8px;font-family:'Press Start 2P',monospace;font-size:8px;}
+  .settings-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--paper);
+    padding:12px 14px;
+    border-radius:12px;
+    margin-bottom:8px;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .settings-row .icon{flex-shrink:0;}
+  .settings-row .label{flex:1;font-size:12.5px;font-weight:700;}
+  .settings-row .value{font-size:11px;font-weight:600;color:#9A8878;}
+  .settings-row .chev-right{color:#C9B8A6;font-weight:700;}
+  .profile-card{
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(120deg,var(--pink) 0%, var(--purple) 100%);
+    border-radius:16px;padding:16px;margin:16px 0 4px;
+    box-shadow:0 3px 0 var(--purple-deep);
+  }
+  .profile-avatar{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .profile-name{color:#fff;font-weight:700;font-size:13.5px;margin:0;}
+  .profile-sub{color:rgba(255,255,255,0.85);font-size:10px;font-weight:600;}
+
+  /* ---------- EMPTY STATE ---------- */
+  .empty-wrap{
+    height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:0 32px 60px;text-align:center;
+  }
+  .empty-title{font-size:15px;font-weight:700;margin:18px 0 8px;}
+  .empty-sub{font-size:12px;color:#8A7867;font-weight:600;line-height:1.6;margin:0 0 20px;}
+
+  /* ---------- COMPLETED / ARCHIVE ---------- */
+  .archive-header{padding:16px 18px 4px;}
+  .archive-title{font-size:16px;font-weight:700;margin:4px 0 0;}
+  .stats-row{display:flex;gap:10px;padding:14px 18px 4px;}
+  .stat-card{
+    flex:1;background:var(--paper);border-radius:14px;padding:12px 10px;text-align:center;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .stat-num{font-size:18px;font-weight:700;color:var(--purple-deep);}
+  .stat-lbl{font-size:8.5px;font-weight:700;color:#9A8878;margin-top:2px;letter-spacing:0.2px;}
+  .filter-row{display:flex;gap:8px;padding:14px 18px 4px;}
+  .filter-chip{
+    font-size:9.5px;font-weight:700;color:#9A8878;
+    background:var(--paper);padding:7px 12px;border-radius:9px;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .filter-chip.active{background:var(--purple);color:#fff;box-shadow:0 2px 0 var(--purple-deep);}
+  .archive-day-label{font-size:9px;font-weight:700;color:#B39D89;margin:16px 0 8px;letter-spacing:0.3px;font-family:'Press Start 2P',monospace;font-size:8px;}
+  .archive-scroll{padding:4px 18px 24px;height:100%;overflow-y:auto;}
+
+  /* ---------- NOTIFICATION PERMISSION ---------- */
+  .permission-wrap{
+    height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:0 30px 40px;text-align:center;
+    background:linear-gradient(180deg,#FFF6EA 0%, #F3E3FB 100%);
+  }
+  .permission-title{font-size:16px;font-weight:700;margin:20px 0 10px;line-height:1.4;}
+  .permission-sub{font-size:12px;color:#8A7867;font-weight:600;line-height:1.65;margin:0 0 26px;}
+  .permission-btns{width:100%;display:flex;flex-direction:column;gap:10px;}
+  .btn-secondary{
+    width:100%;background:none;border:none;
+    font-size:12px;font-weight:700;color:#9A8878;
+    padding:12px;cursor:pointer;
+  }
+
+  /* ---------- HOLIDAY DETAIL ---------- */
+  .holiday-hero{
+    height:170px;
+    background:linear-gradient(160deg,#DFF7EC 0%, #F3E3FB 100%);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .holiday-hero .icon-btn{position:absolute;top:16px;left:16px;background:rgba(255,255,255,0.8);}
+  .holiday-scroll{padding:16px 18px 24px;height:calc(100% - 170px);overflow-y:auto;}
+  .holiday-tag{
+    display:inline-block;font-size:9.5px;font-weight:700;color:var(--mint-deep);
+    background:#E3F7EE;padding:5px 10px;border-radius:8px;margin-bottom:10px;
+  }
+  .holiday-title{font-size:18px;font-weight:700;margin:0 0 6px;}
+  .holiday-date{font-size:12px;color:#8A7867;font-weight:600;margin:0 0 16px;}
+  .source-row{display:flex;align-items:center;gap:8px;margin-top:18px;font-size:10.5px;font-weight:700;color:#B39D89;}
+
+  /* ---------- SEARCH ---------- */
+  .search-header{padding:16px 18px 6px;}
+  .search-bar{
+    display:flex;align-items:center;gap:8px;
+    background:var(--paper);border-radius:12px;padding:11px 14px;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .search-bar input{border:none;background:none;font-family:'Quicksand',sans-serif;font-size:13px;font-weight:600;color:var(--ink);outline:none;flex:1;}
+  .search-bar input::placeholder{color:#B7A493;}
+  .search-scroll{padding:6px 18px 24px;height:100%;overflow-y:auto;}
+  .recent-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .recent-chip{font-size:10.5px;font-weight:700;color:var(--purple-deep);background:#F1E9FB;padding:7px 11px;border-radius:9px;}
+  .result-group-label{font-size:8px;font-family:'Press Start 2P',monospace;color:var(--purple-deep);margin:16px 0 8px;}
+  mark.hl{background:var(--lemon);color:var(--ink);border-radius:3px;padding:0 2px;}
+
+  /* ---------- STATS / STREAK ---------- */
+  .stats-scroll{padding:6px 18px 24px;height:100%;overflow-y:auto;}
+  .stats-title{font-size:18px;font-weight:700;margin:16px 0 4px;}
+  .stats-sub{font-size:11px;color:#8A7867;font-weight:600;margin:0 0 14px;}
+  .big-jar-card{
+    background:var(--paper);border-radius:18px;padding:18px;text-align:center;
+    box-shadow:0 3px 0 var(--line);margin-bottom:16px;
+  }
+  .big-jar-num{font-size:30px;font-weight:700;color:var(--purple-deep);line-height:1;}
+  .big-jar-lbl{font-size:10px;font-weight:700;color:#9A8878;margin-top:4px;}
+  .bar-chart{display:flex;align-items:flex-end;gap:8px;height:90px;margin-top:14px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;}
+  .bar-fill{width:100%;border-radius:4px 4px 0 0;background:var(--mint-deep);}
+  .bar-day{font-size:8px;font-weight:700;color:#B39D89;}
+  .heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;}
+  .heat-cell{aspect-ratio:1/1;border-radius:4px;background:var(--line);}
+  .heat-cell.l1{background:#D9F0E4;}
+  .heat-cell.l2{background:#A9E6C9;}
+  .heat-cell.l3{background:var(--mint);}
+  .heat-cell.l4{background:var(--mint-deep);}
+
+  /* ---------- ERROR / OFFLINE ---------- */
+  .error-banner{
+    display:flex;align-items:center;gap:10px;
+    background:#FFF1DC;border-radius:12px;padding:10px 12px;
+    margin:14px 18px 0;
+    font-size:11px;font-weight:700;color:var(--choc-deep);
+  }
+  .error-banner .retry{margin-left:auto;color:var(--purple-deep);text-decoration:underline;cursor:pointer;}
+  .error-wrap{
+    height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:0 32px 60px;text-align:center;
+  }
+  .error-title{font-size:15px;font-weight:700;margin:18px 0 8px;}
+  .error-sub{font-size:12px;color:#8A7867;font-weight:600;line-height:1.6;margin:0 0 20px;}
+
+  /* ---------- SNACKBAR / UNDO ---------- */
+  .trash-btn{
+    margin-left:auto;flex-shrink:0;
+    width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    background:#FBEDE3;cursor:pointer;
+  }
+  .snackbar{
+    position:absolute;
+    left:14px;right:14px;
+    bottom:14px;
+    background:var(--choc-deep, #4A2C18);
+    background:#3A2A22;
+    color:#FFF6EA;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;align-items:center;gap:10px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.3);
+    transform:translateY(120%);
+    opacity:0;
+    transition:transform .25s ease, opacity .25s ease;
+    z-index:6;
+  }
+  .snackbar.show{transform:translateY(0);opacity:1;}
+  .snackbar .msg{font-size:11.5px;font-weight:700;flex:1;}
+  .snackbar .undo-btn{
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;color:var(--lemon);
+    background:none;border:none;cursor:pointer;
+    flex-shrink:0;
+  }
+  .task-card.removed{display:none;}
+  .demo-hint{font-size:10.5px;color:#9A8878;font-weight:600;text-align:center;margin-top:10px;}
+
+  /* ---------- HOME SCREEN WIDGET ---------- */
+  .home-wallpaper{
+    height:100%;
+    background:linear-gradient(160deg,#FFD9EC 0%, #E3D3FB 50%, #CDEEE0 100%);
+    padding:50px 16px 20px;
+    display:flex;flex-direction:column;
+    align-items:center;
+    gap:16px;
+  }
+  .widget-card{
+    width:100%;
+    background:rgba(255,253,249,0.92);
+    backdrop-filter:blur(2px);
+    border-radius:20px;
+    padding:14px 16px;
+    box-shadow:0 6px 18px rgba(60,30,20,0.18);
+  }
+  .widget-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .widget-title-row{display:flex;align-items:center;gap:6px;}
+  .widget-title{font-size:11.5px;font-weight:700;color:var(--ink);}
+  .widget-date{font-size:9.5px;color:#9A8878;font-weight:600;}
+  .widget-jar-track{height:8px;border-radius:5px;background:#F1E6D8;overflow:hidden;margin:6px 0 10px;}
+  .widget-jar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--mint));}
+  .widget-task-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px;font-weight:600;color:var(--ink);}
+  .widget-checkbox{width:14px;height:14px;border-radius:4px;border:2px solid var(--line);flex-shrink:0;}
+  .widget-checkbox.checked{background:var(--mint-deep);border-color:var(--mint-deep);}
+  .widget-add{
+    width:24px;height:24px;border-radius:8px;background:var(--purple);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;
+    box-shadow:0 2px 0 var(--purple-deep);
+  }
+  .widget-small{width:110px;}
+  .widget-small .big-num{font-size:20px;font-weight:700;color:var(--purple-deep);text-align:center;}
+  .widget-small .big-lbl{font-size:8px;font-weight:700;color:#9A8878;text-align:center;margin-top:2px;}
+  .app-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;width:100%;margin-top:auto;padding-bottom:6px;}
+  .app-icon{display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .app-icon .sq{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.15);}
+  .app-icon span.lbl{font-size:7.5px;color:#4A3B2F;font-weight:700;}
+  .widget-row-two{display:flex;gap:12px;width:100%;}
+
+  /* ---------- ONBOARDING FLOW DIAGRAM ---------- */
+  .flow-stage{
+    display:none;
+    max-width:960px;
+    margin:0 auto;
+    background:var(--paper);
+    border-radius:20px;
+    padding:28px 22px;
+    box-shadow:0 3px 0 var(--line);
+  }
+  .flow-title{font-family:'Press Start 2P',monospace;font-size:11px;color:var(--purple-deep);text-align:center;margin:0 0 6px;}
+  .flow-sub{text-align:center;font-size:12px;color:#8A7867;font-weight:600;margin:0 0 26px;}
+  .flow-row{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;justify-content:center;}
+  .flow-step{
+    width:150px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:16px 10px;
+  }
+  .flow-step .num{
+    font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;
+    background:var(--purple);width:22px;height:22px;border-radius:7px;
+    display:flex;align-items:center;justify-content:center;margin-bottom:8px;
+  }
+  .flow-step .ttl{font-size:11.5px;font-weight:700;margin:0 0 4px;}
+  .flow-step .desc{font-size:9.5px;color:#8A7867;font-weight:600;line-height:1.5;}
+  .flow-arrow{
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:#D9C7AE;font-weight:700;
+    padding:0 4px;
+    align-self:center;
+  }
+  .flow-step.system{background:#F1E6D8;border-radius:14px;}
+  .flow-legend{
+    margin-top:22px;padding-top:16px;border-top:2px solid var(--line);
+    font-size:10.5px;color:#8A7867;font-weight:600;text-align:center;line-height:1.7;
+  }
+
+  .icon-wrap{display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .caption{
+    text-align:center;
+    font-family:'Press Start 2P',monospace;
+    font-size:10px;
+    color:var(--purple-deep);
+    margin-top:16px;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="brand"><span class="a">SWEET</span> <span class="b">CALENDAR</span></h1>
+<p class="sub">Pixel-art candy UI concepts — tap a tab to preview each screen</p>
+
+<div style="text-align:center;margin-bottom:18px;">
+  <button id="theme-toggle" class="tab-btn" style="background:var(--purple);color:#fff;box-shadow:0 3px 0 var(--purple-deep);">
+    <span id="theme-icon" style="display:inline-flex;vertical-align:middle;margin-right:6px;"></span><span id="theme-label">DARK MODE</span>
+  </button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-screen="welcome">WELCOME</button>
+  <button class="tab-btn" data-screen="home">TODAY</button>
+  <button class="tab-btn" data-screen="week">WEEK</button>
+  <button class="tab-btn" data-screen="month">MONTH</button>
+  <button class="tab-btn" data-screen="addtask">ADD TASK</button>
+  <button class="tab-btn" data-screen="detail">TASK DETAIL</button>
+  <button class="tab-btn" data-screen="daydetail">DAY DETAIL</button>
+  <button class="tab-btn" data-screen="settings">SETTINGS</button>
+  <button class="tab-btn" data-screen="empty">EMPTY STATE</button>
+  <button class="tab-btn" data-screen="archive">COMPLETED</button>
+  <button class="tab-btn" data-screen="notif">REMINDERS</button>
+  <button class="tab-btn" data-screen="holiday">HOLIDAY</button>
+  <button class="tab-btn" data-screen="search">SEARCH</button>
+  <button class="tab-btn" data-screen="stats">STATS</button>
+  <button class="tab-btn" data-screen="offline">OFFLINE</button>
+  <button class="tab-btn" data-screen="snackbar">UNDO SNACKBAR</button>
+  <button class="tab-btn" data-screen="widget">HOME WIDGET</button>
+  <button class="tab-btn" data-screen="flow">ONBOARDING FLOW</button>
+</div>
+
+<div class="stage" id="phone-stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen-body">
+
+      <!-- ============ WELCOME ============ -->
+      <div class="screen active" id="screen-welcome">
+        <div class="welcome-bg">
+          <div class="deco" id="deco-mint-tl" style="top:24px;left:20px;"></div>
+          <div class="deco" id="deco-lemon-tr" style="top:36px;right:22px;"></div>
+          <div class="deco" id="deco-choc-bl" style="bottom:170px;left:18px;"></div>
+
+          <div class="icon-wrap" id="hero-lollipop"></div>
+          <div class="welcome-word"><span class="l1">SWEET</span><br><span class="l2">CALENDAR</span></div>
+          <p class="welcome-tag">A Jalali calendar to-do list, decorated one candy at a time.</p>
+
+          <div class="chip-row">
+            <div class="feat-chip"><span id="chip-icon-1"></span> Jalali calendar</div>
+            <div class="feat-chip"><span id="chip-icon-2"></span> Daily tasks</div>
+            <div class="feat-chip"><span id="chip-icon-3"></span> Local holidays</div>
+          </div>
+
+          <button class="pixel-btn">START PLANNING</button>
+          <div class="skip-link">Skip intro</div>
+          <div class="dots-row">
+            <div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ HOME / TODAY ============ -->
+      <div class="screen" id="screen-home">
+        <div class="statusbar">
+          <span>9:41</span>
+          <span class="icons"><span id="sb-icon-home"></span></span>
+        </div>
+        <div class="content">
+          <div class="home-scroll">
+            <div class="greet-row">
+              <div>
+                <p class="greet-h">Good afternoon, Aaron</p>
+                <p class="greet-date">Shahrivar 10, 1405 · Wed</p>
+              </div>
+              <div class="streak-pill"><span id="streak-icon"></span> 5</div>
+            </div>
+
+            <div class="jar-card">
+              <div class="jar-top"><span>Today's jar</span><span>3 / 5</span></div>
+              <div class="jar-track"><div class="jar-fill" style="width:60%;"></div></div>
+            </div>
+
+            <div class="section-label">TODAY</div>
+
+            <div class="task-card purple">
+              <span id="task-icon-1"></span>
+              <div>
+                <p class="task-title">Finish onboarding screens</p>
+                <p class="task-meta">10:00 AM · Work</p>
+              </div>
+              <span class="task-right" id="star-icon-1"></span>
+            </div>
+
+            <div class="task-card">
+              <span id="task-icon-2"></span>
+              <div>
+                <p class="task-title">Call mom about Nowruz trip</p>
+                <p class="task-meta">2:30 PM · Personal</p>
+              </div>
+            </div>
+
+            <div class="task-card mint">
+              <span id="task-icon-3"></span>
+              <div>
+                <p class="task-title">Water the balcony plants</p>
+                <p class="task-meta">6:00 PM · Home</p>
+              </div>
+            </div>
+
+            <div class="completed-row"><span id="completed-icon"></span> 3 completed today</div>
+
+            <div class="task-card done">
+              <span id="task-icon-done"></span>
+              <div>
+                <p class="task-title">Submit expense report</p>
+                <p class="task-meta">9:00 AM · Work</p>
+              </div>
+            </div>
+          </div>
+          <div class="fab" id="fab-home"></div>
+        </div>
+        <div class="bottomnav" id="bottomnav-home"></div>
+      </div>
+
+      <!-- ============ WEEK ============ -->
+      <div class="screen" id="screen-week">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-week"></span></span></div>
+        <div class="content">
+          <div class="week-header">
+            <p class="week-title">This week</p>
+            <p class="week-range">Shahrivar 8 – 14, 1405</p>
+          </div>
+          <div class="day-strip" id="day-strip"></div>
+          <div class="week-list">
+            <div class="week-day-label">WED · SHAHRIVAR 10</div>
+
+            <div class="task-card purple">
+              <span id="wtask-icon-1"></span>
+              <div><p class="task-title">Finish onboarding screens</p><p class="task-meta">10:00 AM · Work</p></div>
+            </div>
+            <div class="task-card">
+              <span id="wtask-icon-2"></span>
+              <div><p class="task-title">Call mom about Nowruz trip</p><p class="task-meta">2:30 PM · Personal</p></div>
+            </div>
+            <div class="task-card mint">
+              <span id="wtask-icon-3"></span>
+              <div><p class="task-title">Water the balcony plants</p><p class="task-meta">6:00 PM · Home</p></div>
+            </div>
+
+            <div class="week-day-label">THU · SHAHRIVAR 11</div>
+            <div class="task-card purple">
+              <span id="wtask-icon-4"></span>
+              <div><p class="task-title">Team retro meeting</p><p class="task-meta">11:00 AM · Work</p></div>
+            </div>
+          </div>
+          <div class="fab" id="fab-week"></div>
+        </div>
+        <div class="bottomnav" id="bottomnav-week"></div>
+      </div>
+
+      <!-- ============ MONTH ============ -->
+      <div class="screen" id="screen-month">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-month"></span></span></div>
+        <div class="content">
+          <div class="month-header">
+            <div class="chev">‹</div>
+            <div style="text-align:center;">
+              <p class="month-title">Shahrivar 1405</p>
+              <p class="month-sub">September 2026</p>
+            </div>
+            <div class="chev">›</div>
+          </div>
+          <div class="weekday-row">
+            <div>SA</div><div>SU</div><div>MO</div><div>TU</div><div>WE</div><div>TH</div><div>FR</div>
+          </div>
+          <div class="month-grid" id="month-grid"></div>
+          <div class="legend-row">
+            <div class="legend-item"><span class="legend-dot shape-circle" style="background:var(--pink-deep);"></span>Personal</div>
+            <div class="legend-item"><span class="legend-dot shape-diamond" style="background:var(--purple-deep);"></span>Work</div>
+            <div class="legend-item"><span class="legend-dot shape-leaf" style="background:var(--mint-deep);"></span>Home</div>
+            <div class="legend-item"><span class="legend-dot shape-ring"></span>Holiday</div>
+          </div>
+          <div class="fab" id="fab-month"></div>
+        </div>
+        <div class="bottomnav" id="bottomnav-month"></div>
+      </div>
+
+      <!-- ============ ADD / EDIT TASK ============ -->
+      <div class="screen" id="screen-addtask">
+        <div class="sheet-header">
+          <button class="close">✕ CLOSE</button>
+          <button class="save">SAVE ✓</button>
+        </div>
+        <p class="sheet-title">New task</p>
+        <div class="content">
+          <div class="form-scroll">
+            <div class="field-label">TITLE</div>
+            <div class="field placeholder">e.g. Call mom about Nowruz trip</div>
+
+            <div class="field-label">DATE &amp; TIME</div>
+            <div class="row-2">
+              <div class="field"><span id="icon-cal-mini"></span> Shahrivar 10</div>
+              <div class="field"><span id="icon-clock-mini"></span> 2:30 PM</div>
+            </div>
+
+            <div class="field-label">CATEGORY</div>
+            <div class="swatch-row">
+              <div class="swatch"><span id="swatch-icon-personal"></span><span>Personal</span></div>
+              <div class="swatch selected"><span id="swatch-icon-home"></span><span>Home</span></div>
+              <div class="swatch"><span id="swatch-icon-work"></span><span>Work</span></div>
+            </div>
+
+            <div class="field-label">PRIORITY</div>
+            <div class="priority-row">
+              <div class="priority-chip">Low</div>
+              <div class="priority-chip selected"><span id="icon-sparkle-mini"></span>Medium</div>
+              <div class="priority-chip">High</div>
+            </div>
+
+            <div class="field-label">REPEAT</div>
+            <div class="switch-row">
+              <span class="lbl">Repeat weekly</span>
+              <div class="switch"><div class="knob"></div></div>
+            </div>
+
+            <div class="field-label">NOTES</div>
+            <textarea class="field" rows="3" placeholder="Add a note (optional)"></textarea>
+
+            <button class="big-save-btn">ADD TO JAR</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ TASK DETAIL ============ -->
+      <div class="screen" id="screen-detail">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-detail"></span></span></div>
+        <div class="detail-header">
+          <div class="icon-btn">←</div>
+          <div class="icon-btn">✎</div>
+        </div>
+        <div class="content">
+          <div class="detail-scroll">
+            <div class="cat-badge" style="background:var(--mint-deep);"><span id="badge-icon"></span> HOME</div>
+            <h2 class="detail-title">Water the balcony plants</h2>
+
+            <div class="meta-grid">
+              <div class="meta-row"><span id="icon-cal-mini2"></span> Wednesday, Shahrivar 10, 1405</div>
+              <div class="meta-row"><span id="icon-clock-mini2"></span> 6:00 PM · 15 min</div>
+              <div class="meta-row"><span id="icon-sparkle-mini2"></span> Medium priority</div>
+            </div>
+
+            <div class="field-label">SUBTASKS</div>
+            <div class="subtask-row done"><span id="sub-icon-1"></span> Refill the watering can</div>
+            <div class="subtask-row"><span id="sub-icon-2"></span> Water the mint &amp; basil</div>
+            <div class="subtask-row"><span id="sub-icon-3"></span> Move ivy out of direct sun</div>
+
+            <div class="field-label">NOTES</div>
+            <div class="notes-box">Balcony gets full sun after 3pm this time of year — check soil first, the basil dries out fast.</div>
+
+            <button class="complete-btn">MARK COMPLETE</button>
+            <div class="delete-link">Delete task</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ DAY DETAIL ============ -->
+      <div class="screen" id="screen-daydetail">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-daydetail"></span></span></div>
+        <div class="content">
+          <div class="day-detail-header">
+            <div class="icon-btn">←</div>
+            <div class="datewrap">
+              <p class="day-detail-title">Shahrivar 21</p>
+              <p class="day-detail-sub">Sunday · September 12</p>
+            </div>
+          </div>
+          <div class="home-scroll" style="padding-top:6px;">
+            <div class="jar-card">
+              <div class="jar-top"><span>Day's jar</span><span>1 / 2</span></div>
+              <div class="jar-track"><div class="jar-fill" style="width:50%;"></div></div>
+            </div>
+
+            <div class="section-label">TASKS</div>
+            <div class="task-card">
+              <span id="dtask-icon-1"></span>
+              <div><p class="task-title">Prep grocery list</p><p class="task-meta">9:00 AM · Home</p></div>
+            </div>
+            <div class="task-card done">
+              <span id="dtask-icon-2"></span>
+              <div><p class="task-title">Book dentist appointment</p><p class="task-meta">1:00 PM · Personal</p></div>
+            </div>
+
+            <div class="section-label">HOLIDAY</div>
+            <div class="task-card" style="border-left-color:var(--mint-deep);">
+              <span id="holiday-icon"></span>
+              <div><p class="task-title">Weekend (no work day)</p><p class="task-meta">Official occasion · time.ir</p></div>
+            </div>
+          </div>
+          <div class="fab" id="fab-daydetail"></div>
+        </div>
+      </div>
+
+      <!-- ============ SETTINGS ============ -->
+      <div class="screen" id="screen-settings">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-settings"></span></span></div>
+        <div class="content">
+          <div class="settings-scroll">
+            <p class="settings-title">Settings</p>
+
+            <div class="profile-card">
+              <div class="profile-avatar" id="profile-icon"></div>
+              <div>
+                <p class="profile-name">Aaron Izadi</p>
+                <p class="profile-sub">5 day streak · 42 candies earned</p>
+              </div>
+            </div>
+
+            <div class="settings-group-label">CALENDAR</div>
+            <div class="settings-row"><span class="icon" id="set-icon-1"></span><span class="label">Calendar system</span><span class="value">Jalali</span><span class="chev-right">›</span></div>
+            <div class="settings-row"><span class="icon" id="set-icon-2"></span><span class="label">Week starts on</span><span class="value">Saturday</span><span class="chev-right">›</span></div>
+            <div class="settings-row"><span class="icon" id="set-icon-3"></span><span class="label">Show local holidays</span><div class="switch on" style="margin-left:auto;"><div class="knob"></div></div></div>
+
+            <div class="settings-group-label">APPEARANCE</div>
+            <div class="settings-row"><span class="icon" id="set-icon-4"></span><span class="label">Candy theme</span><span class="value">Bubblegum</span><span class="chev-right">›</span></div>
+            <div class="settings-row"><span class="icon" id="set-icon-5"></span><span class="label">Dark mode</span><div class="switch" style="margin-left:auto;"><div class="knob"></div></div></div>
+
+            <div class="settings-group-label">NOTIFICATIONS</div>
+            <div class="settings-row"><span class="icon" id="set-icon-6"></span><span class="label">Task reminders</span><div class="switch on" style="margin-left:auto;"><div class="knob"></div></div></div>
+
+            <div class="settings-group-label">DATA</div>
+            <div class="settings-row"><span class="icon" id="set-icon-7"></span><span class="label">Backup &amp; export</span><span class="chev-right">›</span></div>
+            <div class="settings-row"><span class="icon" id="set-icon-8"></span><span class="label">About Sweet Calendar</span><span class="value">v1.0</span><span class="chev-right">›</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ EMPTY STATE ============ -->
+      <div class="screen" id="screen-empty">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-empty"></span></span></div>
+        <div class="content">
+          <div class="greet-row" style="padding:0 18px;">
+            <div>
+              <p class="greet-h">Good morning, Aaron</p>
+              <p class="greet-date">Shahrivar 14, 1405 · Sun</p>
+            </div>
+          </div>
+          <div class="empty-wrap">
+            <div class="icon-wrap" id="empty-icon"></div>
+            <p class="empty-title">Nothing on the menu today</p>
+            <p class="empty-sub">Your jar is empty — add a task and watch it fill up with candy as you check things off.</p>
+            <button class="pixel-btn">ADD A TASK</button>
+          </div>
+          <div class="fab" id="fab-empty"></div>
+        </div>
+        <div class="bottomnav" id="bottomnav-empty"></div>
+      </div>
+
+      <!-- ============ COMPLETED / ARCHIVE ============ -->
+      <div class="screen" id="screen-archive">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-archive"></span></span></div>
+        <div class="content">
+          <div class="archive-header">
+            <p class="archive-title">Completed</p>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card"><div class="stat-num">128</div><div class="stat-lbl">TOTAL DONE</div></div>
+            <div class="stat-card"><div class="stat-num">5</div><div class="stat-lbl">DAY STREAK</div></div>
+            <div class="stat-card"><div class="stat-num">86%</div><div class="stat-lbl">THIS MONTH</div></div>
+          </div>
+          <div class="filter-row">
+            <div class="filter-chip active">This week</div>
+            <div class="filter-chip">This month</div>
+            <div class="filter-chip">All time</div>
+          </div>
+          <div class="archive-scroll">
+            <div class="archive-day-label">TODAY · SHAHRIVAR 10</div>
+            <div class="task-card done purple"><span id="arc-icon-1"></span><div><p class="task-title">Submit expense report</p><p class="task-meta">9:00 AM · Work</p></div></div>
+            <div class="task-card done"><span id="arc-icon-2"></span><div><p class="task-title">Morning stretch routine</p><p class="task-meta">7:30 AM · Personal</p></div></div>
+
+            <div class="archive-day-label">YESTERDAY · SHAHRIVAR 9</div>
+            <div class="task-card done purple"><span id="arc-icon-3"></span><div><p class="task-title">Reply to client emails</p><p class="task-meta">11:00 AM · Work</p></div></div>
+            <div class="task-card done mint"><span id="arc-icon-4"></span><div><p class="task-title">Grocery run</p><p class="task-meta">5:00 PM · Home</p></div></div>
+            <div class="task-card done"><span id="arc-icon-5"></span><div><p class="task-title">Read 20 pages</p><p class="task-meta">9:00 PM · Personal</p></div></div>
+          </div>
+        </div>
+        <div class="bottomnav" id="bottomnav-archive"></div>
+      </div>
+
+      <!-- ============ NOTIFICATION PERMISSION ============ -->
+      <div class="screen" id="screen-notif">
+        <div class="permission-wrap">
+          <div class="icon-wrap" id="notif-icon"></div>
+          <p class="permission-title">Never miss a sweet reminder</p>
+          <p class="permission-sub">Sweet Calendar can notify you a little before each task is due — you can turn this off anytime in Settings.</p>
+          <div class="permission-btns">
+            <button class="pixel-btn" style="width:100%;">ALLOW NOTIFICATIONS</button>
+            <button class="btn-secondary">Not now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ HOLIDAY / OCCASION DETAIL ============ -->
+      <div class="screen" id="screen-holiday">
+        <div class="holiday-hero">
+          <div class="icon-btn">←</div>
+          <div class="icon-wrap" id="holiday-hero-icon"></div>
+        </div>
+        <div class="holiday-scroll">
+          <span class="holiday-tag">OFFICIAL HOLIDAY</span>
+          <h2 class="holiday-title">Nature's Day (Sizdah Bedar)</h2>
+          <p class="holiday-date">Farvardin 13, 1405 · Thursday</p>
+          <div class="notes-box">The 13th day of Farvardin marks the end of the Nowruz holidays. Families traditionally spend the day outdoors, and it's considered unlucky to stay home — a good day to keep your to-do list light.</div>
+          <div class="source-row"><span id="src-icon"></span> Synced from time.ir via holidayapi.ir</div>
+        </div>
+      </div>
+
+      <!-- ============ SEARCH ============ -->
+      <div class="screen" id="screen-search">
+        <div class="search-header">
+          <div class="search-bar">
+            <span id="search-icon"></span>
+            <input type="text" value="plant" placeholder="Search tasks…">
+          </div>
+        </div>
+        <div class="search-scroll">
+          <div class="result-group-label">RESULTS · 2</div>
+          <div class="task-card mint">
+            <span id="res-icon-1"></span>
+            <div><p class="task-title">Water the balcony <mark class="hl">plant</mark>s</p><p class="task-meta">Today · 6:00 PM · Home</p></div>
+          </div>
+          <div class="task-card mint">
+            <span id="res-icon-2"></span>
+            <div><p class="task-title">Repot the mint <mark class="hl">plant</mark></p><p class="task-meta">Shahrivar 18 · Home</p></div>
+          </div>
+
+          <div class="result-group-label">RECENT SEARCHES</div>
+          <div class="recent-chip-row">
+            <div class="recent-chip">dentist</div>
+            <div class="recent-chip">grocery</div>
+            <div class="recent-chip">retro meeting</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ STATS / STREAK ============ -->
+      <div class="screen" id="screen-stats">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-stats"></span></span></div>
+        <div class="content">
+          <div class="stats-scroll">
+            <p class="stats-title">Your candy jar</p>
+            <p class="stats-sub">A sweeter look at how you're doing</p>
+
+            <div class="big-jar-card">
+              <div class="icon-wrap" id="stats-jar-icon" style="margin-bottom:6px;"></div>
+              <div class="big-jar-num">86%</div>
+              <div class="big-jar-lbl">TASKS COMPLETED THIS MONTH</div>
+            </div>
+
+            <div class="field-label">THIS WEEK</div>
+            <div class="jar-card">
+              <div class="bar-chart">
+                <div class="bar-col"><div class="bar-fill" style="height:40%;"></div><div class="bar-day">SA</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:70%;"></div><div class="bar-day">SU</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:55%;background:var(--pink-deep);"></div><div class="bar-day">MO</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:90%;"></div><div class="bar-day">TU</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:60%;"></div><div class="bar-day">WE</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:30%;background:var(--pink-deep);"></div><div class="bar-day">TH</div></div>
+                <div class="bar-col"><div class="bar-fill" style="height:15%;"></div><div class="bar-day">FR</div></div>
+              </div>
+            </div>
+
+            <div class="field-label">STREAK HEATMAP · LAST 4 WEEKS</div>
+            <div class="jar-card">
+              <div class="heatmap" id="heatmap"></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottomnav" id="bottomnav-stats"></div>
+      </div>
+
+      <!-- ============ ERROR / OFFLINE STATE ============ -->
+      <div class="screen" id="screen-offline">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-offline"></span></span></div>
+        <div class="error-banner">
+          <span id="warn-icon"></span> Couldn't load holidays
+          <span class="retry">Retry</span>
+        </div>
+        <div class="content">
+          <div class="error-wrap">
+            <div class="icon-wrap" id="offline-icon"></div>
+            <p class="error-title">Holidays are offline for now</p>
+            <p class="error-sub">holidayapi.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.</p>
+            <button class="pixel-btn">TRY AGAIN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ UNDO SNACKBAR DEMO ============ -->
+      <div class="screen" id="screen-snackbar">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-snackbar"></span></span></div>
+        <div class="content">
+          <div class="home-scroll" style="padding-bottom:130px;">
+            <div class="greet-row">
+              <div>
+                <p class="greet-h">Good afternoon, Aaron</p>
+                <p class="greet-date">Shahrivar 10, 1405 · Wed</p>
+              </div>
+            </div>
+            <div class="section-label">TODAY</div>
+
+            <div class="task-card purple" id="snack-task-1">
+              <span id="snack-icon-1"></span>
+              <div><p class="task-title">Finish onboarding screens</p><p class="task-meta">10:00 AM · Work</p></div>
+              <div class="trash-btn" data-target="snack-task-1"><span id="trash-icon-1"></span></div>
+            </div>
+            <div class="task-card" id="snack-task-2">
+              <span id="snack-icon-2"></span>
+              <div><p class="task-title">Call mom about Nowruz trip</p><p class="task-meta">2:30 PM · Personal</p></div>
+              <div class="trash-btn" data-target="snack-task-2"><span id="trash-icon-2"></span></div>
+            </div>
+            <div class="task-card mint" id="snack-task-3">
+              <span id="snack-icon-3"></span>
+              <div><p class="task-title">Water the balcony plants</p><p class="task-meta">6:00 PM · Home</p></div>
+              <div class="trash-btn" data-target="snack-task-3"><span id="trash-icon-3"></span></div>
+            </div>
+
+            <p class="demo-hint">Tap the trash icon on a task to try the undo pattern</p>
+          </div>
+          <div class="snackbar" id="undo-snackbar">
+            <span class="msg" id="snackbar-msg">Task deleted</span>
+            <button class="undo-btn" id="undo-btn">UNDO</button>
+          </div>
+        </div>
+        <div class="bottomnav" id="bottomnav-snackbar"></div>
+      </div>
+
+      <!-- ============ HOME SCREEN WIDGET ============ -->
+      <div class="screen" id="screen-widget">
+        <div class="statusbar"><span>9:41</span><span class="icons"><span id="sb-icon-widget"></span></span></div>
+        <div class="home-wallpaper">
+          <div class="widget-row-two">
+            <div class="widget-card widget-small">
+              <div class="icon-wrap" id="widget-jar-icon" style="margin-bottom:4px;"></div>
+              <div class="big-num">3/5</div>
+              <div class="big-lbl">TODAY'S JAR</div>
+            </div>
+            <div class="widget-card" style="flex:1;">
+              <div class="widget-head">
+                <div class="widget-title-row"><span id="widget-icon-1"></span><span class="widget-title">Sweet Calendar</span></div>
+                <div class="widget-add">+</div>
+              </div>
+              <div class="widget-date">Shahrivar 10 · Wed</div>
+              <div class="widget-jar-track"><div class="widget-jar-fill" style="width:60%;"></div></div>
+              <div class="widget-task-row"><div class="widget-checkbox checked"></div><span style="text-decoration:line-through;color:#B7A493;">Submit expense report</span></div>
+              <div class="widget-task-row"><div class="widget-checkbox"></div><span>Finish onboarding screens</span></div>
+              <div class="widget-task-row"><div class="widget-checkbox"></div><span>Call mom · 2:30 PM</span></div>
+            </div>
+          </div>
+
+          <div class="app-grid">
+            <div class="app-icon"><div class="sq" style="background:linear-gradient(160deg,var(--pink),var(--purple));" id="widget-app-icon"></div><span class="lbl">Sweet Cal.</span></div>
+            <div class="app-icon"><div class="sq" style="background:#4C8DFF;"></div><span class="lbl">Mail</span></div>
+            <div class="app-icon"><div class="sq" style="background:#34C77B;"></div><span class="lbl">Chat</span></div>
+            <div class="app-icon"><div class="sq" style="background:#FF7A59;"></div><span class="lbl">Camera</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ ONBOARDING PERMISSION FLOW (full-width diagram) ============ -->
+<div class="flow-stage" id="flow-stage">
+  <p class="flow-title">NOTIFICATION PERMISSION SEQUENCING</p>
+  <p class="flow-sub">Ask after showing value, not before — here's where it fits in first run</p>
+  <div class="flow-row">
+    <div class="flow-step">
+      <div class="num">1</div>
+      <div class="icon-wrap" id="flow-icon-1"></div>
+      <p class="ttl">Welcome</p>
+      <p class="desc">Value prop only. No permission prompts on first launch.</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">2</div>
+      <div class="icon-wrap" id="flow-icon-2"></div>
+      <p class="ttl">Add first task</p>
+      <p class="desc">User creates a task with a due time — the moment reminders become relevant.</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">3</div>
+      <div class="icon-wrap" id="flow-icon-3"></div>
+      <p class="ttl">Rationale screen</p>
+      <p class="desc">Our own "Never miss a sweet reminder" screen explains why, in plain language.</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step system">
+      <div class="num">4</div>
+      <div class="icon-wrap" id="flow-icon-4"></div>
+      <p class="ttl">System dialog</p>
+      <p class="desc">Android's own POST_NOTIFICATIONS prompt — only triggered after step 3's "Allow".</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="num">5</div>
+      <div class="icon-wrap" id="flow-icon-5"></div>
+      <p class="ttl">Task saved</p>
+      <p class="desc">Reminder is scheduled. If denied, task still saves — just without a nudge.</p>
+    </div>
+  </div>
+  <p class="flow-legend">Steps 1–3 and 5 are ours to design. Step 4's content and timing rules are owned by Android — we only control when we ask.</p>
+</div>
+<p class="caption" id="active-caption">WELCOME SCREEN</p>
+
+<script>
+/* ---------- tiny pixel-art renderer ---------- */
+function pixel(rows, palette, cell){
+  cell = cell || 4;
+  const w = rows[0].length, h = rows.length;
+  const wrap = document.createElement('div');
+  wrap.className = 'pixelated';
+  wrap.style.display = 'grid';
+  wrap.style.gridTemplateColumns = `repeat(${w}, ${cell}px)`;
+  wrap.style.gridTemplateRows = `repeat(${h}, ${cell}px)`;
+  wrap.style.lineHeight = 0;
+  rows.forEach(row=>{
+    for(const ch of row){
+      const d = document.createElement('div');
+      d.style.width = cell+'px';
+      d.style.height = cell+'px';
+      d.style.background = (ch === '.') ? 'transparent' : (palette[ch] || 'transparent');
+      wrap.appendChild(d);
+    }
+  });
+  return wrap;
+}
+
+const PAL = {
+  pink:'#FF6FA5', pinkD:'#E0487F', white:'#FFFFFF', ink:'#3A2317',
+  purple:'#9B7ED8', purpleH:'#C3AEEF', purpleD:'#5B3F82',
+  mint:'#7FDCB8', mintD:'#4FB894', lemon:'#FFD23F', lemonD:'#E8B32A',
+  choc:'#8A5A38', chocD:'#5A3A22', red:'#E23E57', tan:'#E8A857', tanD:'#C4863C',
+  cream:'#FFF3E3'
+};
+
+/* lollipop head 8x8 + stick */
+const lollipopHead = [
+ "..pppp..",
+ ".ppwppp.",
+ "pppwppwp",
+ "ppwppwpp",
+ "ppwppwpp",
+ "pppwppwp",
+ ".ppwppp.",
+ "..pppp..",
+].map(r=>r.replaceAll('p','a')); // placeholder, real map below
+
+function buildLollipop(cell){
+  const head = [
+   "..aaaa..",
+   ".aabaaa.",
+   "aabaabaa",
+   "aabaabaa",
+   "aabaabaa",
+   "aabaabaa",
+   ".aabaaa.",
+   "..aaaa..",
+  ];
+  const stick = [
+   "...tt...",
+   "...tt...",
+   "...tt...",
+   "...tt...",
+   "...tt...",
+  ];
+  const palette = {a:PAL.pink, b:PAL.white, t:PAL.tan};
+  const div = document.createElement('div');
+  div.appendChild(pixel(head, palette, cell));
+  const s = pixel(stick, palette, cell);
+  s.style.marginTop = '-1px';
+  div.appendChild(s);
+  return div;
+}
+
+/* peppermint (checkered circle) */
+function buildPeppermint(cell){
+  const mask = [
+   "..1111..",
+   ".111111.",
+   "11111111",
+   "11111111",
+   "11111111",
+   "11111111",
+   ".111111.",
+   "..1111..",
+  ];
+  const rows = mask.map((row,r)=>{
+    let out='';
+    for(let c=0;c<row.length;c++){
+      out += row[c]==='1' ? ((r+c)%2===0 ? 'r':'w') : '.';
+    }
+    return out;
+  });
+  return pixel(rows, {r:PAL.red, w:PAL.white}, cell);
+}
+
+/* wrapped candy / gumdrop for FAB, add-button */
+function buildGumdrop(cell){
+  const rows = [
+   ".yppppppy.",
+   "yyppppppyy",
+   "yyphhhhpyy",
+   "yyphhhhpyy",
+   "yyppppppyy",
+   ".yppppppy.",
+  ];
+  return pixel(rows, {y:PAL.lemon, p:PAL.purple, h:PAL.purpleH}, cell);
+}
+
+/* chocolate square */
+function buildChocolate(cell){
+  const rows = [];
+  for(let r=0;r<8;r++){
+    let row='';
+    for(let c=0;c<8;c++){
+      if(r===0||r===7||c===0||c===7) row+='o';
+      else if(r===3||r===4||c===3||c===4) row+='d';
+      else row+='b';
+    }
+    rows.push(row);
+  }
+  return pixel(rows, {o:PAL.chocD, d:PAL.chocD, b:PAL.choc}, cell);
+}
+
+/* checkmark candy (completed) */
+function buildCheckCandy(cell){
+  const rows = [
+   "..mmm..",
+   ".mmmmm.",
+   "mmmmmmm",
+   "mwmwmmm",
+   "mmwmwmm",
+   ".mmwmm.",
+   "..mmm..",
+  ];
+  return pixel(rows, {m:PAL.mint, w:PAL.white}, cell);
+}
+
+/* plain mint circle bullet (list bullet) */
+function buildMintBullet(cell){
+  const rows = [
+   ".mmm.",
+   "mmmmm",
+   "mmmmm",
+   "mmmmm",
+   ".mmm.",
+  ];
+  return pixel(rows, {m:PAL.mint}, cell);
+}
+function buildPinkBullet(cell){
+  const rows = [
+   ".mmm.",
+   "mmmmm",
+   "mmmmm",
+   "mmmmm",
+   ".mmm.",
+  ];
+  return pixel(rows, {m:PAL.pink}, cell);
+}
+function buildLemonBullet(cell){
+  const rows = [
+   ".mmm.",
+   "mmmmm",
+   "mmmmm",
+   "mmmmm",
+   ".mmm.",
+  ];
+  return pixel(rows, {m:PAL.lemon}, cell);
+}
+
+/* sparkle / star for priority */
+function buildSparkle(cell){
+  const rows = [
+   "..y..",
+   "..y..",
+   "yyYyy",
+   "..y..",
+   "..y..",
+  ];
+  return pixel(rows, {y:PAL.lemonD, Y:PAL.lemon}, cell);
+}
+
+/* ice cream (empty state) */
+function buildIceCream(cell){
+  const scoop = [
+   "..1111..",
+   ".111211.",
+   "11122211",
+   "11222211",
+   "11122211",
+   ".111111.",
+  ];
+  const cone = [
+   ".33333.",
+   "..333..",
+   "...3...",
+  ];
+  const div = document.createElement('div');
+  div.appendChild(pixel(scoop, {'1':PAL.cream,'2':PAL.pink}, cell));
+  const c = pixel(cone, {'3':PAL.tan}, cell);
+  c.style.marginTop='-1px';
+  c.style.marginLeft = cell+'px';
+  div.appendChild(c);
+  return div;
+}
+
+/* battery/clock micro icon for status bar */
+function buildBattery(cell){
+  const rows = [
+   "111111.",
+   "1......",
+   "111111.",
+  ];
+  return pixel(rows, {'1':PAL.ink}, cell);
+}
+
+/* nav icons: today(lollipop-mini), week(peppermint pair), month(grid), settings(gumdrop) */
+function buildGridIcon(cell,color){
+  const rows = [
+   "1.1.1",
+   ".....",
+   "1.1.1",
+   ".....",
+   "1.1.1",
+  ];
+  return pixel(rows, {'1':color||PAL.purpleD}, cell);
+}
+function buildGearIcon(cell,color){
+  const rows = [
+   ".1.1.",
+   "11111",
+   "1...1",
+   "11111",
+   ".1.1.",
+  ];
+  return pixel(rows, {'1':color||PAL.purpleD}, cell);
+}
+
+/* place icon helper */
+function place(id, node){
+  const el = document.getElementById(id);
+  if(el){ el.innerHTML=''; el.appendChild(node); }
+}
+
+/* ---------- build all icons ---------- */
+place('hero-lollipop', buildLollipop(8));
+place('deco-mint-tl', buildPeppermint(4));
+place('deco-lemon-tr', buildGumdrop(3));
+place('deco-choc-bl', buildChocolate(4));
+place('chip-icon-1', buildPeppermint(2));
+place('chip-icon-2', buildCheckCandy(2));
+place('chip-icon-3', buildChocolate(2));
+
+place('sb-icon-home', buildBattery(3));
+place('sb-icon-week', buildBattery(3));
+place('sb-icon-month', buildBattery(3));
+
+place('streak-icon', buildChocolate(2));
+/* category icons: shape carries meaning, not just color */
+function buildHeart(cell){
+  const rows = [
+   ".11.11.",
+   "1111111",
+   "1111111",
+   ".11111.",
+   "..111..",
+   "...1...",
+  ];
+  return pixel(rows, {'1':PAL.pinkD}, cell);
+}
+function buildGem(cell){
+  const rows = [
+   "...1...",
+   "..111..",
+   ".11111.",
+   "1111111",
+   ".11111.",
+   "..111..",
+   "...1...",
+  ];
+  return pixel(rows, {'1':PAL.purpleD}, cell);
+}
+function buildLeaf(cell){
+  const rows = [
+   "..1....",
+   ".111...",
+   "11111..",
+   ".11111.",
+   "..1111.",
+   "...111.",
+   "....11.",
+  ];
+  return pixel(rows, {'1':PAL.mintD}, cell);
+}
+
+place('task-icon-1', buildGem(4));
+place('task-icon-2', buildHeart(4));
+place('task-icon-3', buildLeaf(4));
+place('star-icon-1', buildSparkle(3));
+place('completed-icon', buildCheckCandy(2));
+place('task-icon-done', buildCheckCandy(4));
+place('fab-home', buildGumdrop(3));
+place('fab-week', buildGumdrop(3));
+place('fab-month', buildGumdrop(3));
+
+place('wtask-icon-1', buildGem(4));
+place('wtask-icon-2', buildHeart(4));
+place('wtask-icon-3', buildLeaf(4));
+place('wtask-icon-4', buildGem(4));
+
+/* bottom nav builders */
+function buildBottomNav(containerId, activeIndex, dark){
+  const navColor = dark ? '#D4C2FA' : PAL.purpleD;
+  const items = [
+    {label:'TODAY', icon:()=>buildLollipop(2)},
+    {label:'WEEK', icon:()=>buildPeppermint(2)},
+    {label:'MONTH', icon:()=>buildGridIcon(3,navColor)},
+    {label:'SETTINGS', icon:()=>buildGearIcon(3,navColor)},
+  ];
+  const nav = document.getElementById(containerId);
+  nav.innerHTML='';
+  items.forEach((it,i)=>{
+    const div = document.createElement('div');
+    div.className = 'navitem' + (i===activeIndex ? ' active':'');
+    const iconWrap = document.createElement('div');
+    iconWrap.appendChild(it.icon());
+    div.appendChild(iconWrap);
+    const label = document.createElement('span');
+    label.textContent = it.label;
+    div.appendChild(label);
+    nav.appendChild(div);
+  });
+}
+buildBottomNav('bottomnav-home', 0);
+buildBottomNav('bottomnav-week', 1);
+buildBottomNav('bottomnav-month', 2);
+
+/* day strip for week screen */
+const dayStrip = document.getElementById('day-strip');
+const days = [
+  {dow:'SAT', num:6, pips:1}, {dow:'SUN', num:7, pips:2}, {dow:'MON', num:8, pips:0},
+  {dow:'TUE', num:9, pips:3}, {dow:'WED', num:10, pips:3, sel:true}, {dow:'THU', num:11, pips:1},
+  {dow:'FRI', num:12, pips:0},
+];
+days.forEach(d=>{
+  const chip = document.createElement('div');
+  chip.className = 'day-chip' + (d.sel ? ' selected' : '');
+  chip.innerHTML = `<div class="dow">${d.dow}</div><div class="num">${d.num}</div>`;
+  const pips = document.createElement('div');
+  pips.className='pips';
+  for(let i=0;i<3;i++){
+    const p = document.createElement('div');
+    p.className='pip'+(i<d.pips?' on':'');
+    pips.appendChild(p);
+  }
+  chip.appendChild(pips);
+  dayStrip.appendChild(chip);
+});
+
+/* month grid */
+const monthGrid = document.getElementById('month-grid');
+const totalCells = 35;
+const monthStartOffset = 3; // days from prev month shown muted
+const daysInMonth = 31;
+const todayNum = 10;
+const holidayDays = [6, 13];
+const weekendCol = 6; // Friday last column
+const taskDots = {
+  2:['personal'], 4:['work','home'], 6:['holiday'], 8:['personal','work'],
+  10:['personal','work','home'], 11:['work'], 15:['personal'], 18:['work','home'],
+  21:['personal'], 25:['work'], 28:['personal','home'],
+};
+const CATS = {
+  personal:{color:'var(--pink-deep)', shape:'shape-circle'},
+  work:{color:'var(--purple-deep)', shape:'shape-diamond'},
+  home:{color:'var(--mint-deep)', shape:'shape-leaf'},
+  holiday:{color:'var(--mint-deep)', shape:'shape-ring'},
+};
+
+for(let i=0;i<totalCells;i++){
+  const dayNum = i - monthStartOffset + 1;
+  const cell = document.createElement('div');
+  const col = i % 7;
+  if(dayNum < 1 || dayNum > daysInMonth){
+    cell.className = 'day-cell muted';
+    cell.textContent = '';
+  } else {
+    let cls = 'day-cell';
+    if(dayNum === todayNum) cls += ' today';
+    else if(holidayDays.includes(dayNum)) cls += ' holiday';
+    else if(col === weekendCol) cls += ' weekend';
+    cell.className = cls;
+    cell.innerHTML = `<span>${dayNum}</span>`;
+    if(taskDots[dayNum]){
+      const dotsWrap = document.createElement('div');
+      dotsWrap.className='cell-dots';
+      taskDots[dayNum].forEach(catKey=>{
+        const meta = CATS[catKey];
+        const dot = document.createElement('div');
+        dot.className = 'cell-dot ' + meta.shape;
+        if(meta.shape !== 'shape-ring'){
+          dot.style.background = dayNum===todayNum ? 'rgba(255,255,255,0.9)' : meta.color;
+        } else if(dayNum===todayNum){
+          dot.style.borderColor = 'rgba(255,255,255,0.9)';
+        }
+        dotsWrap.appendChild(dot);
+      });
+      cell.appendChild(dotsWrap);
+    }
+  }
+  monthGrid.appendChild(cell);
+}
+
+/* ---------- extra icons for new screens ---------- */
+function buildClockIcon(cell,color){
+  const rows = [
+   ".1111.",
+   "1....1",
+   "1.11.1",
+   "1..1.1",
+   "1....1",
+   ".1111.",
+  ];
+  return pixel(rows, {'1':color||PAL.purpleD}, cell);
+}
+function buildCalIcon(cell,color){
+  const rows = [
+   "111111",
+   "1.1.1.",
+   "111111",
+   "1....1",
+   "1.1.1.",
+   "111111",
+  ];
+  return pixel(rows, {'1':color||PAL.purpleD}, cell);
+}
+function buildBoxUnchecked(cell){
+  const rows = [
+   "11111",
+   "1...1",
+   "1...1",
+   "1...1",
+   "11111",
+  ];
+  return pixel(rows, {'1':'#EAD9C4'}, cell);
+}
+
+place('icon-cal-mini', buildCalIcon(2));
+place('icon-clock-mini', buildClockIcon(2));
+place('icon-sparkle-mini', buildSparkle(2));
+place('sb-icon-detail', buildBattery(3));
+place('sb-icon-daydetail', buildBattery(3));
+place('sb-icon-settings', buildBattery(3));
+place('swatch-icon-personal', buildHeart(3));
+place('swatch-icon-home', buildLeaf(3));
+place('swatch-icon-work', buildGem(3));
+place('badge-icon', buildLeaf(2));
+place('icon-cal-mini2', buildCalIcon(2));
+place('icon-clock-mini2', buildClockIcon(2));
+place('icon-sparkle-mini2', buildSparkle(2));
+place('sub-icon-1', buildCheckCandy(2));
+place('sub-icon-2', buildBoxUnchecked(3));
+place('sub-icon-3', buildBoxUnchecked(3));
+place('dtask-icon-1', buildLeaf(4));
+place('dtask-icon-2', buildCheckCandy(4));
+place('holiday-icon', buildPeppermint(3));
+place('fab-daydetail', buildGumdrop(3));
+place('profile-icon', buildLollipop(3));
+place('set-icon-1', buildCalIcon(2));
+place('set-icon-2', buildCalIcon(2));
+place('set-icon-3', buildPeppermint(2));
+place('set-icon-4', buildGumdrop(2));
+place('set-icon-5', buildChocolate(2));
+place('set-icon-6', buildClockIcon(2));
+place('set-icon-7', buildBoxUnchecked(2));
+place('set-icon-8', buildCheckCandy(2));
+
+/* ---------- icons for empty / archive / notif screens ---------- */
+function buildBellIcon(cell){
+  const rows = [
+   "..111..",
+   ".11111.",
+   ".11111.",
+   "1111111",
+   "...1...",
+  ];
+  return pixel(rows, {'1':PAL.purpleD}, cell);
+}
+function buildBigBell(cell){
+  const rows = [
+   "...111...",
+   "..11111..",
+   ".1111111.",
+   ".1111111.",
+   ".1111111.",
+   "111111111",
+   "....1....",
+   "...111...",
+  ];
+  return pixel(rows, {'1':PAL.pink}, cell);
+}
+
+place('sb-icon-empty', buildBattery(3));
+place('empty-icon', buildIceCream(8));
+place('fab-empty', buildGumdrop(3));
+
+place('sb-icon-archive', buildBattery(3));
+place('arc-icon-1', buildCheckCandy(4));
+place('arc-icon-2', buildCheckCandy(4));
+place('arc-icon-3', buildCheckCandy(4));
+place('arc-icon-4', buildCheckCandy(4));
+place('arc-icon-5', buildCheckCandy(4));
+
+place('notif-icon', buildBigBell(8));
+
+buildBottomNav('bottomnav-empty', 0);
+buildBottomNav('bottomnav-archive', 0);
+
+/* ---------- icons for holiday / search / stats / offline screens ---------- */
+function buildSearchIcon(cell,color){
+  const rows = [
+   ".111..",
+   "1...1.",
+   "1...1.",
+   ".111.1",
+   "....11",
+  ];
+  return pixel(rows, {'1':color||'#B7A493'}, cell);
+}
+function buildWarnIcon(cell,color){
+  const rows = [
+   "..1..",
+   ".111.",
+   ".1.1.",
+   ".1.1.",
+   ".111.",
+  ];
+  return pixel(rows, {'1':color||PAL.chocD}, cell);
+}
+function buildMeltedCandy(cell){
+  const rows = [
+   "..1111..",
+   ".111111.",
+   "11111111",
+   "1111.111",
+   ".11..11.",
+   "..1..1..",
+   ".1....1.",
+  ];
+  return pixel(rows, {'1':PAL.purple}, cell);
+}
+
+place('holiday-hero-icon', buildPeppermint(9));
+place('src-icon', buildCalIcon(2));
+place('search-icon', buildSearchIcon(3));
+place('res-icon-1', buildMintBullet(4));
+place('res-icon-2', buildMintBullet(4));
+place('sb-icon-stats', buildBattery(3));
+place('stats-jar-icon', buildChocolate(5));
+place('sb-icon-offline', buildBattery(3));
+place('warn-icon', buildWarnIcon(2));
+place('offline-icon', buildMeltedCandy(8));
+
+buildBottomNav('bottomnav-stats', 3);
+
+/* streak heatmap: 28 cells, random-ish but deterministic intensities */
+const heatmapEl = document.getElementById('heatmap');
+const heatLevels = [1,2,0,3,4,2,1, 2,3,4,4,3,2,0, 3,4,4,3,2,1,0, 1,2,3,4,4,3,2];
+heatLevels.forEach(lv=>{
+  const cell = document.createElement('div');
+  cell.className = 'heat-cell' + (lv>0 ? ' l'+lv : '');
+  heatmapEl.appendChild(cell);
+});
+
+/* ---------- SNACKBAR / UNDO demo ---------- */
+function buildTrashIcon(cell,color){
+  const rows = [
+   ".1111.",
+   "111111",
+   ".1111.",
+   ".1111.",
+   ".1111.",
+  ];
+  return pixel(rows, {'1':color||'#C9846A'}, cell);
+}
+place('sb-icon-snackbar', buildBattery(3));
+place('snack-icon-1', buildGem(4));
+place('snack-icon-2', buildHeart(4));
+place('snack-icon-3', buildLeaf(4));
+place('trash-icon-1', buildTrashIcon(2));
+place('trash-icon-2', buildTrashIcon(2));
+place('trash-icon-3', buildTrashIcon(2));
+buildBottomNav('bottomnav-snackbar', 0);
+
+let lastRemoved = null;
+let snackbarTimer = null;
+const snackbarEl = document.getElementById('undo-snackbar');
+const snackbarMsg = document.getElementById('snackbar-msg');
+
+document.querySelectorAll('.trash-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const targetId = btn.dataset.target;
+    const card = document.getElementById(targetId);
+    const title = card.querySelector('.task-title').textContent;
+    card.classList.add('removed');
+    lastRemoved = card;
+    snackbarMsg.textContent = `"${title}" deleted`;
+    snackbarEl.classList.add('show');
+    clearTimeout(snackbarTimer);
+    snackbarTimer = setTimeout(()=>{ snackbarEl.classList.remove('show'); lastRemoved = null; }, 4000);
+  });
+});
+document.getElementById('undo-btn').addEventListener('click', ()=>{
+  if(lastRemoved){
+    lastRemoved.classList.remove('removed');
+    lastRemoved = null;
+  }
+  snackbarEl.classList.remove('show');
+  clearTimeout(snackbarTimer);
+});
+
+/* ---------- HOME SCREEN WIDGET icons ---------- */
+place('sb-icon-widget', buildBattery(3));
+place('widget-jar-icon', buildChocolate(4));
+place('widget-icon-1', buildLollipop(2));
+place('widget-app-icon', buildLollipop(2));
+
+/* ---------- ONBOARDING FLOW icons ---------- */
+place('flow-icon-1', buildLollipop(3));
+place('flow-icon-2', buildClockIcon(4));
+place('flow-icon-3', buildBigBell(4));
+place('flow-icon-4', buildGearIcon(4,'#6B5A4B'));
+place('flow-icon-5', buildCheckCandy(4));
+
+
+/* ---------- theme toggle ---------- */
+function buildMoon(cell){
+  const rows = [
+   "..111.",
+   ".11111",
+   "111111",
+   "111111",
+   ".11111",
+   "..111.",
+  ];
+  return pixel(rows, {'1':'#FFDB70'}, cell);
+}
+function buildSun(cell){
+  const rows = [
+   ".1.1.1",
+   "1.111.",
+   ".11111",
+   "11111.",
+   ".1.1.1",
+  ];
+  return pixel(rows, {'1':'#FFD23F'}, cell);
+}
+place('theme-icon', buildMoon(2));
+function renderThemedIcons(dark){
+  const navColor = dark ? '#D4C2FA' : PAL.purpleD;
+  const searchColor = dark ? '#C9B8DE' : '#B7A493';
+  const warnColor = dark ? '#EFD3AE' : PAL.chocD;
+  place('icon-cal-mini', buildCalIcon(2,navColor));
+  place('icon-clock-mini', buildClockIcon(2,navColor));
+  place('icon-cal-mini2', buildCalIcon(2,navColor));
+  place('icon-clock-mini2', buildClockIcon(2,navColor));
+  place('src-icon', buildCalIcon(2,navColor));
+  place('search-icon', buildSearchIcon(3,searchColor));
+  place('warn-icon', buildWarnIcon(2,warnColor));
+  place('set-icon-1', buildCalIcon(2,navColor));
+  place('set-icon-2', buildCalIcon(2,navColor));
+  buildBottomNav('bottomnav-home', 0, dark);
+  buildBottomNav('bottomnav-week', 1, dark);
+  buildBottomNav('bottomnav-month', 2, dark);
+  buildBottomNav('bottomnav-empty', 0, dark);
+  buildBottomNav('bottomnav-archive', 0, dark);
+  buildBottomNav('bottomnav-stats', 3, dark);
+}
+document.getElementById('theme-toggle').addEventListener('click', ()=>{
+  const isDark = document.body.classList.toggle('dark');
+  document.getElementById('theme-label').textContent = isDark ? 'LIGHT MODE' : 'DARK MODE';
+  place('theme-icon', isDark ? buildSun(2) : buildMoon(2));
+  renderThemedIcons(isDark);
+});
+
+/* ---------- tab switching ---------- */
+const tabBtns = document.querySelectorAll('.tab-btn');
+const screens = document.querySelectorAll('.screen');
+const phoneStage = document.getElementById('phone-stage');
+const flowStage = document.getElementById('flow-stage');
+const captions = {welcome:'WELCOME SCREEN', home:"TODAY'S TASKS", week:'WEEKLY VIEW', month:'MONTH GRID', addtask:'ADD / EDIT TASK', detail:'TASK DETAIL', daydetail:'DAY DETAIL', settings:'SETTINGS', empty:'EMPTY STATE', archive:'COMPLETED / ARCHIVE', notif:'NOTIFICATION PERMISSION', holiday:'HOLIDAY DETAIL', search:'SEARCH', stats:'STATS / STREAK', offline:'OFFLINE / ERROR STATE', snackbar:'UNDO SNACKBAR', widget:'HOME SCREEN WIDGET', flow:'ONBOARDING PERMISSION FLOW'};
+tabBtns.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    tabBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.dataset.screen;
+    if(key === 'flow'){
+      phoneStage.style.display = 'none';
+      flowStage.style.display = 'block';
+    } else {
+      flowStage.style.display = 'none';
+      phoneStage.style.display = 'flex';
+      screens.forEach(s=>s.classList.remove('active'));
+      document.getElementById('screen-'+key).classList.add('active');
+    }
+    document.getElementById('active-caption').textContent = captions[key];
+  });
+});
+</script>
+</body>
+</html>

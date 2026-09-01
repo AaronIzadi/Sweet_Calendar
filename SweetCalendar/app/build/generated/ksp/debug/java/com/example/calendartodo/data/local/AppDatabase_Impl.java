@@ -33,13 +33,13 @@ public final class AppDatabase_Impl extends AppDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `notes` TEXT NOT NULL, `jalaliDate` TEXT NOT NULL, `reminderTime` TEXT, `category` TEXT NOT NULL, `isDone` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `event_cache` (`jalaliDate` TEXT NOT NULL, `description` TEXT NOT NULL, `isHoliday` INTEGER NOT NULL, PRIMARY KEY(`jalaliDate`, `description`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `tasks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `notes` TEXT NOT NULL, `jalaliDate` TEXT NOT NULL, `reminderTime` TEXT, `category` TEXT NOT NULL, `priority` TEXT NOT NULL, `repeatWeekly` INTEGER NOT NULL, `isDone` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `event_cache` (`jalaliDate` TEXT NOT NULL, `description` TEXT NOT NULL, `additionalDescription` TEXT NOT NULL, `isHoliday` INTEGER NOT NULL, PRIMARY KEY(`jalaliDate`, `description`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9cb022ccc0514314289ca38bd287d176')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '41eff012326b0dfe0bf05ca9283e8f96')");
       }
 
       @Override
@@ -89,13 +89,15 @@ public final class AppDatabase_Impl extends AppDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsTasks = new HashMap<String, TableInfo.Column>(8);
+        final HashMap<String, TableInfo.Column> _columnsTasks = new HashMap<String, TableInfo.Column>(10);
         _columnsTasks.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("title", new TableInfo.Column("title", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("notes", new TableInfo.Column("notes", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("jalaliDate", new TableInfo.Column("jalaliDate", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("reminderTime", new TableInfo.Column("reminderTime", "TEXT", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("category", new TableInfo.Column("category", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTasks.put("priority", new TableInfo.Column("priority", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTasks.put("repeatWeekly", new TableInfo.Column("repeatWeekly", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("isDone", new TableInfo.Column("isDone", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsTasks.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysTasks = new HashSet<TableInfo.ForeignKey>(0);
@@ -107,9 +109,10 @@ public final class AppDatabase_Impl extends AppDatabase {
                   + " Expected:\n" + _infoTasks + "\n"
                   + " Found:\n" + _existingTasks);
         }
-        final HashMap<String, TableInfo.Column> _columnsEventCache = new HashMap<String, TableInfo.Column>(3);
+        final HashMap<String, TableInfo.Column> _columnsEventCache = new HashMap<String, TableInfo.Column>(4);
         _columnsEventCache.put("jalaliDate", new TableInfo.Column("jalaliDate", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsEventCache.put("description", new TableInfo.Column("description", "TEXT", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsEventCache.put("additionalDescription", new TableInfo.Column("additionalDescription", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsEventCache.put("isHoliday", new TableInfo.Column("isHoliday", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysEventCache = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesEventCache = new HashSet<TableInfo.Index>(0);
@@ -122,7 +125,7 @@ public final class AppDatabase_Impl extends AppDatabase {
         }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "9cb022ccc0514314289ca38bd287d176", "8a8ef7adaa4c8801973d391f7f1dc922");
+    }, "41eff012326b0dfe0bf05ca9283e8f96", "3daea7d99ed64a273a11ca0840b78d97");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;

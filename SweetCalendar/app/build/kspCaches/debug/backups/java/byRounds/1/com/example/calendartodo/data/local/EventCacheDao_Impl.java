@@ -38,7 +38,7 @@ public final class EventCacheDao_Impl implements EventCacheDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `event_cache` (`jalaliDate`,`description`,`isHoliday`) VALUES (?,?,?)";
+        return "INSERT OR REPLACE INTO `event_cache` (`jalaliDate`,`description`,`additionalDescription`,`isHoliday`) VALUES (?,?,?,?)";
       }
 
       @Override
@@ -46,8 +46,9 @@ public final class EventCacheDao_Impl implements EventCacheDao {
           @NonNull final EventCacheEntity entity) {
         statement.bindString(1, entity.getJalaliDate());
         statement.bindString(2, entity.getDescription());
+        statement.bindString(3, entity.getAdditionalDescription());
         final int _tmp = entity.isHoliday() ? 1 : 0;
-        statement.bindLong(3, _tmp);
+        statement.bindLong(4, _tmp);
       }
     };
   }
@@ -85,6 +86,7 @@ public final class EventCacheDao_Impl implements EventCacheDao {
         try {
           final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
           final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
+          final int _cursorIndexOfAdditionalDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "additionalDescription");
           final int _cursorIndexOfIsHoliday = CursorUtil.getColumnIndexOrThrow(_cursor, "isHoliday");
           final List<EventCacheEntity> _result = new ArrayList<EventCacheEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
@@ -93,11 +95,13 @@ public final class EventCacheDao_Impl implements EventCacheDao {
             _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
             final String _tmpDescription;
             _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            final String _tmpAdditionalDescription;
+            _tmpAdditionalDescription = _cursor.getString(_cursorIndexOfAdditionalDescription);
             final boolean _tmpIsHoliday;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsHoliday);
             _tmpIsHoliday = _tmp != 0;
-            _item = new EventCacheEntity(_tmpJalaliDate,_tmpDescription,_tmpIsHoliday);
+            _item = new EventCacheEntity(_tmpJalaliDate,_tmpDescription,_tmpAdditionalDescription,_tmpIsHoliday);
             _result.add(_item);
           }
           return _result;
@@ -127,6 +131,7 @@ public final class EventCacheDao_Impl implements EventCacheDao {
         try {
           final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
           final int _cursorIndexOfDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "description");
+          final int _cursorIndexOfAdditionalDescription = CursorUtil.getColumnIndexOrThrow(_cursor, "additionalDescription");
           final int _cursorIndexOfIsHoliday = CursorUtil.getColumnIndexOrThrow(_cursor, "isHoliday");
           final List<EventCacheEntity> _result = new ArrayList<EventCacheEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
@@ -135,11 +140,13 @@ public final class EventCacheDao_Impl implements EventCacheDao {
             _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
             final String _tmpDescription;
             _tmpDescription = _cursor.getString(_cursorIndexOfDescription);
+            final String _tmpAdditionalDescription;
+            _tmpAdditionalDescription = _cursor.getString(_cursorIndexOfAdditionalDescription);
             final boolean _tmpIsHoliday;
             final int _tmp;
             _tmp = _cursor.getInt(_cursorIndexOfIsHoliday);
             _tmpIsHoliday = _tmp != 0;
-            _item = new EventCacheEntity(_tmpJalaliDate,_tmpDescription,_tmpIsHoliday);
+            _item = new EventCacheEntity(_tmpJalaliDate,_tmpDescription,_tmpAdditionalDescription,_tmpIsHoliday);
             _result.add(_item);
           }
           return _result;
