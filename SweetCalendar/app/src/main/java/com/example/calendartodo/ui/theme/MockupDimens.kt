@@ -75,7 +75,12 @@ object MockupDimens {
     const val NAV_ICON_SLOT = 18
     const val NAV_LABEL_F = 6.5f
     const val PRIORITY_SPARKLE_SLOT = 10
-    const val PRIORITY_CHIP_MIN_H = 36
+    const val PRIORITY_CHIP_PAD_V = 10
+    const val PRIORITY_CHIP_PAD_H = 4
+    const val PRIORITY_CHIP_GAP = 4
+    const val PRIORITY_CHIP_LINE = 14
+    /** pad×2 + sparkle + gap + label line — keeps row height fixed without empty sparkle slots on Low/High. */
+    const val PRIORITY_CHIP_MIN_H = 48
 
     // Add / Edit task
     const val SHEET_HEADER_BTN = 10
@@ -109,4 +114,10 @@ object MockupDimens {
     const val COMPLETE_BTN_PAD_V = 15
     const val COMPLETE_BTN_RADIUS = 14
     const val COMPLETE_BTN_SHADOW = 4
+
+    // Day detail
+    const val DAY_DETAIL_TITLE = 16
+    const val DAY_DETAIL_SUB_F = 11f
+    const val DAY_DETAIL_HEADER_GAP = 12
+    const val HOLIDAY_EVENT_ICON = 24
 }

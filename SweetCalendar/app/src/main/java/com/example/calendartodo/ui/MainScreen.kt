@@ -335,13 +335,12 @@ fun MainScreen(
                             emptyList()
                         }
                         DayDetailScreen(
+                            modifier = Modifier.fillMaxSize(),
                             date = current.date,
                             tasks = dayTasks,
                             events = dayEvents,
                             onBack = { overlay = OverlayState.None },
                             onTaskClick = { openTaskDetail(it) },
-                            onCompleteTask = { completeTask(it) },
-                            onDeleteTask = { deleteWithUndo(it) },
                             onAddTask = { sheetState = SheetState.Add(current.date) },
                             onHolidayClick = { event ->
                                 overlay = OverlayState.HolidayDetail(current.date, event)

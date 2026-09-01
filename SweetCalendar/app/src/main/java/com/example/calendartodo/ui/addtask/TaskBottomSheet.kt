@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -304,18 +303,14 @@ fun TaskBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
                 ) {
                     TaskPriority.entries.forEach { p ->
-                        Box(
+                        PriorityChip(
+                            priority = p,
+                            selected = priority == p,
+                            onClick = { priority = p },
                             modifier = Modifier
                                 .weight(1f)
                                 .widthIn(min = mockupDp(0))
-                        ) {
-                            PriorityChip(
-                                priority = p,
-                                selected = priority == p,
-                                onClick = { priority = p },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                        )
                     }
                 }
 
@@ -614,6 +609,13 @@ private fun PriorityChip(
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
     val sparkleSize = mockupDp(MockupDimens.PRIORITY_SPARKLE_SLOT)
     val chipHeight = mockupDp(MockupDimens.PRIORITY_CHIP_MIN_H)
+    val labelStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = mockupSp(MockupDimens.PRIORITY_CHIP_TEXT),
+        lineHeight = mockupSp(MockupDimens.PRIORITY_CHIP_LINE.toFloat())
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -642,29 +644,28 @@ private fun PriorityChip(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(radius))
                 .background(if (selected) colors.lemon else colors.paper)
+                .padding(
+                    horizontal = mockupDp(MockupDimens.PRIORITY_CHIP_PAD_H),
+                    vertical = mockupDp(MockupDimens.PRIORITY_CHIP_PAD_V)
+                )
         ) {
-            Text(
-                priority.label,
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.PRIORITY_CHIP_TEXT)
-                ),
-                color = if (selected) colors.chocDeep else MetaMutedColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.Center)
-                    .padding(horizontal = mockupDp(2))
-            )
-            if (priority == TaskPriority.Medium && selected) {
-                SparkleIcon(
-                    size = sparkleSize,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = mockupDp(7))
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = if (selected) Arrangement.Top else Arrangement.Center
+            ) {
+                if (selected) {
+                    SparkleIcon(size = sparkleSize)
+                    Spacer(Modifier.height(mockupDp(MockupDimens.PRIORITY_CHIP_GAP)))
+                }
+                Text(
+                    priority.label,
+                    style = labelStyle,
+                    color = if (selected) colors.chocDeep else MetaMutedColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
