@@ -617,7 +617,7 @@ fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            ChocolateIcon(size = mockupDp(MockupDimens.STREAK_ICON))
+            SettingsChocolateIcon(size = mockupDp(MockupDimens.STREAK_ICON))
             Text(
                 streak.toString(),
                 style = MaterialTheme.typography.bodySmall.copy(
