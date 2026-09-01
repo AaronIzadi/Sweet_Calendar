@@ -1,8 +1,8 @@
 package com.example.calendartodo.ui.today
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,17 +18,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.ui.components.CheckCandyIcon
 import com.example.calendartodo.ui.components.IceCreamIcon
 import com.example.calendartodo.ui.components.JarProgressCard
 import com.example.calendartodo.ui.components.StreakPill
 import com.example.calendartodo.ui.components.SweetSectionLabel
 import com.example.calendartodo.ui.components.SweetTaskCard
+import com.example.calendartodo.ui.components.TaskCardStyle
 import com.example.calendartodo.ui.components.formatDisplayWithWeekday
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.SweetTheme
 import java.util.Calendar
+
+private val TaskMetaColor = Color(0xFF9A8878)
 
 private fun timeOfDayGreeting(): String {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -94,17 +104,26 @@ fun TodayScreen(
                 Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             "${timeOfDayGreeting()}, $userName",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = mockupSp(MockupDimens.GREET_TITLE),
+                                lineHeight = mockupSp(22f)
+                            ),
                             color = colors.ink
                         )
                         Text(
                             today.formatDisplayWithWeekday(),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = mockupSp(MockupDimens.GREET_DATE_F),
+                                lineHeight = mockupSp(16f)
+                            ),
                             color = colors.muted,
                             modifier = Modifier.padding(top = 2.dp)
                         )
@@ -112,19 +131,11 @@ fun TodayScreen(
                     if (streak > 0) {
                         StreakPill(streak, modifier = Modifier.clickable(onClick = onOpenStats))
                     }
-                    Text(
-                        "⌕",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colors.purpleDeep,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .clickable(onClick = onOpenSearch)
-                    )
                 }
                 JarProgressCard(
                     label = "Today's jar",
                     completed = done.size,
-                    total = todayTasks.size.coerceAtLeast(done.size + pending.size),
+                    total = todayTasks.size,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -160,8 +171,7 @@ fun TodayScreen(
                         SweetTaskCard(
                             task = task,
                             onClick = { onEditTask(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            onDelete = { onDeleteTask(task) }
+                            style = TaskCardStyle.Mockup
                         )
                     }
                 }
@@ -169,14 +179,19 @@ fun TodayScreen(
                     item {
                         Row(
                             modifier = Modifier
-                                .padding(vertical = 6.dp)
+                                .padding(top = 6.dp, bottom = 6.dp)
                                 .clickable(onClick = onOpenArchive),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
+                            CheckCandyIcon(size = mockupDp(MockupDimens.COMPLETED_ROW_ICON))
                             Text(
                                 "${done.size} completed today",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.muted
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F)
+                                ),
+                                color = TaskMetaColor
                             )
                         }
                     }
@@ -184,13 +199,12 @@ fun TodayScreen(
                         SweetTaskCard(
                             task = task,
                             onClick = { onEditTask(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            onDelete = { onDeleteTask(task) }
+                            style = TaskCardStyle.Mockup
                         )
                     }
                 }
             }
-            item { Spacer(Modifier.height(100.dp)) }
+            item { Spacer(Modifier.height(90.dp)) }
         }
     }
 }

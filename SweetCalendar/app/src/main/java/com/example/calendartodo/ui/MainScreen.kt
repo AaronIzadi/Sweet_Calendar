@@ -46,6 +46,7 @@ import com.example.calendartodo.ui.settings.SettingsScreen
 import com.example.calendartodo.ui.stats.StatsScreen
 import com.example.calendartodo.ui.taskdetail.TaskDetailScreen
 import com.example.calendartodo.ui.theme.CalendarTodoTheme
+import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.today.TodayScreen
 import com.example.calendartodo.ui.week.WeekScreen
@@ -162,13 +163,14 @@ fun MainScreen(
     }
 
     CalendarTodoTheme(darkTheme = darkMode) {
+        ProvideMockupScale {
         val colors = SweetTheme.colors
         if (showWelcome) {
             WelcomeScreen(
                 onStart = { finishWelcome() },
                 onSkip = { finishWelcome() }
             )
-            return@CalendarTodoTheme
+            return@ProvideMockupScale
         }
 
         if (overlay == OverlayState.NotificationPermission) {
@@ -185,7 +187,7 @@ fun MainScreen(
                     overlay = OverlayState.None
                 }
             )
-            return@CalendarTodoTheme
+            return@ProvideMockupScale
         }
 
         val showMainChrome = overlay == OverlayState.None
@@ -235,6 +237,7 @@ fun MainScreen(
                                 onOpenArchive = { overlay = OverlayState.Archive }
                             )
                             AppDestination.Week -> WeekScreen(
+                                modifier = Modifier.fillMaxSize(),
                                 tasks = allTasks,
                                 weekStartsOn = calendarState.weekStartsOn,
                                 onEditTask = { openTaskDetail(it) },
@@ -377,7 +380,6 @@ fun MainScreen(
                 }
             }
         }
-    }
 
     when (val sheet = sheetState) {
         SheetState.Hidden -> Unit
@@ -440,5 +442,7 @@ fun MainScreen(
 
     if (showCelebration) {
         CompleteCelebrationDialog(onDismiss = { showCelebration = false })
+    }
+        }
     }
 }

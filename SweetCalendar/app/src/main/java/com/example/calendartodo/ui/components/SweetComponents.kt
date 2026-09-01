@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,15 +19,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.navigation.AppDestination
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
+import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.SweetTheme
 
 enum class TaskCategory(val label: String) {
@@ -41,6 +50,15 @@ enum class TaskCategory(val label: String) {
     }
 }
 
+enum class TaskCardStyle {
+    /** Mockup layout: candy category icons, depth shadow, no inline actions. */
+    Mockup,
+    /** Full interactive card with checkbox and delete. */
+    Interactive
+}
+
+private val TaskMetaColor = Color(0xFF9A8878)
+
 @Composable
 fun TaskCategory.accentColor(): Color = when (this) {
     TaskCategory.Personal -> SweetTheme.colors.pinkDeep
@@ -52,7 +70,11 @@ fun TaskCategory.accentColor(): Color = when (this) {
 fun SweetSectionLabel(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
+        style = TextStyle(
+            fontFamily = PixelFont,
+            fontSize = mockupSp(MockupDimens.SECTION_LABEL_F),
+            lineHeight = mockupSp(14f)
+        ),
         color = SweetTheme.colors.purpleDeep,
         modifier = modifier.padding(top = 20.dp, bottom = 10.dp)
     )
@@ -67,36 +89,61 @@ fun JarProgressCard(
 ) {
     val colors = SweetTheme.colors
     val progress = if (total > 0) completed.toFloat() / total else 0f
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.paper)
-            .padding(14.dp, 16.dp)
-    ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, style = MaterialTheme.typography.bodySmall, color = colors.ink)
-            Text("$completed / $total", style = MaterialTheme.typography.bodySmall, color = colors.ink)
-        }
-        Spacer(Modifier.height(8.dp))
+    val shape = RoundedCornerShape(16.dp)
+    Box(modifier = modifier) {
         Box(
             modifier = Modifier
+                .matchParentSize()
+                .offset(y = 3.dp)
+                .clip(shape)
+                .background(colors.line)
+        )
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .height(14.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(if (colors.isDark) Color(0xFF1E1628) else Color(0xFFF1E6D8))
+                .clip(shape)
+                .background(colors.paper)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.JAR_LABEL)
+                    ),
+                    color = colors.ink
+                )
+                Text(
+                    "$completed / $total",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.JAR_LABEL)
+                    ),
+                    color = colors.ink
+                )
+            }
+            Spacer(Modifier.height(8.dp))
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(
-                        androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            listOf(colors.pink, colors.mint)
+                    .fillMaxWidth()
+                    .height(mockupDp(MockupDimens.JAR_TRACK_H))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (colors.isDark) Color(0xFF1E1628) else Color(0xFFF1E6D8))
+                    .border(2.dp, colors.line, RoundedCornerShape(8.dp))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .height(mockupDp(MockupDimens.JAR_TRACK_H))
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            androidx.compose.ui.graphics.Brush.horizontalGradient(
+                                listOf(colors.pink, colors.mint)
+                            )
                         )
-                    )
-            )
+                )
+            }
         }
     }
 }
@@ -107,6 +154,117 @@ fun SweetTaskCard(
     onClick: () -> Unit = {},
     onToggleComplete: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    showDate: Boolean = false,
+    style: TaskCardStyle = TaskCardStyle.Interactive
+) {
+    when (style) {
+        TaskCardStyle.Mockup -> MockupTaskCard(task, onClick, modifier, showDate)
+        TaskCardStyle.Interactive -> InteractiveTaskCard(
+            task, onClick, onToggleComplete, onDelete, modifier, showDate
+        )
+    }
+}
+
+@Composable
+private fun MockupTaskCard(
+    task: TaskEntity,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    showDate: Boolean = false
+) {
+    val colors = SweetTheme.colors
+    val category = TaskCategory.fromString(task.category)
+    val accent = category.accentColor()
+    val priority = TaskPriority.fromString(task.priority)
+    val shape = RoundedCornerShape(14.dp)
+
+    val taskIcon = mockupDp(MockupDimens.TASK_ICON)
+    val taskAccentH = mockupDp(56)
+
+    Box(modifier = modifier.padding(bottom = mockupDp(10))) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(2))
+                .clip(shape)
+                .background(colors.line)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(if (task.isDone) 0.55f else 1f)
+                .clip(shape)
+                .background(colors.paper)
+                .clickable(onClick = onClick),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = mockupDp(MockupDimens.TASK_ACCENT_W), height = taskAccentH)
+                    .background(accent)
+            )
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(
+                        horizontal = mockupDp(MockupDimens.TASK_CARD_PAD_H),
+                        vertical = mockupDp(MockupDimens.TASK_CARD_PAD_V)
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (task.isDone) {
+                    CheckCandyIcon(size = taskIcon)
+                } else {
+                    TaskCategoryIcon(category = category, size = taskIcon)
+                }
+                Column(modifier = Modifier.padding(start = mockupDp(10)).weight(1f)) {
+                    Text(
+                        task.title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = mockupSp(MockupDimens.TASK_TITLE_F),
+                            lineHeight = mockupSp(17f)
+                        ),
+                        color = colors.ink,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        textDecoration = if (task.isDone) TextDecoration.LineThrough else null
+                    )
+                    val meta = buildList {
+                        task.reminderTime?.let { add(formatTime12h(it)) }
+                        if (task.category.isNotBlank()) add(task.category)
+                        if (showDate) add(JalaliDate.parseIso(task.jalaliDate).formatDisplayShort())
+                    }
+                    if (meta.isNotEmpty()) {
+                        Text(
+                            meta.joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = mockupSp(MockupDimens.TASK_META_F),
+                                lineHeight = mockupSp(13f)
+                            ),
+                            color = TaskMetaColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = mockupDp(2))
+                        )
+                    }
+                }
+                if (!task.isDone && priority == TaskPriority.High) {
+                    SparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InteractiveTaskCard(
+    task: TaskEntity,
+    onClick: () -> Unit,
+    onToggleComplete: (() -> Unit)?,
+    onDelete: (() -> Unit)?,
     modifier: Modifier = Modifier,
     showDate: Boolean = false
 ) {
@@ -140,7 +298,7 @@ fun SweetTaskCard(
                     modifier = Modifier.padding(end = 8.dp)
                 )
             }
-            CategoryIcon(category = category, size = 16.dp)
+            LegacyCategoryIcon(category = category, size = 16.dp)
             Column(modifier = Modifier.padding(start = 10.dp).weight(1f)) {
                 Text(
                     task.title,
@@ -213,7 +371,16 @@ private fun TaskCheckbox(
 }
 
 @Composable
-private fun CategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
+private fun TaskCategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
+    when (category) {
+        TaskCategory.Personal -> TaskHeartIcon(size = size)
+        TaskCategory.Home -> TaskLeafIcon(size = size)
+        TaskCategory.Work -> TaskGemIcon(size = size)
+    }
+}
+
+@Composable
+private fun LegacyCategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
     when (category) {
         TaskCategory.Personal -> PeppermintCandyIcon(size = size)
         TaskCategory.Home -> ChocolateIcon(size = size)
@@ -245,16 +412,25 @@ fun JalaliDate.formatDisplayWithWeekday(): String {
 @Composable
 fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
-    Box(
-        modifier = modifier
-            .size(54.dp)
-            .shadow(4.dp, RoundedCornerShape(16.dp), spotColor = colors.purpleDeep)
-            .clip(RoundedCornerShape(16.dp))
-            .background(colors.purple)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        WrappedCandyIcon(size = 28.dp)
+    val shape = RoundedCornerShape(16.dp)
+    Box(modifier = modifier.size(mockupDp(MockupDimens.FAB_SIZE))) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(4))
+                .clip(shape)
+                .background(colors.purpleDeep)
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(shape)
+                .background(colors.purple)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            GummyIcon(size = mockupDp(MockupDimens.FAB_ICON), color = colors.lemon)
+        }
     }
 }
 
@@ -277,22 +453,22 @@ fun SweetBottomNav(
             label = "TODAY",
             selected = selected == AppDestination.Today,
             onClick = { onSelect(AppDestination.Today) }
-        ) { LollipopIcon(size = 16.dp) }
+        ) { LollipopIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
         NavItem(
             label = "WEEK",
             selected = selected == AppDestination.Week,
             onClick = { onSelect(AppDestination.Week) }
-        ) { PeppermintCandyIcon(size = 16.dp) }
+        ) { PeppermintCandyIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
         NavItem(
             label = "MONTH",
             selected = selected == AppDestination.Month,
             onClick = { onSelect(AppDestination.Month) }
-        ) { ChocolateIcon(size = 16.dp) }
+        ) { ChocolateIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
         NavItem(
             label = "SETTINGS",
             selected = selected == AppDestination.Settings,
             onClick = { onSelect(AppDestination.Settings) }
-        ) { WrappedCandyIcon(size = 16.dp) }
+        ) { WrappedCandyIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
     }
 }
 
@@ -325,19 +501,73 @@ private fun NavItem(
 @Composable
 fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(colors.streakBg)
-            .padding(horizontal = 9.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        ChocolateIcon(size = 14.dp)
-        Text(
-            streak.toString(),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.chocDeep
+    val shape = RoundedCornerShape(10.dp)
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = 2.dp)
+                .clip(shape)
+                .background(colors.line)
         )
+        Row(
+            modifier = Modifier
+                .clip(shape)
+                .background(colors.streakBg)
+                .padding(horizontal = 9.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            ChocolateIcon(size = mockupDp(MockupDimens.STREAK_ICON))
+            Text(
+                streak.toString(),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.STREAK_FONT)
+                ),
+                color = colors.chocDeep
+            )
+        }
+    }
+}
+
+/** Primary CTA matching mockup `.pixel-btn` (Press Start 2P + purple depth shadow). */
+@Composable
+fun SweetPixelButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(4))
+                .clip(RoundedCornerShape(mockupDp(12)))
+                .background(colors.purpleDeep)
+        )
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(mockupDp(12)))
+                .background(colors.purple)
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
+                    vertical = mockupDp(MockupDimens.PIXEL_BTN_PAD_V)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = TextStyle(
+                    fontFamily = PixelFont,
+                    fontSize = mockupSp(MockupDimens.PIXEL_BTN),
+                    letterSpacing = mockupSp(0.5f),
+                    lineHeight = mockupSp(14f)
+                ),
+                color = Color.White
+            )
+        }
     }
 }

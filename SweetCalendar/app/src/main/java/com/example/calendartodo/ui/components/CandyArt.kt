@@ -2,7 +2,9 @@ package com.example.calendartodo.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -16,7 +18,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.R
 import com.example.calendartodo.ui.theme.BubblegumPink
+import com.example.calendartodo.ui.theme.GrapePurple
 import com.example.calendartodo.ui.theme.LemonYellow
+import com.example.calendartodo.ui.theme.MintDeep
+import com.example.calendartodo.ui.theme.MintGreen
+import com.example.calendartodo.ui.theme.PinkDeep
 import com.example.calendartodo.ui.theme.PixelBorder
 import com.example.calendartodo.ui.theme.SprinklesBlue
 import com.example.calendartodo.ui.theme.SprinklesGreen
@@ -27,21 +33,27 @@ private fun PixelArtImage(
     resId: Int,
     size: Dp,
     modifier: Modifier = Modifier,
+    height: Dp? = null,
     contentDescription: String? = null
 ) {
     Image(
         painter = painterResource(resId),
         contentDescription = contentDescription,
-        modifier = modifier.size(size),
+        modifier = modifier.size(width = size, height = height ?: size),
         contentScale = ContentScale.Fit
     )
 }
 
 @Composable
-fun LollipopIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
+fun LollipopIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 24.dp,
+    height: Dp? = null
+) {
     PixelArtImage(
         resId = R.drawable.pixel_lollipop_swirl,
         size = size,
+        height = height,
         modifier = modifier,
         contentDescription = "Lollipop"
     )
@@ -114,6 +126,124 @@ fun GummyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp, color: Color = Le
         drawPath(body, PixelBorder, style = Stroke(width = b))
         drawCircle(color, s * 0.1f, Offset(s * 0.25f, s * 0.2f))
         drawCircle(color, s * 0.1f, Offset(s * 0.75f, s * 0.2f))
+    }
+}
+
+/** Work category marker — purple gem from mockup `buildGem`. */
+@Composable
+fun TaskGemIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = listOf(
+            "...1...",
+            "..111..",
+            ".11111.",
+            "1111111",
+            ".11111.",
+            "..111..",
+            "...1..."
+        ),
+        palette = mapOf('1' to GrapePurple),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Personal category marker — pink heart from mockup `buildHeart`. */
+@Composable
+fun TaskHeartIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = listOf(
+            ".11.11.",
+            "1111111",
+            "1111111",
+            ".11111.",
+            "..111..",
+            "...1..."
+        ),
+        palette = mapOf('1' to PinkDeep),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Home category marker — mint leaf from mockup `buildLeaf`. */
+@Composable
+fun TaskLeafIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = listOf(
+            "..1....",
+            ".111...",
+            "11111..",
+            ".11111.",
+            "..1111.",
+            "...111.",
+            "....11."
+        ),
+        palette = mapOf('1' to MintDeep),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Completed-task candy from mockup `buildCheckCandy`. */
+@Composable
+fun CheckCandyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = listOf(
+            "..mmm..",
+            ".mmmmm.",
+            "mmmmmmm",
+            "mwmwmmm",
+            "mmwmwmm",
+            ".mmwmm.",
+            "..mmm.."
+        ),
+        palette = mapOf('m' to MintGreen, 'w' to Color.White),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** High-priority sparkle from mockup `buildSparkle`. */
+@Composable
+fun SparkleIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
+    PixelIcon(
+        rows = listOf(
+            "..y..",
+            "..y..",
+            "yyYyy",
+            "..y..",
+            "..y.."
+        ),
+        palette = mapOf('y' to Color(0xFFE8B32A), 'Y' to LemonYellow),
+        size = size,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun PixelIcon(
+    rows: List<String>,
+    palette: Map<Char, Color>,
+    size: Dp,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier.size(size)) {
+        val cols = rows.maxOf { it.length }
+        val cell = minOf(this.size.width / cols, this.size.height / rows.size)
+        val offsetX = (this.size.width - cell * cols) / 2f
+        val offsetY = (this.size.height - cell * rows.size) / 2f
+        rows.forEachIndexed { rowIndex, row ->
+            row.forEachIndexed { colIndex, ch ->
+                palette[ch]?.let { color ->
+                    drawRect(
+                        color = color,
+                        topLeft = Offset(offsetX + colIndex * cell, offsetY + rowIndex * cell),
+                        size = Size(cell, cell)
+                    )
+                }
+            }
+        }
     }
 }
 
