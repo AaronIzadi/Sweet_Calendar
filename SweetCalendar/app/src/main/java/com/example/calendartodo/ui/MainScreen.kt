@@ -192,6 +192,7 @@ fun MainScreen(
 
         val showMainChrome = overlay == OverlayState.None
 
+        Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             snackbarHost = {
                 SnackbarHost(snackbarHostState) { data ->
@@ -210,7 +211,6 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .background(colors.paper)
-                                .padding(top = 3.dp)
                         ) {
                             SweetBottomNav(selected = destination, onSelect = { destination = it })
                         }
@@ -381,48 +381,49 @@ fun MainScreen(
             }
         }
 
-    when (val sheet = sheetState) {
-        SheetState.Hidden -> Unit
-        is SheetState.Add -> {
-            TaskBottomSheet(
-                date = sheet.date,
-                existingTask = null,
-                onDismiss = { sheetState = SheetState.Hidden },
-                onConfirm = { form ->
-                    viewModel.addTask(form)
-                    sheetState = SheetState.Hidden
-                    onTaskSaved(form)
-                    showSnackbar("Task added to jar!")
-                }
-            )
-        }
-        is SheetState.Edit -> {
-            val task = sheet.task
-            val d = JalaliDate.parseIso(task.jalaliDate)
-            TaskBottomSheet(
-                date = d,
-                existingTask = task,
-                onDismiss = { sheetState = SheetState.Hidden },
-                onConfirm = { form ->
-                    viewModel.updateTask(task, form)
-                    sheetState = SheetState.Hidden
-                    overlay = OverlayState.TaskDetail(
-                        task.copy(
-                            title = form.title,
-                            notes = form.notes,
-                            jalaliDate = form.jalaliDate.formatIso(),
-                            reminderTime = form.reminderTime,
-                            category = form.category,
-                            priority = form.priority,
-                            repeatWeekly = form.repeatWeekly
+        when (val sheet = sheetState) {
+            SheetState.Hidden -> Unit
+            is SheetState.Add -> {
+                TaskBottomSheet(
+                    date = sheet.date,
+                    existingTask = null,
+                    onDismiss = { sheetState = SheetState.Hidden },
+                    onConfirm = { form ->
+                        viewModel.addTask(form)
+                        sheetState = SheetState.Hidden
+                        onTaskSaved(form)
+                        showSnackbar("Task added to jar!")
+                    }
+                )
+            }
+            is SheetState.Edit -> {
+                val task = sheet.task
+                val d = JalaliDate.parseIso(task.jalaliDate)
+                TaskBottomSheet(
+                    date = d,
+                    existingTask = task,
+                    onDismiss = { sheetState = SheetState.Hidden },
+                    onConfirm = { form ->
+                        viewModel.updateTask(task, form)
+                        sheetState = SheetState.Hidden
+                        overlay = OverlayState.TaskDetail(
+                            task.copy(
+                                title = form.title,
+                                notes = form.notes,
+                                jalaliDate = form.jalaliDate.formatIso(),
+                                reminderTime = form.reminderTime,
+                                category = form.category,
+                                priority = form.priority,
+                                repeatWeekly = form.repeatWeekly
+                            )
                         )
-                    )
-                    onTaskSaved(form)
-                    showSnackbar("Task updated!")
-                }
-            )
+                        onTaskSaved(form)
+                        showSnackbar("Task updated!")
+                    }
+                )
+            }
         }
-    }
+        }
 
     taskToDelete?.let { task ->
         PixelConfirmDialog(

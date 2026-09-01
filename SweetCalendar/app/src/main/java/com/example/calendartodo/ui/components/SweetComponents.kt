@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.navigation.AppDestination
+import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
@@ -409,6 +411,45 @@ fun JalaliDate.formatDisplayWithWeekday(): String {
     return "${JalaliDate.MONTH_NAMES_EN[month - 1]} $day, $year · $weekday"
 }
 
+/** Square paper icon button matching mockup `.icon-btn` (detail headers, etc.). */
+@Composable
+fun SweetIconButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    val radius = mockupDp(MockupDimens.DETAIL_ICON_BTN_RADIUS)
+    val size = mockupDp(MockupDimens.DETAIL_ICON_BTN)
+    Box(modifier = modifier.size(size)) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
+                .clip(RoundedCornerShape(radius))
+                .background(colors.line)
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(radius))
+                .background(colors.paper)
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                label,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.DETAIL_ICON_BTN_FONT)
+                ),
+                color = colors.purpleDeep
+            )
+        }
+    }
+}
+
 @Composable
 fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
@@ -429,7 +470,7 @@ fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            GummyIcon(size = mockupDp(MockupDimens.FAB_ICON), color = colors.lemon)
+            FabGumdropIcon(size = mockupDp(MockupDimens.FAB_ICON))
         }
     }
 }
@@ -441,34 +482,57 @@ fun SweetBottomNav(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(colors.paper)
-            .padding(horizontal = 6.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        NavItem(
-            label = "TODAY",
-            selected = selected == AppDestination.Today,
-            onClick = { onSelect(AppDestination.Today) }
-        ) { LollipopIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
-        NavItem(
-            label = "WEEK",
-            selected = selected == AppDestination.Week,
-            onClick = { onSelect(AppDestination.Week) }
-        ) { PeppermintCandyIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
-        NavItem(
-            label = "MONTH",
-            selected = selected == AppDestination.Month,
-            onClick = { onSelect(AppDestination.Month) }
-        ) { ChocolateIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
-        NavItem(
-            label = "SETTINGS",
-            selected = selected == AppDestination.Settings,
-            onClick = { onSelect(AppDestination.Settings) }
-        ) { WrappedCandyIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(mockupDp(3))
+                .background(colors.line)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.paper)
+                .padding(
+                    start = mockupDp(6),
+                    end = mockupDp(6),
+                    top = mockupDp(10),
+                    bottom = mockupDp(16)
+                ),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NavItem(
+                label = "TODAY",
+                selected = selected == AppDestination.Today,
+                onClick = { onSelect(AppDestination.Today) }
+            ) { NavLollipopIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
+            NavItem(
+                label = "WEEK",
+                selected = selected == AppDestination.Week,
+                onClick = { onSelect(AppDestination.Week) }
+            ) { NavPeppermintIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
+            NavItem(
+                label = "MONTH",
+                selected = selected == AppDestination.Month,
+                onClick = { onSelect(AppDestination.Month) }
+            ) {
+                NavMonthGridIcon(
+                    size = mockupDp(MockupDimens.NAV_ICON_LARGE),
+                    color = colors.purpleDeep
+                )
+            }
+            NavItem(
+                label = "SETTINGS",
+                selected = selected == AppDestination.Settings,
+                onClick = { onSelect(AppDestination.Settings) }
+            ) {
+                NavSettingsGearIcon(
+                    size = mockupDp(MockupDimens.NAV_ICON_LARGE),
+                    color = colors.purpleDeep
+                )
+            }
+        }
     }
 }
 
@@ -480,19 +544,29 @@ private fun NavItem(
     icon: @Composable () -> Unit
 ) {
     val colors = SweetTheme.colors
+    val iconSlot = mockupDp(MockupDimens.NAV_ICON_SLOT)
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(mockupDp(12)))
             .background(if (selected) colors.navActiveBg else Color.Transparent)
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(horizontal = mockupDp(10), vertical = mockupDp(6)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(mockupDp(4))
     ) {
-        icon()
-        Spacer(Modifier.height(4.dp))
+        Box(
+            modifier = Modifier.size(iconSlot),
+            contentAlignment = Alignment.Center
+        ) {
+            icon()
+        }
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
+            style = TextStyle(
+                fontFamily = PixelFont,
+                fontSize = mockupSp(MockupDimens.NAV_LABEL_F),
+                lineHeight = mockupSp(10f)
+            ),
             color = if (selected) colors.pinkDeep else colors.navInactive
         )
     }
@@ -567,6 +641,47 @@ fun SweetPixelButton(
                     lineHeight = mockupSp(14f)
                 ),
                 color = Color.White
+            )
+        }
+    }
+}
+
+/** Full-width pink CTA matching mockup `.big-save-btn` on the add-task screen. */
+@Composable
+fun SweetBigSaveButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    val radius = mockupDp(MockupDimens.BIG_SAVE_RADIUS)
+    Box(modifier = modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.BIG_SAVE_SHADOW))
+                .clip(RoundedCornerShape(radius))
+                .background(colors.pinkDeep)
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(radius))
+                .background(colors.pink)
+                .clickable(onClick = onClick)
+                .padding(mockupDp(16)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = TextStyle(
+                    fontFamily = PixelFont,
+                    fontSize = mockupSp(MockupDimens.BIG_SAVE_BTN),
+                    lineHeight = mockupSp(15f),
+                    textAlign = TextAlign.Center
+                ),
+                color = Color.White,
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

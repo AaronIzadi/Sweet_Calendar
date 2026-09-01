@@ -69,6 +69,44 @@ object MockupDimens {
     const val PIXEL_BTN_PAD_V = 14
     const val PIXEL_BTN_PAD_H = 20
     const val FAB_SIZE = 54
-    const val FAB_ICON = 24
+    const val FAB_ICON = 30
     const val NAV_ICON = 16
+    const val NAV_ICON_LARGE = 15
+    const val NAV_ICON_SLOT = 18
+    const val NAV_LABEL_F = 6.5f
+    const val PRIORITY_SPARKLE_SLOT = 10
+    const val PRIORITY_CHIP_MIN_H = 36
+
+    // Add / Edit task
+    const val SHEET_HEADER_BTN = 10
+    const val SHEET_TITLE = 16
+    const val FIELD_LABEL = 10
+    const val FIELD_TEXT = 13
+    const val FIELD_TEXT_F = 13f
+    const val SWATCH_TEXT_F = 9.5f
+    const val SWATCH_ICON = 21
+    const val PRIORITY_CHIP_TEXT = 10
+    const val SWITCH_LABEL_F = 12.5f
+    const val BIG_SAVE_BTN = 11
+    const val MINI_FIELD_ICON = 12
+    const val FORM_FIELD_RADIUS = 12
+    const val FORM_FIELD_SHADOW = 2
+    const val BIG_SAVE_RADIUS = 14
+    const val BIG_SAVE_SHADOW = 4
+
+    // Task detail
+    const val DETAIL_ICON_BTN = 30
+    const val DETAIL_ICON_BTN_RADIUS = 9
+    const val DETAIL_ICON_BTN_FONT = 13
+    const val DETAIL_BADGE_TEXT_F = 9.5f
+    const val DETAIL_BADGE_RADIUS = 10
+    const val DETAIL_BADGE_ICON = 14
+    const val DETAIL_TITLE = 19
+    const val DETAIL_META_F = 12.5f
+    const val DETAIL_NOTES_F = 12.5f
+    const val DETAIL_DELETE = 11
+    const val COMPLETE_BTN_F = 10.5f
+    const val COMPLETE_BTN_PAD_V = 15
+    const val COMPLETE_BTN_RADIUS = 14
+    const val COMPLETE_BTN_SHADOW = 4
 }

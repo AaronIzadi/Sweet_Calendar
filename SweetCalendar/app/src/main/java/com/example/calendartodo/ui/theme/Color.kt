@@ -18,6 +18,11 @@ val Ink = Color(0xFF3A2317)
 val Paper = Color(0xFFFFFDF9)
 val Line = Color(0xFFEAD9C4)
 
+/** Pixel-art canvas colors from mockup JS `PAL` (lighter than CSS `--purple` UI tokens). */
+val PixelPurple = Color(0xFF9B7ED8)
+val PixelPurpleHighlight = Color(0xFFC3AEEF)
+val PixelPurpleDark = Color(0xFF5B3F82)
+
 // Dark mode — "midnight candy shop"
 val DarkCream = Color(0xFF241A30)
 val DarkPaper = Color(0xFF2F2340)

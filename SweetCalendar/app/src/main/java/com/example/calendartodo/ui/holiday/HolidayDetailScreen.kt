@@ -24,7 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.PeppermintCandyIcon
+import com.example.calendartodo.ui.components.SweetIconButton
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
 
 @Composable
 fun HolidayDetailScreen(
@@ -58,18 +60,13 @@ fun HolidayDetailScreen(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            Box(
+            SweetIconButton(
+                label = "←",
+                onClick = onBack,
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .size(30.dp)
-                    .clip(RoundedCornerShape(9.dp))
-                    .background(Color.White.copy(alpha = 0.8f))
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("←", style = MaterialTheme.typography.bodyMedium, color = colors.purpleDeep)
-            }
+                    .padding(mockupDp(16))
+            )
             PeppermintCandyIcon(size = 72.dp)
         }
 

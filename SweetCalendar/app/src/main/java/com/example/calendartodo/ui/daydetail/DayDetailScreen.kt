@@ -2,7 +2,6 @@ package com.example.calendartodo.ui.daydetail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,9 +27,11 @@ import com.example.calendartodo.ui.calendar.DayEvent
 import com.example.calendartodo.ui.components.JarProgressCard
 import com.example.calendartodo.ui.components.PeppermintCandyIcon
 import com.example.calendartodo.ui.components.SweetFab
+import com.example.calendartodo.ui.components.SweetIconButton
 import com.example.calendartodo.ui.components.SweetSectionLabel
 import com.example.calendartodo.ui.components.SweetTaskCard
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
 import java.text.DateFormatSymbols
 import java.util.Locale
 
@@ -65,18 +66,8 @@ fun DayDetailScreen(
                     .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val interaction = remember { MutableInteractionSource() }
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(colors.paper)
-                        .clickable(interactionSource = interaction, indication = null, onClick = onBack)
-                        .padding(horizontal = 10.dp, vertical = 6.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("←", style = MaterialTheme.typography.bodyMedium, color = colors.purpleDeep)
-                }
-                Column(modifier = Modifier.padding(start = 12.dp)) {
+                SweetIconButton(label = "←", onClick = onBack)
+                Column(modifier = Modifier.padding(start = mockupDp(12))) {
                     Text("$month ${date.day}", style = MaterialTheme.typography.titleMedium, color = colors.ink)
                     Text("$weekday · $gregMonth $gregDay", style = MaterialTheme.typography.bodySmall, color = colors.muted)
                 }

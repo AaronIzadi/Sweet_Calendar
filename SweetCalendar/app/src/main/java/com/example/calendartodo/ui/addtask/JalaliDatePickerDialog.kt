@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
 
 @Composable
@@ -54,6 +55,7 @@ fun JalaliDatePickerDialog(
             Text("Pick a date", color = colors.ink)
         },
         text = {
+            ProvideMockupScale {
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -152,6 +154,7 @@ fun JalaliDatePickerDialog(
                         }
                     }
                 }
+            }
             }
         }
     )

@@ -2,10 +2,12 @@ package com.example.calendartodo.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -22,8 +24,11 @@ import com.example.calendartodo.ui.theme.GrapePurple
 import com.example.calendartodo.ui.theme.LemonYellow
 import com.example.calendartodo.ui.theme.MintDeep
 import com.example.calendartodo.ui.theme.MintGreen
-import com.example.calendartodo.ui.theme.PinkDeep
 import com.example.calendartodo.ui.theme.PixelBorder
+import com.example.calendartodo.ui.theme.PixelPurple
+import com.example.calendartodo.ui.theme.PixelPurpleHighlight
+import com.example.calendartodo.ui.theme.PinkDeep
+import com.example.calendartodo.ui.theme.PurpleDeep
 import com.example.calendartodo.ui.theme.SprinklesBlue
 import com.example.calendartodo.ui.theme.SprinklesGreen
 import com.example.calendartodo.ui.theme.SprinklesRed
@@ -221,6 +226,181 @@ fun SparkleIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
     )
 }
 
+/** Mini calendar from mockup `buildCalIcon` (cell × 2). */
+@Composable
+fun CalMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {
+    PixelIcon(
+        rows = listOf(
+            "111111",
+            "1.1.1.",
+            "111111",
+            "1....1",
+            "1.1.1.",
+            "111111"
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Mini clock from mockup `buildClockIcon` (cell × 2). */
+@Composable
+fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {
+    PixelIcon(
+        rows = listOf(
+            ".1111.",
+            "1....1",
+            "1.11.1",
+            "1..1.1",
+            "1....1",
+            ".1111."
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** FAB gumdrop — mockup `buildGumdrop(3)`. */
+@Composable
+fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
+    PixelIcon(
+        rows = listOf(
+            ".yppppppy.",
+            "yyppppppyy",
+            "yyphhhhpyy",
+            "yyphhhhpyy",
+            "yyppppppyy",
+            ".yppppppy."
+        ),
+        palette = mapOf(
+            'y' to LemonYellow,
+            'p' to PixelPurple,
+            'h' to PixelPurpleHighlight
+        ),
+        width = size,
+        height = size,
+        modifier = modifier
+    )
+}
+
+private val LollipopTan = Color(0xFFD4A574)
+
+/** Bottom-nav Today tab — mockup `buildLollipop(2)`. */
+@Composable
+fun NavLollipopIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    val headPalette = mapOf('a' to BubblegumPink, 'b' to Color.White)
+    val stickPalette = mapOf('t' to LollipopTan)
+    Column(modifier = modifier.width(size), horizontalAlignment = Alignment.CenterHorizontally) {
+        PixelIcon(
+            rows = listOf(
+                "..aaaa..",
+                ".aabaaa.",
+                "aabaabaa",
+                "aabaabaa",
+                "aabaabaa",
+                "aabaabaa",
+                ".aabaaa.",
+                "..aaaa.."
+            ),
+            palette = headPalette,
+            width = size,
+            height = size
+        )
+        PixelIcon(
+            rows = listOf(
+                "...tt...",
+                "...tt...",
+                "...tt...",
+                "...tt...",
+                "...tt..."
+            ),
+            palette = stickPalette,
+            width = size,
+            height = size * 0.625f
+        )
+    }
+}
+
+/** Bottom-nav Week tab — mockup `buildPeppermint(2)`. */
+@Composable
+fun NavPeppermintIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    PixelIcon(
+        rows = peppermintPixelRows(),
+        palette = mapOf('r' to SprinklesRed, 'w' to Color.White),
+        width = size,
+        height = size,
+        modifier = modifier
+    )
+}
+
+/** Bottom-nav Month tab — mockup `buildGridIcon(3)`. */
+@Composable
+fun NavMonthGridIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 15.dp,
+    color: Color = GrapePurple
+) {
+    PixelIcon(
+        rows = listOf(
+            "1.1.1",
+            ".....",
+            "1.1.1",
+            ".....",
+            "1.1.1"
+        ),
+        palette = mapOf('1' to color),
+        width = size,
+        height = size,
+        modifier = modifier
+    )
+}
+
+/** Bottom-nav Settings tab — mockup `buildGearIcon(3)`. */
+@Composable
+fun NavSettingsGearIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 15.dp,
+    color: Color = GrapePurple
+) {
+    PixelIcon(
+        rows = listOf(
+            ".1.1.",
+            "11111",
+            "1...1",
+            "11111",
+            ".1.1."
+        ),
+        palette = mapOf('1' to color),
+        width = size,
+        height = size,
+        modifier = modifier
+    )
+}
+
+private fun peppermintPixelRows(): List<String> {
+    val mask = listOf(
+        "..1111..",
+        ".111111.",
+        "11111111",
+        "11111111",
+        "11111111",
+        "11111111",
+        ".111111.",
+        "..1111.."
+    )
+    return mask.mapIndexed { rowIndex, row ->
+        row.mapIndexed { colIndex, ch ->
+            when {
+                ch != '1' -> '.'
+                (rowIndex + colIndex) % 2 == 0 -> 'r'
+                else -> 'w'
+            }
+        }.joinToString("")
+    }
+}
+
 @Composable
 private fun PixelIcon(
     rows: List<String>,
@@ -228,7 +408,18 @@ private fun PixelIcon(
     size: Dp,
     modifier: Modifier = Modifier
 ) {
-    Canvas(modifier.size(size)) {
+    PixelIcon(rows, palette, width = size, height = size, modifier = modifier)
+}
+
+@Composable
+private fun PixelIcon(
+    rows: List<String>,
+    palette: Map<Char, Color>,
+    width: Dp,
+    height: Dp,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier.then(Modifier.size(width = width, height = height))) {
         val cols = rows.maxOf { it.length }
         val cell = minOf(this.size.width / cols, this.size.height / rows.size)
         val offsetX = (this.size.width - cell * cols) / 2f
