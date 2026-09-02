@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,10 +18,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
@@ -351,37 +351,18 @@ private fun CalendarSystemDialog(
     onDismiss: () -> Unit,
     onSelect: (CalendarSystem) -> Unit
 ) {
-    val colors = SweetTheme.colors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Calendar system", color = colors.ink) },
-        text = {
-            Column {
-                CalendarSystem.entries.forEach { system ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(mockupDp(10)))
-                            .background(if (system == selected) colors.purple.copy(alpha = 0.15f) else Color.Transparent)
-                            .clickable { onSelect(system) }
-                            .padding(vertical = mockupDp(10), horizontal = mockupDp(8)),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            system.label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (system == selected) colors.purpleDeep else colors.ink
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Done", color = colors.pinkDeep)
-            }
+    SettingsPickerDialog(
+        title = "Calendar system",
+        onDismiss = onDismiss
+    ) {
+        CalendarSystem.entries.forEach { system ->
+            SettingsPickerOption(
+                label = system.label,
+                selected = system == selected,
+                onClick = { onSelect(system) }
+            )
         }
-    )
+    }
 }
 
 @Composable
@@ -540,37 +521,115 @@ private fun WeekStartDialog(
     onDismiss: () -> Unit,
     onSelect: (Int) -> Unit
 ) {
+    SettingsPickerDialog(
+        title = "Week starts on",
+        onDismiss = onDismiss
+    ) {
+        JalaliDate.WEEKDAY_NAMES_EN.forEachIndexed { index, label ->
+            SettingsPickerOption(
+                label = label,
+                selected = index == selected,
+                onClick = { onSelect(index) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsPickerDialog(
+    title: String,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
     val colors = SweetTheme.colors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Week starts on", color = colors.ink) },
-        text = {
-            Column {
-                JalaliDate.WEEKDAY_NAMES_EN.forEachIndexed { index, label ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(mockupDp(10)))
-                            .background(if (index == selected) colors.purple.copy(alpha = 0.15f) else Color.Transparent)
-                            .clickable { onSelect(index) }
-                            .padding(vertical = mockupDp(10), horizontal = mockupDp(8)),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (index == selected) colors.purpleDeep else colors.ink
-                        )
-                    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        ProvideMockupScale {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.cream)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = mockupDp(18),
+                            end = mockupDp(18),
+                            top = mockupDp(16),
+                            bottom = mockupDp(8)
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "✕ CLOSE",
+                        style = TextStyle(
+                            fontFamily = PixelFont,
+                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
+                            lineHeight = mockupSp(14f)
+                        ),
+                        color = colors.purpleDeep,
+                        modifier = Modifier.clickable(onClick = onDismiss)
+                    )
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Done", color = colors.pinkDeep)
+
+                Text(
+                    title,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+                        lineHeight = mockupSp(22f)
+                    ),
+                    color = colors.ink,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = mockupDp(8)),
+                    textAlign = TextAlign.Center
+                )
+
+                Column(
+                    modifier = Modifier.padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        bottom = mockupDp(24)
+                    ),
+                    content = content
+                )
             }
         }
-    )
+    }
+}
+
+@Composable
+private fun SettingsPickerOption(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = SweetTheme.colors
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(mockupDp(10)))
+            .background(if (selected) colors.purple.copy(alpha = 0.15f) else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(vertical = mockupDp(12), horizontal = mockupDp(10)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            label,
+            style = TextStyle(
+                fontFamily = BodyFont,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+                lineHeight = mockupSp(18f)
+            ),
+            color = if (selected) colors.purpleDeep else colors.ink
+        )
+    }
 }
 
 @Composable
