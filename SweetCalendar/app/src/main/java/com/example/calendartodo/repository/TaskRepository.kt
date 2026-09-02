@@ -8,6 +8,8 @@ class TaskRepository(private val dao: TaskDao) {
 
     fun observeAll(): Flow<List<TaskEntity>> = dao.observeAll()
 
+    fun observeDeleted(): Flow<List<TaskEntity>> = dao.observeDeleted()
+
     fun observeForDate(jalaliDate: String): Flow<List<TaskEntity>> = dao.observeForDate(jalaliDate)
 
     fun observeDatesWithTasks(): Flow<List<String>> = dao.observeDatesWithTasks()
@@ -34,14 +36,27 @@ class TaskRepository(private val dao: TaskDao) {
         )
     }
 
-    suspend fun updateTask(task: TaskEntity) = dao.update(task)
+    suspend fun updateTask(task: TaskEntity) = dao.update(task.copy(deletedAt = null))
 
     suspend fun getActiveReminders(): List<TaskEntity> = dao.getActiveReminders()
 
-    suspend fun deleteTask(task: TaskEntity) = dao.delete(task)
+    suspend fun deleteTask(task: TaskEntity) {
+        dao.softDelete(task.id, System.currentTimeMillis())
+    }
 
     suspend fun restoreTask(task: TaskEntity) {
-        dao.upsert(task)
+        dao.restore(task.id)
+    }
+
+    suspend fun permanentlyDeleteTask(task: TaskEntity) {
+        dao.hardDelete(task.id)
+    }
+
+    suspend fun purgeExpiredDeleted(
+        retentionMs: Long = DELETED_TASK_RETENTION_MS,
+        now: Long = System.currentTimeMillis()
+    ) {
+        dao.purgeDeletedBefore(now - retentionMs)
     }
 
     suspend fun setDone(id: Long, done: Boolean) = dao.setDone(id, done)

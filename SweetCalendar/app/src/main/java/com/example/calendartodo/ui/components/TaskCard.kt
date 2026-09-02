@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -35,9 +36,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.ui.theme.BodyFont
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
@@ -216,26 +224,88 @@ fun PixelConfirmDialog(
     title: String,
     message: String,
     confirmLabel: String,
-    dismissLabel: String = "No",
+    dismissLabel: String = "Keep",
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        PixelPanel(modifier = Modifier.fillMaxWidth(), backgroundColor = LemonYellow.copy(alpha = 0.95f)) {
-            Column {
-                Text(title, style = MaterialTheme.typography.titleSmall, color = ChocolateBrown)
-                Spacer(Modifier.height(8.dp))
-                Text(message, style = MaterialTheme.typography.bodySmall, color = ChocolateBrown)
-                Spacer(Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    PixelButton(onClick = onDismiss, backgroundColor = CreamFrosting, contentDescription = dismissLabel) {
-                        Text(dismissLabel, style = MaterialTheme.typography.labelSmall, color = ChocolateBrown)
-                    }
-                    Spacer(Modifier.size(8.dp))
-                    PixelButton(onClick = onConfirm, backgroundColor = BubblegumPink, contentDescription = confirmLabel) {
-                        Text(confirmLabel, style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
-                    }
+    val colors = SweetTheme.colors
+    val deleteColor = Color(0xFFD9455E)
+
+    Dialog(onDismissRequest = onDismiss) {
+        ProvideMockupScale {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.cream)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = mockupDp(18),
+                            end = mockupDp(18),
+                            top = mockupDp(16),
+                            bottom = mockupDp(8)
+                        ),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "✕ $dismissLabel".uppercase(),
+                        style = TextStyle(
+                            fontFamily = PixelFont,
+                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
+                            lineHeight = mockupSp(14f)
+                        ),
+                        color = colors.purpleDeep,
+                        modifier = Modifier.clickable(onClick = onDismiss)
+                    )
+                    Text(
+                        confirmLabel.uppercase(),
+                        style = TextStyle(
+                            fontFamily = PixelFont,
+                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
+                            lineHeight = mockupSp(14f)
+                        ),
+                        color = deleteColor,
+                        modifier = Modifier.clickable(onClick = onConfirm)
+                    )
                 }
+
+                Text(
+                    title,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+                        lineHeight = mockupSp(22f)
+                    ),
+                    color = colors.ink,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = mockupDp(8)),
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    message,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = mockupSp(12f),
+                        lineHeight = mockupSp(18f)
+                    ),
+                    color = colors.muted,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = mockupDp(24),
+                            end = mockupDp(24),
+                            bottom = mockupDp(24)
+                        )
+                )
             }
         }
     }
@@ -244,34 +314,53 @@ fun PixelConfirmDialog(
 @Composable
 fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
     val colors = SweetTheme.colors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("OK", color = colors.pinkDeep)
-            }
-        },
-        title = { Text("Sweet job!", color = colors.ink) },
-        text = {
-            ProvideMockupScale {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CheckCandyIcon(size = mockupDp(56))
-                    Spacer(Modifier.height(mockupDp(12)))
-                    Text(
-                        "You completed the task successfully!",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = mockupSp(12f),
-                            lineHeight = mockupSp(16f)
-                        ),
-                        color = colors.muted,
-                        textAlign = TextAlign.Center
-                    )
-                }
+
+    Dialog(onDismissRequest = onDismiss) {
+        ProvideMockupScale {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.cream)
+                    .padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        top = mockupDp(24),
+                        bottom = mockupDp(24)
+                    ),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CheckCandyIcon(size = mockupDp(56))
+                Spacer(Modifier.height(mockupDp(12)))
+                Text(
+                    "Sweet job!",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+                        lineHeight = mockupSp(22f)
+                    ),
+                    color = colors.ink,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(mockupDp(8)))
+                Text(
+                    "You completed the task successfully!",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = mockupSp(12f),
+                        lineHeight = mockupSp(18f)
+                    ),
+                    color = colors.muted,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(mockupDp(20)))
+                SweetPixelButton(
+                    text = "OK",
+                    onClick = onDismiss
+                )
             }
         }
-    )
+    }
 }

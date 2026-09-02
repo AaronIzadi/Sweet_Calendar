@@ -1,9 +1,9 @@
 package com.example.calendartodo.ui.offline
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,10 +19,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import com.example.calendartodo.ui.components.WrappedCandyIcon
+import androidx.compose.ui.text.style.TextDecoration
+import com.example.calendartodo.ui.components.MeltedCandyIcon
+import com.example.calendartodo.ui.components.SweetPixelButton
+import com.example.calendartodo.ui.components.WarnIcon
+import com.example.calendartodo.ui.theme.BodyFont
+import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
+
+private val OfflineBannerBackground = Color(0xFFFFF1DC)
+private val OfflineBannerBackgroundDark = Color(0xFF3A2A22)
+private val OfflineSubColor = Color(0xFF8A7867)
+private val OfflineWarnColorDark = Color(0xFFEFD3AE)
 
 @Composable
 fun OfflineScreen(
@@ -31,6 +44,11 @@ fun OfflineScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val bannerBackground = if (colors.isDark) OfflineBannerBackgroundDark else OfflineBannerBackground
+    val warnColor = if (colors.isDark) OfflineWarnColorDark else colors.chocDeep
+
+    BackHandler(onBack = onBack)
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -39,18 +57,41 @@ fun OfflineScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 14.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFFF1DC))
-                .padding(10.dp, 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(14)
+                )
+                .clip(RoundedCornerShape(mockupDp(MockupDimens.OFFLINE_BANNER_RADIUS)))
+                .background(bannerBackground)
+                .padding(horizontal = mockupDp(12), vertical = mockupDp(10)),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
         ) {
-            Text("⚠", modifier = Modifier.padding(end = 8.dp))
+            WarnIcon(
+                size = mockupDp(MockupDimens.OFFLINE_WARN_ICON),
+                color = warnColor
+            )
             Text(
                 "Couldn't load holidays",
-                style = MaterialTheme.typography.bodySmall,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.OFFLINE_BANNER_TEXT)
+                ),
                 color = colors.chocDeep,
                 modifier = Modifier.weight(1f)
+            )
+            Text(
+                "Retry",
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.OFFLINE_BANNER_TEXT)
+                ),
+                color = colors.purpleDeep,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable(onClick = onRetry)
             )
         }
 
@@ -58,46 +99,43 @@ fun OfflineScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 32.dp),
+                .padding(
+                    start = mockupDp(MockupDimens.OFFLINE_PAD_H),
+                    end = mockupDp(MockupDimens.OFFLINE_PAD_H),
+                    bottom = mockupDp(MockupDimens.OFFLINE_PAD_BOTTOM)
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                "← Back",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.purpleDeep,
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .clickable(onClick = onBack)
-                    .padding(bottom = 24.dp)
+            MeltedCandyIcon(
+                width = mockupDp(MockupDimens.OFFLINE_ICON_W),
+                height = mockupDp(MockupDimens.OFFLINE_ICON_H)
             )
-            WrappedCandyIcon(size = 100.dp)
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(mockupDp(18)))
             Text(
                 "Holidays are offline for now",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.OFFLINE_TITLE),
+                    lineHeight = mockupSp(20f)
+                ),
                 color = colors.ink,
                 textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(mockupDp(8)))
             Text(
                 "time.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.muted,
-                textAlign = TextAlign.Center,
-                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.5f
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = mockupSp(MockupDimens.OFFLINE_SUB),
+                    lineHeight = mockupSp(MockupDimens.OFFLINE_SUB * 1.6f)
+                ),
+                color = OfflineSubColor,
+                textAlign = TextAlign.Center
             )
-            Spacer(Modifier.height(20.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.purple)
-                    .clickable(onClick = onRetry)
-                    .padding(horizontal = 20.dp, vertical = 14.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("TRY AGAIN", style = MaterialTheme.typography.labelLarge, color = Color.White)
-            }
+            Spacer(Modifier.height(mockupDp(20)))
+            SweetPixelButton(text = "TRY AGAIN", onClick = onRetry)
         }
     }
 }

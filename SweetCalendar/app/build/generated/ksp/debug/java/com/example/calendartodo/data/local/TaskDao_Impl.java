@@ -35,9 +35,15 @@ public final class TaskDao_Impl implements TaskDao {
 
   private final EntityInsertionAdapter<TaskEntity> __insertionAdapterOfTaskEntity;
 
-  private final EntityDeletionOrUpdateAdapter<TaskEntity> __deletionAdapterOfTaskEntity;
-
   private final EntityDeletionOrUpdateAdapter<TaskEntity> __updateAdapterOfTaskEntity;
+
+  private final SharedSQLiteStatement __preparedStmtOfSoftDelete;
+
+  private final SharedSQLiteStatement __preparedStmtOfRestore;
+
+  private final SharedSQLiteStatement __preparedStmtOfHardDelete;
+
+  private final SharedSQLiteStatement __preparedStmtOfPurgeDeletedBefore;
 
   private final SharedSQLiteStatement __preparedStmtOfSetDone;
 
@@ -47,7 +53,7 @@ public final class TaskDao_Impl implements TaskDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`notes`,`jalaliDate`,`reminderTime`,`category`,`priority`,`repeatWeekly`,`isDone`,`createdAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?)";
+        return "INSERT OR REPLACE INTO `tasks` (`id`,`title`,`notes`,`jalaliDate`,`reminderTime`,`category`,`priority`,`repeatWeekly`,`isDone`,`createdAt`,`deletedAt`) VALUES (nullif(?, 0),?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -69,26 +75,18 @@ public final class TaskDao_Impl implements TaskDao {
         final int _tmp_1 = entity.isDone() ? 1 : 0;
         statement.bindLong(9, _tmp_1);
         statement.bindLong(10, entity.getCreatedAt());
-      }
-    };
-    this.__deletionAdapterOfTaskEntity = new EntityDeletionOrUpdateAdapter<TaskEntity>(__db) {
-      @Override
-      @NonNull
-      protected String createQuery() {
-        return "DELETE FROM `tasks` WHERE `id` = ?";
-      }
-
-      @Override
-      protected void bind(@NonNull final SupportSQLiteStatement statement,
-          @NonNull final TaskEntity entity) {
-        statement.bindLong(1, entity.getId());
+        if (entity.getDeletedAt() == null) {
+          statement.bindNull(11);
+        } else {
+          statement.bindLong(11, entity.getDeletedAt());
+        }
       }
     };
     this.__updateAdapterOfTaskEntity = new EntityDeletionOrUpdateAdapter<TaskEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`notes` = ?,`jalaliDate` = ?,`reminderTime` = ?,`category` = ?,`priority` = ?,`repeatWeekly` = ?,`isDone` = ?,`createdAt` = ? WHERE `id` = ?";
+        return "UPDATE OR ABORT `tasks` SET `id` = ?,`title` = ?,`notes` = ?,`jalaliDate` = ?,`reminderTime` = ?,`category` = ?,`priority` = ?,`repeatWeekly` = ?,`isDone` = ?,`createdAt` = ?,`deletedAt` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -110,7 +108,44 @@ public final class TaskDao_Impl implements TaskDao {
         final int _tmp_1 = entity.isDone() ? 1 : 0;
         statement.bindLong(9, _tmp_1);
         statement.bindLong(10, entity.getCreatedAt());
-        statement.bindLong(11, entity.getId());
+        if (entity.getDeletedAt() == null) {
+          statement.bindNull(11);
+        } else {
+          statement.bindLong(11, entity.getDeletedAt());
+        }
+        statement.bindLong(12, entity.getId());
+      }
+    };
+    this.__preparedStmtOfSoftDelete = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE tasks SET deletedAt = ? WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfRestore = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "UPDATE tasks SET deletedAt = NULL WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfHardDelete = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM tasks WHERE id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfPurgeDeletedBefore = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM tasks WHERE deletedAt IS NOT NULL AND deletedAt < ?";
+        return _query;
       }
     };
     this.__preparedStmtOfSetDone = new SharedSQLiteStatement(__db) {
@@ -142,24 +177,6 @@ public final class TaskDao_Impl implements TaskDao {
   }
 
   @Override
-  public Object delete(final TaskEntity task, final Continuation<? super Unit> $completion) {
-    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
-      @Override
-      @NonNull
-      public Unit call() throws Exception {
-        __db.beginTransaction();
-        try {
-          __deletionAdapterOfTaskEntity.handle(task);
-          __db.setTransactionSuccessful();
-          return Unit.INSTANCE;
-        } finally {
-          __db.endTransaction();
-        }
-      }
-    }, $completion);
-  }
-
-  @Override
   public Object update(final TaskEntity task, final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
@@ -172,6 +189,110 @@ public final class TaskDao_Impl implements TaskDao {
           return Unit.INSTANCE;
         } finally {
           __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object softDelete(final long id, final long deletedAt,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfSoftDelete.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, deletedAt);
+        _argIndex = 2;
+        _stmt.bindLong(_argIndex, id);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfSoftDelete.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object restore(final long id, final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfRestore.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, id);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfRestore.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object hardDelete(final long id, final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfHardDelete.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, id);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfHardDelete.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object purgeDeletedBefore(final long cutoff,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfPurgeDeletedBefore.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, cutoff);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfPurgeDeletedBefore.release(_stmt);
         }
       }
     }, $completion);
@@ -208,7 +329,7 @@ public final class TaskDao_Impl implements TaskDao {
 
   @Override
   public Flow<List<TaskEntity>> observeAll() {
-    final String _sql = "SELECT * FROM tasks ORDER BY jalaliDate ASC, createdAt ASC";
+    final String _sql = "SELECT * FROM tasks WHERE deletedAt IS NULL ORDER BY jalaliDate ASC, createdAt ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"tasks"}, new Callable<List<TaskEntity>>() {
       @Override
@@ -226,6 +347,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfRepeatWeekly = CursorUtil.getColumnIndexOrThrow(_cursor, "repeatWeekly");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfDeletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "deletedAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -257,7 +379,87 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpIsDone = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt);
+            final Long _tmpDeletedAt;
+            if (_cursor.isNull(_cursorIndexOfDeletedAt)) {
+              _tmpDeletedAt = null;
+            } else {
+              _tmpDeletedAt = _cursor.getLong(_cursorIndexOfDeletedAt);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt,_tmpDeletedAt);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
+  public Flow<List<TaskEntity>> observeDeleted() {
+    final String _sql = "SELECT * FROM tasks WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"tasks"}, new Callable<List<TaskEntity>>() {
+      @Override
+      @NonNull
+      public List<TaskEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+          final int _cursorIndexOfNotes = CursorUtil.getColumnIndexOrThrow(_cursor, "notes");
+          final int _cursorIndexOfJalaliDate = CursorUtil.getColumnIndexOrThrow(_cursor, "jalaliDate");
+          final int _cursorIndexOfReminderTime = CursorUtil.getColumnIndexOrThrow(_cursor, "reminderTime");
+          final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
+          final int _cursorIndexOfPriority = CursorUtil.getColumnIndexOrThrow(_cursor, "priority");
+          final int _cursorIndexOfRepeatWeekly = CursorUtil.getColumnIndexOrThrow(_cursor, "repeatWeekly");
+          final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
+          final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfDeletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "deletedAt");
+          final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final TaskEntity _item;
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final String _tmpTitle;
+            _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+            final String _tmpNotes;
+            _tmpNotes = _cursor.getString(_cursorIndexOfNotes);
+            final String _tmpJalaliDate;
+            _tmpJalaliDate = _cursor.getString(_cursorIndexOfJalaliDate);
+            final String _tmpReminderTime;
+            if (_cursor.isNull(_cursorIndexOfReminderTime)) {
+              _tmpReminderTime = null;
+            } else {
+              _tmpReminderTime = _cursor.getString(_cursorIndexOfReminderTime);
+            }
+            final String _tmpCategory;
+            _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
+            final String _tmpPriority;
+            _tmpPriority = _cursor.getString(_cursorIndexOfPriority);
+            final boolean _tmpRepeatWeekly;
+            final int _tmp;
+            _tmp = _cursor.getInt(_cursorIndexOfRepeatWeekly);
+            _tmpRepeatWeekly = _tmp != 0;
+            final boolean _tmpIsDone;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsDone);
+            _tmpIsDone = _tmp_1 != 0;
+            final long _tmpCreatedAt;
+            _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
+            final Long _tmpDeletedAt;
+            if (_cursor.isNull(_cursorIndexOfDeletedAt)) {
+              _tmpDeletedAt = null;
+            } else {
+              _tmpDeletedAt = _cursor.getLong(_cursorIndexOfDeletedAt);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt,_tmpDeletedAt);
             _result.add(_item);
           }
           return _result;
@@ -275,7 +477,7 @@ public final class TaskDao_Impl implements TaskDao {
 
   @Override
   public Flow<List<TaskEntity>> observeForDate(final String jalaliDate) {
-    final String _sql = "SELECT * FROM tasks WHERE jalaliDate = ? ORDER BY createdAt ASC";
+    final String _sql = "SELECT * FROM tasks WHERE jalaliDate = ? AND deletedAt IS NULL ORDER BY createdAt ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
     _statement.bindString(_argIndex, jalaliDate);
@@ -295,6 +497,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfRepeatWeekly = CursorUtil.getColumnIndexOrThrow(_cursor, "repeatWeekly");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfDeletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "deletedAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -326,7 +529,13 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpIsDone = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt);
+            final Long _tmpDeletedAt;
+            if (_cursor.isNull(_cursorIndexOfDeletedAt)) {
+              _tmpDeletedAt = null;
+            } else {
+              _tmpDeletedAt = _cursor.getLong(_cursorIndexOfDeletedAt);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt,_tmpDeletedAt);
             _result.add(_item);
           }
           return _result;
@@ -344,7 +553,7 @@ public final class TaskDao_Impl implements TaskDao {
 
   @Override
   public Flow<List<String>> observeDatesWithTasks() {
-    final String _sql = "SELECT DISTINCT jalaliDate FROM tasks";
+    final String _sql = "SELECT DISTINCT jalaliDate FROM tasks WHERE deletedAt IS NULL";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     return CoroutinesRoom.createFlow(__db, false, new String[] {"tasks"}, new Callable<List<String>>() {
       @Override
@@ -373,7 +582,7 @@ public final class TaskDao_Impl implements TaskDao {
 
   @Override
   public Object getActiveReminders(final Continuation<? super List<TaskEntity>> $completion) {
-    final String _sql = "SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0";
+    final String _sql = "SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0 AND deletedAt IS NULL";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
     final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
     return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<TaskEntity>>() {
@@ -392,6 +601,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfRepeatWeekly = CursorUtil.getColumnIndexOrThrow(_cursor, "repeatWeekly");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfDeletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "deletedAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -423,7 +633,13 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpIsDone = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt);
+            final Long _tmpDeletedAt;
+            if (_cursor.isNull(_cursorIndexOfDeletedAt)) {
+              _tmpDeletedAt = null;
+            } else {
+              _tmpDeletedAt = _cursor.getLong(_cursorIndexOfDeletedAt);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt,_tmpDeletedAt);
             _result.add(_item);
           }
           return _result;
@@ -438,7 +654,7 @@ public final class TaskDao_Impl implements TaskDao {
   @Override
   public Object getForDate(final String jalaliDate,
       final Continuation<? super List<TaskEntity>> $completion) {
-    final String _sql = "SELECT * FROM tasks WHERE jalaliDate = ? ORDER BY isDone ASC, createdAt ASC";
+    final String _sql = "SELECT * FROM tasks WHERE jalaliDate = ? AND deletedAt IS NULL ORDER BY isDone ASC, createdAt ASC";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
     int _argIndex = 1;
     _statement.bindString(_argIndex, jalaliDate);
@@ -459,6 +675,7 @@ public final class TaskDao_Impl implements TaskDao {
           final int _cursorIndexOfRepeatWeekly = CursorUtil.getColumnIndexOrThrow(_cursor, "repeatWeekly");
           final int _cursorIndexOfIsDone = CursorUtil.getColumnIndexOrThrow(_cursor, "isDone");
           final int _cursorIndexOfCreatedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAt");
+          final int _cursorIndexOfDeletedAt = CursorUtil.getColumnIndexOrThrow(_cursor, "deletedAt");
           final List<TaskEntity> _result = new ArrayList<TaskEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final TaskEntity _item;
@@ -490,7 +707,13 @@ public final class TaskDao_Impl implements TaskDao {
             _tmpIsDone = _tmp_1 != 0;
             final long _tmpCreatedAt;
             _tmpCreatedAt = _cursor.getLong(_cursorIndexOfCreatedAt);
-            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt);
+            final Long _tmpDeletedAt;
+            if (_cursor.isNull(_cursorIndexOfDeletedAt)) {
+              _tmpDeletedAt = null;
+            } else {
+              _tmpDeletedAt = _cursor.getLong(_cursorIndexOfDeletedAt);
+            }
+            _item = new TaskEntity(_tmpId,_tmpTitle,_tmpNotes,_tmpJalaliDate,_tmpReminderTime,_tmpCategory,_tmpPriority,_tmpRepeatWeekly,_tmpIsDone,_tmpCreatedAt,_tmpDeletedAt);
             _result.add(_item);
           }
           return _result;

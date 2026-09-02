@@ -1,7 +1,6 @@
 package com.example.calendartodo.data.local
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -11,13 +10,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
 
-    @Query("SELECT * FROM tasks ORDER BY jalaliDate ASC, createdAt ASC")
+    @Query("SELECT * FROM tasks WHERE deletedAt IS NULL ORDER BY jalaliDate ASC, createdAt ASC")
     fun observeAll(): Flow<List<TaskEntity>>
 
-    @Query("SELECT * FROM tasks WHERE jalaliDate = :jalaliDate ORDER BY createdAt ASC")
+    @Query("SELECT * FROM tasks WHERE deletedAt IS NOT NULL ORDER BY deletedAt DESC")
+    fun observeDeleted(): Flow<List<TaskEntity>>
+
+    @Query("SELECT * FROM tasks WHERE jalaliDate = :jalaliDate AND deletedAt IS NULL ORDER BY createdAt ASC")
     fun observeForDate(jalaliDate: String): Flow<List<TaskEntity>>
 
-    @Query("SELECT DISTINCT jalaliDate FROM tasks")
+    @Query("SELECT DISTINCT jalaliDate FROM tasks WHERE deletedAt IS NULL")
     fun observeDatesWithTasks(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -26,15 +28,29 @@ interface TaskDao {
     @Update
     suspend fun update(task: TaskEntity)
 
-    @Delete
-    suspend fun delete(task: TaskEntity)
+    @Query("UPDATE tasks SET deletedAt = :deletedAt WHERE id = :id")
+    suspend fun softDelete(id: Long, deletedAt: Long)
+
+    @Query("UPDATE tasks SET deletedAt = NULL WHERE id = :id")
+    suspend fun restore(id: Long)
+
+    @Query("DELETE FROM tasks WHERE id = :id")
+    suspend fun hardDelete(id: Long)
+
+    @Query("DELETE FROM tasks WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
+    suspend fun purgeDeletedBefore(cutoff: Long)
 
     @Query("UPDATE tasks SET isDone = :done WHERE id = :id")
     suspend fun setDone(id: Long, done: Boolean)
 
-    @Query("SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0")
+    @Query(
+        "SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0 AND deletedAt IS NULL"
+    )
     suspend fun getActiveReminders(): List<TaskEntity>
 
-    @Query("SELECT * FROM tasks WHERE jalaliDate = :jalaliDate ORDER BY isDone ASC, createdAt ASC")
+    @Query(
+        "SELECT * FROM tasks WHERE jalaliDate = :jalaliDate AND deletedAt IS NULL " +
+            "ORDER BY isDone ASC, createdAt ASC"
+    )
     suspend fun getForDate(jalaliDate: String): List<TaskEntity>
 }

@@ -116,6 +116,15 @@ class CalendarViewModel(
     val allTasks: StateFlow<List<TaskEntity>> = taskRepository.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val deletedTasks: StateFlow<List<TaskEntity>> = taskRepository.observeDeleted()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        viewModelScope.launch {
+            taskRepository.purgeExpiredDeleted()
+        }
+    }
+
     val uiState: StateFlow<CalendarUiState> = combine(
         monthContextFlow,
         taskRepository.observeAll(),
@@ -345,6 +354,14 @@ class CalendarViewModel(
             if (!task.isDone && task.reminderTime != null) {
                 reminderScheduler.schedule(task)
             }
+            refreshWidgets()
+        }
+    }
+
+    fun permanentlyDeleteTask(task: TaskEntity) {
+        viewModelScope.launch {
+            reminderScheduler.cancel(task.id)
+            taskRepository.permanentlyDeleteTask(task)
             refreshWidgets()
         }
     }

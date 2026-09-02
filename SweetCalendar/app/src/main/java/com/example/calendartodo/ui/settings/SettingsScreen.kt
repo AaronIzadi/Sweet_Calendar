@@ -2,6 +2,7 @@ package com.example.calendartodo.ui.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.window.Dialog
 import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
@@ -45,10 +47,12 @@ import com.example.calendartodo.ui.components.SettingsBoxUncheckedIcon
 import com.example.calendartodo.ui.components.SettingsChocolateIcon
 import com.example.calendartodo.ui.components.SettingsGumdropIcon
 import com.example.calendartodo.ui.components.SweetSwitch
+import com.example.calendartodo.ui.components.TrashIcon
 import com.example.calendartodo.ui.today.computeStreak
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.PixelFont
+import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
@@ -56,6 +60,10 @@ import com.example.calendartodo.ui.theme.mockupSp
 private val SettingsValueColor = Color(0xFF9A8878)
 private val SettingsGroupLabelColor = Color(0xFFB39D89)
 private val SettingsChevronColor = Color(0xFFC9B8A6)
+private val ProfileAvatarBackground = Color(0xFFFFF8FA)
+private val ProfileAvatarBackgroundDark = Color(0xFF3D3035)
+private val FieldLabelColor = Color(0xFF9A8878)
+private val FieldPlaceholderColor = Color(0xFFB7A493)
 
 @Composable
 fun SettingsScreen(
@@ -73,6 +81,7 @@ fun SettingsScreen(
     onOpenStats: () -> Unit = {},
     onOpenArchive: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
+    onOpenRecoverSnackbar: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
@@ -126,7 +135,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .size(mockupDp(MockupDimens.SETTINGS_PROFILE_AVATAR))
                     .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
-                    .background(Color.White.copy(alpha = 0.25f)),
+                    .background(if (colors.isDark) ProfileAvatarBackgroundDark else ProfileAvatarBackground),
                 contentAlignment = Alignment.Center
             ) {
                 ProfileLollipopIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
@@ -267,6 +276,18 @@ fun SettingsScreen(
             label = "Search tasks",
             onClick = onOpenSearch
         )
+        SettingsRow(
+            icon = {
+                SettingsIconSlot(rowIconSlot) {
+                    TrashIcon(
+                        width = mockupDp(MockupDimens.TRASH_ICON_W),
+                        height = mockupDp(MockupDimens.TRASH_ICON_H)
+                    )
+                }
+            },
+            label = "Recover snackbar",
+            onClick = onOpenRecoverSnackbar
+        )
 
         SettingsGroupLabel("DATA")
         SettingsRow(
@@ -384,34 +405,133 @@ private fun NameEditDialog(
 ) {
     val colors = SweetTheme.colors
     var name by remember(initialName) { mutableStateOf(initialName) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Your name", color = colors.ink) },
-        text = {
-            BasicTextField(
-                value = name,
-                onValueChange = { name = it },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.ink),
-                cursorBrush = SolidColor(colors.pink),
+    val fieldShape = RoundedCornerShape(mockupDp(MockupDimens.FORM_FIELD_RADIUS))
+
+    Dialog(onDismissRequest = onDismiss) {
+        ProvideMockupScale {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(mockupDp(10)))
-                    .background(colors.paper)
-                    .padding(mockupDp(12))
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(name.trim().ifBlank { "Friend" }) }) {
-                Text("Save", color = colors.pinkDeep)
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.cream)
+            ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        top = mockupDp(16),
+                        bottom = mockupDp(8)
+                    ),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "✕ CLOSE",
+                    style = TextStyle(
+                        fontFamily = PixelFont,
+                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
+                        lineHeight = mockupSp(14f)
+                    ),
+                    color = colors.purpleDeep,
+                    modifier = Modifier.clickable(onClick = onDismiss)
+                )
+                Text(
+                    "SAVE ✓",
+                    style = TextStyle(
+                        fontFamily = PixelFont,
+                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
+                        lineHeight = mockupSp(14f)
+                    ),
+                    color = colors.pinkDeep,
+                    modifier = Modifier.clickable {
+                        onConfirm(name.trim().ifBlank { "Friend" })
+                    }
+                )
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = colors.muted)
+
+            Text(
+                "Edit info",
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+                    lineHeight = mockupSp(22f)
+                ),
+                color = colors.ink,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = mockupDp(8)),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+
+            Column(
+                modifier = Modifier.padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(8),
+                    bottom = mockupDp(24)
+                )
+            ) {
+                Text(
+                    "NAME",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.FIELD_LABEL),
+                        letterSpacing = mockupSp(0.3f),
+                        lineHeight = mockupSp(14f)
+                    ),
+                    color = FieldLabelColor,
+                    modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
+                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
+                            .clip(fieldShape)
+                            .background(colors.line)
+                    )
+                    BasicTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontFamily = BodyFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+                            lineHeight = mockupSp(18f),
+                            color = colors.ink
+                        ),
+                        cursorBrush = SolidColor(colors.pink),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(fieldShape)
+                            .background(colors.paper)
+                            .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
+                        decorationBox = { inner ->
+                            if (name.isEmpty()) {
+                                Text(
+                                    "e.g. Aaron",
+                                    style = TextStyle(
+                                        fontFamily = BodyFont,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+                                        lineHeight = mockupSp(18f)
+                                    ),
+                                    color = FieldPlaceholderColor
+                                )
+                            }
+                            inner()
+                        }
+                    )
+                }
             }
         }
-    )
+        }
+    }
 }
 
 @Composable

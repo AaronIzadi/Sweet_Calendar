@@ -78,6 +78,8 @@ object MockupDimens {
     const val NAV_ICON = 16
     const val NAV_ICON_LARGE = 15
     const val NAV_ICON_SLOT = 18
+    /** Fits `buildLollipop(2)` head + stick with −1px overlap (25px mockup). */
+    const val NAV_ICON_SLOT_H = 26
     const val NAV_LABEL_F = 6.5f
     const val PRIORITY_SPARKLE_SLOT = 10
     const val PRIORITY_CHIP_PAD_V = 10
@@ -170,4 +172,57 @@ object MockupDimens {
     const val PERMISSION_SECONDARY = 12
     const val PERMISSION_PAD_H = 30
     const val PERMISSION_PAD_BOTTOM = 40
+
+    // Search
+    const val SEARCH_BAR_RADIUS = 12
+    const val SEARCH_BAR_SHADOW = 2
+    const val SEARCH_BAR_PAD_H = 14
+    const val SEARCH_BAR_PAD_V = 11
+    const val SEARCH_TEXT = 13
+    const val SEARCH_ICON = 18
+    const val SEARCH_GROUP_LABEL = 8
+    const val SEARCH_CHIP_TEXT = 10.5f
+    const val SEARCH_CHIP_RADIUS = 9
+
+    // Stats
+    const val STATS_TITLE = 18
+    const val STATS_SUB = 11
+    const val STATS_JAR_ICON = 40
+    const val STATS_BIG_NUM = 30
+    const val STATS_BIG_LBL = 10
+    const val STATS_BIG_CARD_RADIUS = 18
+    const val STATS_BIG_CARD_SHADOW = 3
+    const val STATS_JAR_CARD_RADIUS = 16
+    const val STATS_JAR_CARD_SHADOW = 3
+    const val STATS_BAR_HEIGHT = 90
+    const val STATS_BAR_DAY = 8
+    const val STATS_BAR_RADIUS = 4
+    const val STATS_HEAT_RADIUS = 4
+    const val STATS_HEAT_GAP = 4
+
+    // Offline / error
+    const val OFFLINE_BANNER_RADIUS = 12
+    const val OFFLINE_BANNER_TEXT = 11
+    const val OFFLINE_WARN_ICON = 10
+    const val OFFLINE_ICON_W = 64
+    const val OFFLINE_ICON_H = 56
+    const val OFFLINE_TITLE = 15
+    const val OFFLINE_SUB = 12
+    const val OFFLINE_PAD_H = 32
+    const val OFFLINE_PAD_BOTTOM = 60
+
+    // Recover snackbar
+    const val SNACKBAR_RADIUS = 12
+    const val SNACKBAR_MSG_F = 11.5f
+    const val SNACKBAR_RECOVER = 9
+    const val SNACKBAR_PAD_H = 14
+    const val SNACKBAR_PAD_V = 12
+    const val SNACKBAR_EDGE = 14
+    const val SNACKBAR_BOTTOM = 14
+    const val TRASH_BTN = 26
+    const val TRASH_BTN_RADIUS = 8
+    const val TRASH_ICON_W = 12
+    const val TRASH_ICON_H = 10
+    const val DEMO_HINT_F = 10.5f
+    const val SNACKBAR_SCROLL_PAD_BOTTOM = 130
 }

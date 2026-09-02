@@ -1,13 +1,19 @@
 package com.example.calendartodo.ui.search
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,20 +29,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.example.calendartodo.data.local.TaskEntity
-import com.example.calendartodo.jalali.JalaliDate
-import com.example.calendartodo.ui.components.SweetSectionLabel
+import com.example.calendartodo.ui.components.SearchGroupLabel
+import com.example.calendartodo.ui.components.SearchIcon
 import com.example.calendartodo.ui.components.SweetTaskCard
-import com.example.calendartodo.ui.components.formatDisplayShort
-import com.example.calendartodo.ui.components.formatTime12h
+import com.example.calendartodo.ui.components.TaskCardStyle
+import com.example.calendartodo.ui.components.TaskMetaStyle
 import com.example.calendartodo.ui.stats.searchTasks
+import com.example.calendartodo.ui.theme.BodyFont
+import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
 
+private val SearchPlaceholderColor = Color(0xFFB7A493)
+private val RecentChipBackground = Color(0xFFF1E9FB)
+private val RecentChipBackgroundDark = Color(0xFF3A2C4C)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
     tasks: List<TaskEntity>,
@@ -49,151 +63,150 @@ fun SearchScreen(
     val colors = SweetTheme.colors
     var query by remember { mutableStateOf("") }
     val results = remember(tasks, query) { searchTasks(tasks, query) }
+    val chipBackground = if (colors.isDark) RecentChipBackgroundDark else RecentChipBackground
+
+    BackHandler(onBack = onBack)
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "←",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.purpleDeep,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(9.dp))
-                    .clickable(onClick = onBack)
-                    .padding(end = 12.dp, top = 4.dp, bottom = 4.dp)
-            )
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.paper)
-                    .padding(horizontal = 14.dp, vertical = 11.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("⌕", color = colors.muted, modifier = Modifier.padding(end = 8.dp))
-                BasicTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = colors.ink),
-                    cursorBrush = SolidColor(colors.pink),
-                    modifier = Modifier.fillMaxWidth(),
-                    decorationBox = { inner ->
-                        if (query.isEmpty()) {
-                            Text("Search tasks…", style = MaterialTheme.typography.bodyMedium, color = colors.muted)
-                        }
-                        inner()
-                    }
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(16),
+                    bottom = mockupDp(6)
                 )
+        ) {
+            val barShape = RoundedCornerShape(mockupDp(MockupDimens.SEARCH_BAR_RADIUS))
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .offset(y = mockupDp(MockupDimens.SEARCH_BAR_SHADOW))
+                        .clip(barShape)
+                        .background(colors.line)
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(barShape)
+                        .background(colors.paper)
+                        .padding(
+                            horizontal = mockupDp(MockupDimens.SEARCH_BAR_PAD_H),
+                            vertical = mockupDp(MockupDimens.SEARCH_BAR_PAD_V)
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
+                ) {
+                    SearchIcon(
+                        size = mockupDp(MockupDimens.SEARCH_ICON),
+                        color = SearchPlaceholderColor
+                    )
+                    BasicTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            fontFamily = BodyFont,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = mockupSp(MockupDimens.SEARCH_TEXT),
+                            color = colors.ink
+                        ),
+                        cursorBrush = SolidColor(colors.pink),
+                        modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { inner ->
+                            if (query.isEmpty()) {
+                                Text(
+                                    "Search tasks…",
+                                    style = TextStyle(
+                                        fontFamily = BodyFont,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = mockupSp(MockupDimens.SEARCH_TEXT)
+                                    ),
+                                    color = SearchPlaceholderColor
+                                )
+                            }
+                            inner()
+                        }
+                    )
+                }
             }
         }
 
-        LazyColumn(modifier = Modifier.padding(horizontal = 18.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = mockupDp(18))
+        ) {
             if (query.isNotBlank()) {
                 item {
-                    SweetSectionLabel("RESULTS · ${results.size}")
+                    SearchGroupLabel("RESULTS · ${results.size}")
                 }
                 if (results.isEmpty()) {
                     item {
                         Text(
                             "No matching tasks",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = mockupSp(12f)
+                            ),
                             color = colors.muted,
-                            modifier = Modifier.padding(vertical = 12.dp)
+                            modifier = Modifier.padding(bottom = mockupDp(8))
                         )
                     }
                 } else {
                     items(results, key = { it.id }) { task ->
-                        HighlightedTaskRow(
+                        SweetTaskCard(
                             task = task,
-                            query = query,
                             onClick = {
                                 onSearchSubmitted(query)
                                 onTaskClick(task)
-                            }
+                            },
+                            style = TaskCardStyle.Mockup,
+                            highlightQuery = query,
+                            metaStyle = TaskMetaStyle.SearchResult
                         )
                     }
                 }
-            } else if (recentSearches.isNotEmpty()) {
-                item { SweetSectionLabel("RECENT SEARCHES") }
+            }
+
+            if (recentSearches.isNotEmpty()) {
                 item {
-                    Row(modifier = Modifier.fillMaxWidth()) {
+                    SearchGroupLabel("RECENT SEARCHES")
+                }
+                item {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
+                        verticalArrangement = Arrangement.spacedBy(mockupDp(8)),
+                        modifier = Modifier.padding(bottom = mockupDp(6))
+                    ) {
                         recentSearches.forEach { term ->
                             Text(
                                 term,
-                                style = MaterialTheme.typography.bodySmall,
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = mockupSp(MockupDimens.SEARCH_CHIP_TEXT),
+                                    lineHeight = mockupSp(14f)
+                                ),
                                 color = colors.purpleDeep,
                                 modifier = Modifier
-                                    .padding(end = 8.dp, bottom = 8.dp)
-                                    .clip(RoundedCornerShape(9.dp))
-                                    .background(if (colors.isDark) colors.paper else androidx.compose.ui.graphics.Color(0xFFF1E9FB))
+                                    .clip(RoundedCornerShape(mockupDp(MockupDimens.SEARCH_CHIP_RADIUS)))
+                                    .background(chipBackground)
                                     .clickable { query = term }
-                                    .padding(horizontal = 11.dp, vertical = 7.dp)
+                                    .padding(horizontal = mockupDp(11), vertical = mockupDp(7))
                             )
                         }
                     }
                 }
             }
-            item { Spacer(Modifier.height(32.dp)) }
+
+            item { Spacer(Modifier.height(mockupDp(24))) }
         }
     }
 }
-
-@Composable
-private fun HighlightedTaskRow(
-    task: TaskEntity,
-    query: String,
-    onClick: () -> Unit
-) {
-    val colors = SweetTheme.colors
-    val date = remember(task.jalaliDate) { JalaliDate.parseIso(task.jalaliDate) }
-    val isToday = date == JalaliDate.today()
-    val meta = buildList {
-        add(if (isToday) "Today" else date.formatDisplayShort())
-        task.reminderTime?.let { add(formatTime12h(it)) }
-        if (task.category.isNotBlank()) add(task.category)
-    }.joinToString(" · ")
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(colors.paper)
-            .clickable(onClick = onClick)
-            .padding(12.dp)
-    ) {
-        Text(
-            buildHighlightedText(task.title, query, colors),
-            style = MaterialTheme.typography.titleSmall,
-            color = colors.ink
-        )
-        Text(meta, style = MaterialTheme.typography.bodySmall, color = colors.muted, modifier = Modifier.padding(top = 2.dp))
-    }
-}
-
-@Composable
-private fun buildHighlightedText(text: String, query: String, colors: com.example.calendartodo.ui.theme.SweetColors) =
-    buildAnnotatedString {
-        val lower = text.lowercase()
-        val q = query.trim().lowercase()
-        var start = 0
-        var idx = lower.indexOf(q)
-        while (idx >= 0 && q.isNotEmpty()) {
-            append(text.substring(start, idx))
-            withStyle(SpanStyle(background = colors.lemon, color = colors.ink)) {
-                append(text.substring(idx, idx + q.length))
-            }
-            start = idx + q.length
-            idx = lower.indexOf(q, start)
-        }
-        append(text.substring(start))
-    }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +28,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -44,6 +48,8 @@ import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.PixelFont
+import com.example.calendartodo.ui.theme.PixelPurple
+import com.example.calendartodo.ui.theme.PixelPurpleHighlight
 import com.example.calendartodo.ui.theme.SweetTheme
 
 enum class TaskCategory(val label: String) {
@@ -63,6 +69,12 @@ enum class TaskCardStyle {
     Mockup,
     /** Full interactive card with checkbox and delete. */
     Interactive
+}
+
+enum class TaskMetaStyle {
+    Default,
+    /** Date · time · category — used on search results. */
+    SearchResult
 }
 
 private val TaskMetaColor = Color(0xFF9A8878)
@@ -85,6 +97,20 @@ fun SweetSectionLabel(text: String, modifier: Modifier = Modifier) {
         ),
         color = SweetTheme.colors.purpleDeep,
         modifier = modifier.padding(top = 20.dp, bottom = 10.dp)
+    )
+}
+
+@Composable
+fun SearchGroupLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = TextStyle(
+            fontFamily = PixelFont,
+            fontSize = mockupSp(MockupDimens.SEARCH_GROUP_LABEL),
+            lineHeight = mockupSp(12f)
+        ),
+        color = SweetTheme.colors.purpleDeep,
+        modifier = modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
     )
 }
 
@@ -161,9 +187,12 @@ fun SweetTaskCard(
     task: TaskEntity,
     onClick: () -> Unit = {},
     onToggleComplete: (() -> Unit)? = null,
+    onRecover: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     showDate: Boolean = false,
+    highlightQuery: String? = null,
+    metaStyle: TaskMetaStyle = TaskMetaStyle.Default,
     style: TaskCardStyle = TaskCardStyle.Interactive
 ) {
     when (style) {
@@ -171,8 +200,12 @@ fun SweetTaskCard(
             task = task,
             onClick = onClick,
             onToggleComplete = onToggleComplete,
+            onRecover = onRecover,
+            onDelete = onDelete,
             modifier = modifier,
-            showDate = showDate
+            showDate = showDate,
+            highlightQuery = highlightQuery,
+            metaStyle = metaStyle
         )
         TaskCardStyle.Interactive -> InteractiveTaskCard(
             task, onClick, onToggleComplete, onDelete, modifier, showDate
@@ -185,8 +218,12 @@ private fun MockupTaskCard(
     task: TaskEntity,
     onClick: () -> Unit,
     onToggleComplete: (() -> Unit)? = null,
+    onRecover: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
-    showDate: Boolean = false
+    showDate: Boolean = false,
+    highlightQuery: String? = null,
+    metaStyle: TaskMetaStyle = TaskMetaStyle.Default
 ) {
     val colors = SweetTheme.colors
     val category = TaskCategory.fromString(task.category)
@@ -255,7 +292,7 @@ private fun MockupTaskCard(
                         .clickable(onClick = onClick)
                 ) {
                     Text(
-                        task.title,
+                        text = buildMockupTaskTitle(task.title, highlightQuery, colors),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = mockupSp(MockupDimens.TASK_TITLE_F),
@@ -266,10 +303,21 @@ private fun MockupTaskCard(
                         overflow = TextOverflow.Ellipsis,
                         textDecoration = if (task.isDone) TextDecoration.LineThrough else null
                     )
-                    val meta = buildList {
-                        task.reminderTime?.let { add(formatTime12h(it)) }
-                        if (task.category.isNotBlank()) add(task.category)
-                        if (showDate) add(JalaliDate.parseIso(task.jalaliDate).formatDisplayShort())
+                    val meta = when (metaStyle) {
+                        TaskMetaStyle.SearchResult -> buildList {
+                            val date = JalaliDate.parseIso(task.jalaliDate)
+                            add(
+                                if (date == JalaliDate.today()) "Today"
+                                else date.formatDisplayShort()
+                            )
+                            task.reminderTime?.let { add(formatTime12h(it)) }
+                            if (task.category.isNotBlank()) add(task.category)
+                        }
+                        TaskMetaStyle.Default -> buildList {
+                            task.reminderTime?.let { add(formatTime12h(it)) }
+                            if (task.category.isNotBlank()) add(task.category)
+                            if (showDate) add(JalaliDate.parseIso(task.jalaliDate).formatDisplayShort())
+                        }
                     }
                     if (meta.isNotEmpty()) {
                         Text(
@@ -286,11 +334,88 @@ private fun MockupTaskCard(
                         )
                     }
                 }
-                if (!task.isDone && priority == TaskPriority.High) {
-                    SparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
+                when {
+                    onRecover != null || onDelete != null -> {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(mockupDp(6))
+                        ) {
+                            if (onRecover != null) {
+                                TaskRecoverButton(onClick = onRecover)
+                            }
+                            if (onDelete != null) {
+                                TaskTrashButton(onClick = onDelete)
+                            }
+                        }
+                    }
+                    !task.isDone && priority == TaskPriority.High -> {
+                        SparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TaskRecoverButton(onClick: () -> Unit) {
+    val colors = SweetTheme.colors
+    Text(
+        "RECOVER",
+        style = TextStyle(
+            fontFamily = PixelFont,
+            fontSize = mockupSp(MockupDimens.SNACKBAR_RECOVER),
+            letterSpacing = mockupSp(0.5f),
+            lineHeight = mockupSp(14f)
+        ),
+        color = colors.purpleDeep,
+        modifier = Modifier
+            .clip(RoundedCornerShape(mockupDp(MockupDimens.TRASH_BTN_RADIUS)))
+            .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFBEDE3))
+            .clickable(onClick = onClick)
+            .padding(horizontal = mockupDp(8), vertical = mockupDp(7))
+    )
+}
+
+@Composable
+private fun TaskTrashButton(onClick: () -> Unit) {
+    val colors = SweetTheme.colors
+    Box(
+        modifier = Modifier
+            .size(mockupDp(MockupDimens.TRASH_BTN))
+            .clip(RoundedCornerShape(mockupDp(MockupDimens.TRASH_BTN_RADIUS)))
+            .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFBEDE3))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        TrashIcon(
+            width = mockupDp(MockupDimens.TRASH_ICON_W),
+            height = mockupDp(MockupDimens.TRASH_ICON_H)
+        )
+    }
+}
+
+private fun buildMockupTaskTitle(
+    title: String,
+    highlightQuery: String?,
+    colors: com.example.calendartodo.ui.theme.SweetColors
+): androidx.compose.ui.text.AnnotatedString {
+    val query = highlightQuery?.trim().orEmpty()
+    if (query.isEmpty()) return buildAnnotatedString { append(title) }
+    val lower = title.lowercase()
+    val q = query.lowercase()
+    return buildAnnotatedString {
+        var start = 0
+        var idx = lower.indexOf(q)
+        while (idx >= 0) {
+            append(title.substring(start, idx))
+            withStyle(SpanStyle(background = colors.lemon, color = colors.ink)) {
+                append(title.substring(idx, idx + q.length))
+            }
+            start = idx + q.length
+            idx = lower.indexOf(q, start)
+        }
+        append(title.substring(start))
     }
 }
 
@@ -548,6 +673,7 @@ fun SweetBottomNav(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val navColor = colors.purpleDeep
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -572,12 +698,25 @@ fun SweetBottomNav(
                 label = "TODAY",
                 selected = selected == AppDestination.Today,
                 onClick = { onSelect(AppDestination.Today) }
-            ) { NavLollipopIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
+            ) {
+                NavLollipopIcon(
+                    size = mockupDp(MockupDimens.NAV_ICON),
+                    headColor = navColor,
+                    highlightColor = PixelPurpleHighlight,
+                    stickColor = PixelPurple
+                )
+            }
             NavItem(
                 label = "WEEK",
                 selected = selected == AppDestination.Week,
                 onClick = { onSelect(AppDestination.Week) }
-            ) { NavPeppermintIcon(size = mockupDp(MockupDimens.NAV_ICON)) }
+            ) {
+                NavPeppermintIcon(
+                    size = mockupDp(MockupDimens.NAV_ICON),
+                    color = navColor,
+                    highlightColor = PixelPurpleHighlight
+                )
+            }
             NavItem(
                 label = "MONTH",
                 selected = selected == AppDestination.Month,
@@ -585,7 +724,7 @@ fun SweetBottomNav(
             ) {
                 NavMonthGridIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
-                    color = colors.purpleDeep
+                    color = navColor
                 )
             }
             NavItem(
@@ -595,7 +734,7 @@ fun SweetBottomNav(
             ) {
                 NavSettingsGearIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
-                    color = colors.purpleDeep
+                    color = navColor
                 )
             }
         }
@@ -610,7 +749,8 @@ private fun NavItem(
     icon: @Composable () -> Unit
 ) {
     val colors = SweetTheme.colors
-    val iconSlot = mockupDp(MockupDimens.NAV_ICON_SLOT)
+    val iconSlotW = mockupDp(MockupDimens.NAV_ICON_SLOT)
+    val iconSlotH = mockupDp(MockupDimens.NAV_ICON_SLOT_H)
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(mockupDp(12)))
@@ -621,7 +761,9 @@ private fun NavItem(
         verticalArrangement = Arrangement.spacedBy(mockupDp(4))
     ) {
         Box(
-            modifier = Modifier.size(iconSlot),
+            modifier = Modifier
+                .width(iconSlotW)
+                .height(iconSlotH),
             contentAlignment = Alignment.Center
         ) {
             icon()

@@ -35,18 +35,21 @@ import com.example.calendartodo.ui.components.CompleteCelebrationDialog
 import com.example.calendartodo.ui.components.PixelConfirmDialog
 import com.example.calendartodo.ui.components.SweetBottomNav
 import com.example.calendartodo.ui.components.SweetFab
-import com.example.calendartodo.ui.components.SweetUndoSnackbar
+import com.example.calendartodo.ui.components.SweetRecoverSnackbar
 import com.example.calendartodo.ui.daydetail.DayDetailScreen
 import com.example.calendartodo.ui.holiday.HolidayDetailScreen
 import com.example.calendartodo.ui.navigation.AppDestination
 import com.example.calendartodo.ui.offline.OfflineScreen
+import com.example.calendartodo.ui.snackbar.RecoverSnackbarScreen
 import com.example.calendartodo.ui.permission.NotificationPermissionScreen
 import com.example.calendartodo.ui.search.SearchScreen
 import com.example.calendartodo.ui.settings.SettingsScreen
 import com.example.calendartodo.ui.stats.StatsScreen
 import com.example.calendartodo.ui.taskdetail.TaskDetailScreen
 import com.example.calendartodo.ui.theme.CalendarTodoTheme
+import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.ProvideMockupScale
+import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.today.TodayScreen
 import com.example.calendartodo.ui.week.WeekScreen
@@ -70,6 +73,7 @@ private sealed class OverlayState {
     data class HolidayDetail(val date: JalaliDate, val event: DayEvent) : OverlayState()
     data object NotificationPermission : OverlayState()
     data object Offline : OverlayState()
+    data object RecoverSnackbar : OverlayState()
 }
 
 @Composable
@@ -82,6 +86,7 @@ fun MainScreen(
 ) {
     val calendarState by viewModel.uiState.collectAsState()
     val allTasks by viewModel.allTasks.collectAsState()
+    val deletedTasks by viewModel.deletedTasks.collectAsState()
     var destination by remember { mutableStateOf(AppDestination.Today) }
     var overlay by remember { mutableStateOf<OverlayState>(OverlayState.None) }
     var sheetState by remember { mutableStateOf<SheetState>(SheetState.Hidden) }
@@ -89,7 +94,7 @@ fun MainScreen(
     var showCelebration by remember { mutableStateOf(false) }
     var showWelcome by remember { mutableStateOf(!preferences.hasSeenWelcome) }
     var pendingNotificationPrompt by remember { mutableStateOf(false) }
-    var undoTask by remember { mutableStateOf<TaskEntity?>(null) }
+    var recoverTask by remember { mutableStateOf<TaskEntity?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf(preferences.userName) }
@@ -102,19 +107,19 @@ fun MainScreen(
         )
     }
 
-    fun deleteWithUndo(task: TaskEntity) {
+    fun deleteWithRecover(task: TaskEntity) {
         viewModel.deleteTask(task)
-        undoTask = task
+        recoverTask = task
         if (overlay is OverlayState.TaskDetail) {
             overlay = (overlay as OverlayState.TaskDetail).returnTo
         }
     }
 
-    LaunchedEffect(undoTask?.id) {
-        val task = undoTask ?: return@LaunchedEffect
+    LaunchedEffect(recoverTask?.id) {
+        val task = recoverTask ?: return@LaunchedEffect
         delay(4000)
-        if (undoTask?.id == task.id) {
-            undoTask = null
+        if (recoverTask?.id == task.id) {
+            recoverTask = null
         }
     }
 
@@ -193,7 +198,10 @@ fun MainScreen(
             return@ProvideMockupScale
         }
 
-        val showMainChrome = overlay == OverlayState.None || overlay == OverlayState.Archive
+        val showMainChrome = overlay == OverlayState.None ||
+            overlay == OverlayState.Archive ||
+            overlay == OverlayState.Stats ||
+            overlay == OverlayState.RecoverSnackbar
 
         Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -219,7 +227,10 @@ fun MainScreen(
                                 selected = destination,
                                 onSelect = {
                                     destination = it
-                                    if (overlay == OverlayState.Archive) {
+                                    if (overlay == OverlayState.Archive ||
+                                        overlay == OverlayState.Stats ||
+                                        overlay == OverlayState.RecoverSnackbar
+                                    ) {
                                         overlay = OverlayState.None
                                     }
                                 }
@@ -244,7 +255,7 @@ fun MainScreen(
                                 onEditTask = { openTaskDetail(it) },
                                 onAddTask = { sheetState = SheetState.Add(JalaliDate.today()) },
                                 onCompleteTask = { completeTask(it) },
-                                onDeleteTask = { deleteWithUndo(it) },
+                                onDeleteTask = { deleteWithRecover(it) },
                                 onOpenSearch = { overlay = OverlayState.Search },
                                 onOpenStats = { overlay = OverlayState.Stats },
                                 onOpenArchive = { overlay = OverlayState.Archive }
@@ -256,7 +267,7 @@ fun MainScreen(
                                 calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
                                 onCompleteTask = { completeTask(it) },
-                                onDeleteTask = { deleteWithUndo(it) }
+                                onDeleteTask = { deleteWithRecover(it) }
                             )
                             AppDestination.Month -> MonthScreen(
                                 viewModel = viewModel,
@@ -295,7 +306,8 @@ fun MainScreen(
                                 },
                                 onOpenStats = { overlay = OverlayState.Stats },
                                 onOpenArchive = { overlay = OverlayState.Archive },
-                                onOpenSearch = { overlay = OverlayState.Search }
+                                onOpenSearch = { overlay = OverlayState.Search },
+                                onOpenRecoverSnackbar = { overlay = OverlayState.RecoverSnackbar }
                             )
                         }
 
@@ -326,7 +338,7 @@ fun MainScreen(
                         tasks = allTasks,
                         onBack = { overlay = OverlayState.None },
                         onTaskClick = { openTaskDetail(it, OverlayState.Archive) },
-                        onDeleteTask = { deleteWithUndo(it) }
+                        onDeleteTask = { deleteWithRecover(it) }
                     )
                     OverlayState.Stats -> StatsScreen(
                         tasks = allTasks,
@@ -381,20 +393,27 @@ fun MainScreen(
                             overlay = OverlayState.None
                         }
                     )
+                    OverlayState.RecoverSnackbar -> RecoverSnackbarScreen(
+                        userName = userName,
+                        calendarSystem = calendarState.calendarSystem,
+                        deletedTasks = deletedTasks,
+                        onRestore = { viewModel.restoreTask(it) },
+                        onPermanentDelete = { viewModel.permanentlyDeleteTask(it) }
+                    )
                     OverlayState.NotificationPermission -> Unit
                 }
 
-                undoTask?.let { task ->
-                    SweetUndoSnackbar(
+                recoverTask?.let { task ->
+                    SweetRecoverSnackbar(
                         message = "\"${task.title}\" deleted",
                         visible = true,
-                        onUndo = {
+                        onRecover = {
                             viewModel.restoreTask(task)
-                            undoTask = null
+                            recoverTask = null
                         },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = if (showMainChrome) 88.dp else 16.dp)
+                            .padding(bottom = if (showMainChrome) mockupDp(88) else mockupDp(MockupDimens.SNACKBAR_BOTTOM))
                     )
                 }
             }
@@ -457,7 +476,7 @@ fun MainScreen(
                 viewModel.deleteTask(task)
                 taskToDelete = null
                 overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                undoTask = task
+                recoverTask = task
             },
             onDismiss = { taskToDelete = null }
         )

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -190,26 +191,92 @@ fun TaskLeafIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     )
 }
 
-/** Pencil glyph for mockup task-detail `.icon-btn` edit action. */
+/** Search magnifier from mockup `buildSearchIcon` (cell × 3). */
 @Composable
-fun EditPencilIcon(
+fun SearchIcon(
     modifier: Modifier = Modifier,
-    size: Dp = 13.dp,
-    color: Color = PurpleDeep
+    size: Dp = 18.dp,
+    color: Color = Color(0xFFB7A493)
 ) {
     PixelIcon(
         rows = listOf(
-            "11......",
-            "111.....",
-            ".111....",
-            "..111...",
-            "...111..",
-            "....111.",
-            ".....11.",
-            "......1."
+            ".111..",
+            "1...1.",
+            "1...1.",
+            ".111.1",
+            "....11"
         ),
         palette = mapOf('1' to color),
         size = size,
+        modifier = modifier
+    )
+}
+
+/** Trash can — mockup `buildTrashIcon(2)`. */
+@Composable
+fun TrashIcon(
+    modifier: Modifier = Modifier,
+    width: Dp = 12.dp,
+    height: Dp = 10.dp,
+    color: Color = Color(0xFFC9846A)
+) {
+    PixelIcon(
+        rows = listOf(
+            ".1111.",
+            "111111",
+            ".1111.",
+            ".1111.",
+            ".1111."
+        ),
+        palette = mapOf('1' to color),
+        width = width,
+        height = height,
+        modifier = modifier
+    )
+}
+
+/** Error banner — mockup `buildWarnIcon(2)`. */
+@Composable
+fun WarnIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 10.dp,
+    color: Color = ChocBrownDark
+) {
+    PixelIcon(
+        rows = listOf(
+            "..1..",
+            ".111.",
+            ".1.1.",
+            ".1.1.",
+            ".111."
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Offline state hero — mockup `buildMeltedCandy(8)`. */
+@Composable
+fun MeltedCandyIcon(
+    modifier: Modifier = Modifier,
+    width: Dp = 64.dp,
+    height: Dp = 56.dp,
+    color: Color = PixelPurple
+) {
+    PixelIcon(
+        rows = listOf(
+            "..1111..",
+            ".111111.",
+            "11111111",
+            "1111.111",
+            ".11..11.",
+            "..1..1..",
+            ".1....1."
+        ),
+        palette = mapOf('1' to color),
+        width = width,
+        height = height,
         modifier = modifier
     )
 }
@@ -338,15 +405,27 @@ fun SettingsGumdropIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
 private val ChocBrown = Color(0xFF8A5A38)
 private val ChocBrownDark = Color(0xFF5A3A22)
 
-/** Settings row — mockup `buildChocolate(2)`. */
+/** Mockup `buildChocolate(cell)` — 8×8 chocolate square. */
 @Composable
-fun SettingsChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun MockupChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     PixelIcon(
         rows = chocolatePixelRows(),
         palette = mapOf('o' to ChocBrownDark, 'd' to ChocBrownDark, 'b' to ChocBrown),
         size = size,
         modifier = modifier
     )
+}
+
+/** Settings row — mockup `buildChocolate(2)`. */
+@Composable
+fun SettingsChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+    MockupChocolateIcon(modifier = modifier, size = size)
+}
+
+/** Stats jar — mockup `buildChocolate(5)`. */
+@Composable
+fun StatsJarChocolateIcon(modifier: Modifier = Modifier, size: Dp = 40.dp) {
+    MockupChocolateIcon(modifier = modifier, size = size)
 }
 
 /** Settings row — mockup `buildBoxUnchecked(2)`. */
@@ -369,7 +448,13 @@ fun SettingsBoxUncheckedIcon(modifier: Modifier = Modifier, size: Dp = 10.dp) {
 /** Profile avatar — mockup `buildLollipop(3)`. */
 @Composable
 fun ProfileLollipopIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
-    NavLollipopIcon(modifier = modifier, size = size)
+    NavLollipopIcon(
+        modifier = modifier,
+        size = size,
+        headColor = BubblegumPink,
+        highlightColor = Color.White,
+        stickColor = LollipopTan
+    )
 }
 
 private fun chocolatePixelRows(): List<String> =
@@ -387,10 +472,20 @@ private val LollipopTan = Color(0xFFD4A574)
 
 /** Bottom-nav Today tab — mockup `buildLollipop(2)`. */
 @Composable
-fun NavLollipopIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
-    val headPalette = mapOf('a' to BubblegumPink, 'b' to Color.White)
-    val stickPalette = mapOf('t' to LollipopTan)
-    Column(modifier = modifier.width(size), horizontalAlignment = Alignment.CenterHorizontally) {
+fun NavLollipopIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    headColor: Color = PurpleDeep,
+    highlightColor: Color = PixelPurpleHighlight,
+    stickColor: Color = PixelPurple
+) {
+    val headPalette = mapOf('a' to headColor, 'b' to highlightColor)
+    val stickPalette = mapOf('t' to stickColor)
+    val stickHeight = size * 0.625f
+    Column(
+        modifier = modifier.width(size),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         PixelIcon(
             rows = listOf(
                 "..aaaa..",
@@ -416,17 +511,23 @@ fun NavLollipopIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             ),
             palette = stickPalette,
             width = size,
-            height = size * 0.625f
+            height = stickHeight,
+            modifier = Modifier.offset(y = -size / 16)
         )
     }
 }
 
 /** Bottom-nav Week tab — mockup `buildPeppermint(2)`. */
 @Composable
-fun NavPeppermintIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun NavPeppermintIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    color: Color = SprinklesRed,
+    highlightColor: Color = Color.White
+) {
     PixelIcon(
         rows = peppermintPixelRows(),
-        palette = mapOf('r' to SprinklesRed, 'w' to Color.White),
+        palette = mapOf('r' to color, 'w' to highlightColor),
         width = size,
         height = size,
         modifier = modifier
@@ -438,7 +539,7 @@ fun NavPeppermintIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
 fun NavMonthGridIcon(
     modifier: Modifier = Modifier,
     size: Dp = 15.dp,
-    color: Color = GrapePurple
+    color: Color = PurpleDeep
 ) {
     PixelIcon(
         rows = listOf(
@@ -460,7 +561,7 @@ fun NavMonthGridIcon(
 fun NavSettingsGearIcon(
     modifier: Modifier = Modifier,
     size: Dp = 15.dp,
-    color: Color = GrapePurple
+    color: Color = PurpleDeep
 ) {
     PixelIcon(
         rows = listOf(

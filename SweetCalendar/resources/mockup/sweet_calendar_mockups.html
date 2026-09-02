@@ -89,8 +89,34 @@
   body.dark .swatch.selected{outline-color:var(--pink);}
   body.dark .profile-avatar{background:rgba(0,0,0,0.2);}
 
-  /* ---------- SPACE THEME — "sweet calendar in orbit" palette ---------- */
+  /* ---------- SPACE THEME (LIGHT) — "sweet calendar in daylight orbit" ---------- */
   body.space{
+    --cream:#EDEFFC;
+    --paper:#FFFDFD;
+    --ink:#2B2450;
+    --line:#DAD9F5;
+    --pink:#FF7FD1;
+    --pink-deep:#D63F9E;
+    --purple:#8B6FEF;
+    --purple-deep:#6B4FD6;
+    --mint:#4FD8D2;
+    --mint-deep:#1F9E98;
+    --lemon:#FFCB4D;
+    --lemon-deep:#DE9F14;
+    --choc:#9089B0;
+    --choc-deep:#5C5678;
+    background:
+      radial-gradient(1.5px 1.5px at 24px 32px, #FFE8A3 90%, transparent),
+      radial-gradient(1.5px 1.5px at 96px 84px, #FFC9EA 90%, transparent),
+      radial-gradient(1px 1px at 152px 44px, #C9BFF2 80%, transparent),
+      radial-gradient(1.5px 1.5px at 210px 128px, #FFE8A3 90%, transparent),
+      radial-gradient(1px 1px at 264px 66px, #C9BFF2 80%, transparent),
+      linear-gradient(160deg,#EAF0FF 0%, #F3E8FF 50%, #FFE9F5 100%);
+    background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat;
+    background-size: 300px 220px, 300px 220px, 300px 220px, 300px 220px, 300px 220px, cover;
+  }
+  /* ---------- SPACE THEME (DARK) — "sweet calendar in orbit" ---------- */
+  body.space.dark{
     --cream:#141833;
     --paper:#1E2359;
     --ink:#EDEBFF;
@@ -116,44 +142,75 @@
     background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, no-repeat;
     background-size: 300px 220px, 300px 220px, 300px 220px, 300px 220px, 300px 220px, 300px 220px, cover;
   }
-  body.space .phone{ box-shadow:0 20px 50px rgba(0,0,0,0.6), 0 0 0 2px #08091A inset; }
-  body.space .brand span.a{color:var(--pink);}
-  body.space .brand span.b{color:var(--purple-deep);}
-  body.space p.sub{color:#9C97D9;}
+  body.space .phone{ box-shadow:0 20px 50px rgba(107,79,214,0.28), 0 0 0 2px #FFFFFF inset; }
+  body.space.dark .phone{ box-shadow:0 20px 50px rgba(0,0,0,0.6), 0 0 0 2px #08091A inset; }
+  body.space .brand span.a, body.space.dark .brand span.a{color:var(--pink);}
+  body.space .brand span.b, body.space.dark .brand span.b{color:var(--purple-deep);}
+  body.space p.sub{color:#7A72B0;}
+  body.space.dark p.sub{color:#9C97D9;}
   body.space .greet-date, body.space .task-meta, body.space .week-range, body.space .month-sub,
   body.space .day-detail-sub, body.space .stats-sub, body.space .empty-sub, body.space .error-sub,
   body.space .permission-sub, body.space .welcome-tag, body.space .field-label, body.space .stat-lbl,
   body.space .settings-row .value, body.space .bar-day, body.space .day-chip .dow,
   body.space .weekday-row div, body.space .completed-row, body.space .source-row,
-  body.space .chev-right, body.space .btn-secondary, body.space .holiday-date{ color:#9C97D9; }
-  body.space .navitem{color:#5C5A9A;}
-  body.space .navitem.active{background:#2A2F72; color:var(--pink);}
-  body.space .jar-track{background:#171A3D; border-color:var(--line);}
-  body.space .streak-pill{background:#2A2F72; color:var(--lemon);}
-  body.space .day-cell.weekend{background:#2A2F72;}
-  body.space .day-cell.holiday{background:#173A3A;}
-  body.space .welcome-bg{background:linear-gradient(180deg,#1A1440 0%, #141833 55%, #0B0E24 100%);}
-  body.space .permission-wrap{background:linear-gradient(180deg,#141833 0%,#0B0E24 100%);}
-  body.space .holiday-hero{background:linear-gradient(160deg,#173A3A 0%, #1A1440 100%);}
-  body.space .holiday-tag{background:#173A3A; color:var(--mint);}
-  body.space .recent-chip{background:#2A2F72; color:var(--purple-deep);}
-  body.space .error-banner{background:#3A2F1A; color:var(--lemon);}
-  body.space .filter-chip.active{background:var(--purple); color:#0B0E24;}
-  body.space mark.hl{color:#0B0E24;}
-  body.space .priority-chip.selected{color:#0B0E24;}
+  body.space .chev-right, body.space .btn-secondary, body.space .holiday-date{ color:#7A72B0; }
+  body.space.dark .greet-date, body.space.dark .task-meta, body.space.dark .week-range, body.space.dark .month-sub,
+  body.space.dark .day-detail-sub, body.space.dark .stats-sub, body.space.dark .empty-sub, body.space.dark .error-sub,
+  body.space.dark .permission-sub, body.space.dark .welcome-tag, body.space.dark .field-label, body.space.dark .stat-lbl,
+  body.space.dark .settings-row .value, body.space.dark .bar-day, body.space.dark .day-chip .dow,
+  body.space.dark .weekday-row div, body.space.dark .completed-row, body.space.dark .source-row,
+  body.space.dark .chev-right, body.space.dark .btn-secondary, body.space.dark .holiday-date{ color:#9C97D9; }
+  body.space .navitem{color:#A7A0D9;}
+  body.space.dark .navitem{color:#5C5A9A;}
+  body.space .navitem.active{background:#F3E4FA; color:var(--pink-deep);}
+  body.space.dark .navitem.active{background:#2A2F72; color:var(--pink);}
+  body.space .jar-track{background:#EDEAFB; border-color:var(--line);}
+  body.space.dark .jar-track{background:#171A3D; border-color:var(--line);}
+  body.space .streak-pill{background:#FFF1D6; color:var(--lemon-deep);}
+  body.space.dark .streak-pill{background:#2A2F72; color:var(--lemon);}
+  body.space .day-cell.weekend{background:#FFF1D6;}
+  body.space.dark .day-cell.weekend{background:#2A2F72;}
+  body.space .day-cell.holiday{background:#DFF7F5;}
+  body.space.dark .day-cell.holiday{background:#173A3A;}
+  body.space .welcome-bg{background:linear-gradient(180deg,#F3E8FF 0%, #EAF0FF 55%, #E8FBF8 100%);}
+  body.space.dark .welcome-bg{background:linear-gradient(180deg,#1A1440 0%, #141833 55%, #0B0E24 100%);}
+  body.space .permission-wrap{background:linear-gradient(180deg,#EDEFFC 0%,#F3E8FF 100%);}
+  body.space.dark .permission-wrap{background:linear-gradient(180deg,#141833 0%,#0B0E24 100%);}
+  body.space .holiday-hero{background:linear-gradient(160deg,#DFF7F5 0%, #F3E8FF 100%);}
+  body.space.dark .holiday-hero{background:linear-gradient(160deg,#173A3A 0%, #1A1440 100%);}
+  body.space .holiday-tag{background:#DFF7F5; color:var(--mint-deep);}
+  body.space.dark .holiday-tag{background:#173A3A; color:var(--mint);}
+  body.space .recent-chip{background:#F3E4FA; color:var(--purple-deep);}
+  body.space.dark .recent-chip{background:#2A2F72; color:var(--purple-deep);}
+  body.space .error-banner{background:#FFF1D6; color:var(--lemon-deep);}
+  body.space.dark .error-banner{background:#3A2F1A; color:var(--lemon);}
+  body.space .filter-chip.active{background:var(--purple); color:#FFFFFF;}
+  body.space.dark .filter-chip.active{background:var(--purple); color:#0B0E24;}
+  body.space.dark mark.hl{color:#0B0E24;}
+  body.space.dark .priority-chip.selected{color:#0B0E24;}
   body.space .feat-chip{color:var(--ink);}
   body.space .skip-link{color:var(--purple-deep);}
-  body.space .dot{background:#33397A;}
-  body.space .heat-cell{background:#141833;}
-  body.space .heat-cell.l1{background:#173A3A;}
-  body.space .heat-cell.l2{background:#1F6E63;}
-  body.space .heat-cell.l3{background:#2A9A87;}
+  body.space .dot{background:#DAD9F5;}
+  body.space.dark .dot{background:#33397A;}
+  body.space .heat-cell{background:#EDEFFC;}
+  body.space.dark .heat-cell{background:#141833;}
+  body.space .heat-cell.l1{background:#DFF7F5;}
+  body.space.dark .heat-cell.l1{background:#173A3A;}
+  body.space .heat-cell.l2{background:#9FE5DE;}
+  body.space.dark .heat-cell.l2{background:#1F6E63;}
+  body.space .heat-cell.l3{background:#4FD8D2;}
+  body.space.dark .heat-cell.l3{background:#2A9A87;}
   body.space .heat-cell.l4{background:var(--mint-deep);}
-  body.space .swatch.selected{outline-color:var(--pink);}
-  body.space .profile-avatar{background:rgba(255,255,255,0.12);}
-  body.space .home-wallpaper{background:linear-gradient(160deg,#1A1440 0%, #141833 60%, #0B0E24 100%);}
-  body.space .widget-card{background:rgba(30,35,89,0.88);}
-  body.space .app-icon span.lbl{color:#C9C4E0;}
+  body.space .swatch.selected{outline-color:var(--pink-deep);}
+  body.space.dark .swatch.selected{outline-color:var(--pink);}
+  body.space .profile-avatar{background:rgba(255,255,255,0.4);}
+  body.space.dark .profile-avatar{background:rgba(255,255,255,0.12);}
+  body.space .home-wallpaper{background:linear-gradient(160deg,#F3E8FF 0%, #EAF0FF 60%, #E8FBF8 100%);}
+  body.space.dark .home-wallpaper{background:linear-gradient(160deg,#1A1440 0%, #141833 60%, #0B0E24 100%);}
+  body.space .widget-card{background:rgba(255,255,255,0.92);}
+  body.space.dark .widget-card{background:rgba(30,35,89,0.88);}
+  body.space .app-icon span.lbl{color:#5C5678;}
+  body.space.dark .app-icon span.lbl{color:#C9C4E0;}
   h1.brand{
     font-family:'Press Start 2P',monospace;
     text-align:center;
@@ -778,7 +835,8 @@
   .widget-date{font-size:9.5px;color:#9A8878;font-weight:600;}
   .widget-jar-track{height:8px;border-radius:5px;background:#F1E6D8;overflow:hidden;margin:6px 0 10px;}
   .widget-jar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--mint));}
-  .widget-task-row{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px;font-weight:600;color:var(--ink);}
+  .widget-task-row{display:flex;align-items:center;gap:6px;padding:5px 0;font-size:11px;font-weight:600;color:var(--ink);}
+  .widget-done-text{text-decoration:line-through;color:var(--choc);}
   .widget-checkbox{width:14px;height:14px;border-radius:4px;border:2px solid var(--line);flex-shrink:0;}
   .widget-checkbox.checked{background:var(--mint-deep);border-color:var(--mint-deep);}
   .widget-add{
@@ -873,9 +931,12 @@
 <h1 class="brand"><span class="a">SWEET</span> <span class="b">CALENDAR</span></h1>
 <p class="sub">Pixel-art candy UI concepts — tap a tab to preview each screen</p>
 
-<div style="text-align:center;margin-bottom:18px;">
-  <button id="theme-toggle" class="tab-btn" style="background:var(--purple);color:#fff;box-shadow:0 3px 0 var(--purple-deep);">
-    <span id="theme-icon" style="display:inline-flex;vertical-align:middle;margin-right:6px;"></span><span id="theme-label">DARK MODE</span>
+<div style="text-align:center;margin-bottom:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+  <button id="family-toggle" class="tab-btn" style="background:var(--purple);color:#fff;box-shadow:0 3px 0 var(--purple-deep);">
+    <span id="family-icon" style="display:inline-flex;vertical-align:middle;margin-right:6px;"></span><span id="family-label">CANDY THEME</span>
+  </button>
+  <button id="mode-toggle" class="tab-btn" style="background:var(--purple);color:#fff;box-shadow:0 3px 0 var(--purple-deep);">
+    <span id="mode-icon" style="display:inline-flex;vertical-align:middle;margin-right:6px;"></span><span id="mode-label">LIGHT MODE</span>
   </button>
 </div>
 
@@ -1413,7 +1474,7 @@
             <div class="widget-card widget-small">
               <div class="icon-wrap" id="widget-jar-icon" style="margin-bottom:4px;"></div>
               <div class="big-num">3/5</div>
-              <div class="big-lbl">TODAY'S JAR</div>
+              <div class="big-lbl" id="widget-stat-label">TODAY'S JAR</div>
             </div>
             <div class="widget-card" style="flex:1;">
               <div class="widget-head">
@@ -1422,9 +1483,9 @@
               </div>
               <div class="widget-date">Shahrivar 10 · Wed</div>
               <div class="widget-jar-track"><div class="widget-jar-fill" style="width:60%;"></div></div>
-              <div class="widget-task-row"><div class="widget-checkbox checked"></div><span style="text-decoration:line-through;color:#B7A493;">Submit expense report</span></div>
-              <div class="widget-task-row"><div class="widget-checkbox"></div><span>Finish onboarding screens</span></div>
-              <div class="widget-task-row"><div class="widget-checkbox"></div><span>Call mom · 2:30 PM</span></div>
+              <div class="widget-task-row"><span id="widget-task-icon-1"></span><div class="widget-checkbox checked"></div><span class="widget-done-text">Submit expense report</span></div>
+              <div class="widget-task-row"><span id="widget-task-icon-2"></span><div class="widget-checkbox"></div><span>Water the balcony plants</span></div>
+              <div class="widget-task-row"><span id="widget-task-icon-3"></span><div class="widget-checkbox"></div><span>Call mom · 2:30 PM</span></div>
             </div>
           </div>
 
@@ -1528,7 +1589,7 @@ const lollipopHead = [
  "..pppp..",
 ].map(r=>r.replaceAll('p','a')); // placeholder, real map below
 
-function buildLollipop(cell){
+function buildLollipop(cell,headColor){
   const head = [
    "..aaaa..",
    ".aabaaa.",
@@ -1546,7 +1607,7 @@ function buildLollipop(cell){
    "...tt...",
    "...tt...",
   ];
-  const palette = {a:PAL.pink, b:PAL.white, t:PAL.tan};
+  const palette = {a:headColor||PAL.pink, b:PAL.white, t:PAL.tan};
   const div = document.createElement('div');
   div.appendChild(pixel(head, palette, cell));
   const s = pixel(stick, palette, cell);
@@ -1578,7 +1639,7 @@ function buildPeppermint(cell){
 }
 
 /* wrapped candy / gumdrop for FAB, add-button */
-function buildGumdrop(cell){
+function buildGumdrop(cell,bodyColor,wrapColor,highlightColor){
   const rows = [
    ".yppppppy.",
    "yyppppppyy",
@@ -1587,11 +1648,11 @@ function buildGumdrop(cell){
    "yyppppppyy",
    ".yppppppy.",
   ];
-  return pixel(rows, {y:PAL.lemon, p:PAL.purple, h:PAL.purpleH}, cell);
+  return pixel(rows, {y:wrapColor||PAL.lemon, p:bodyColor||PAL.purple, h:highlightColor||PAL.purpleH}, cell);
 }
 
 /* chocolate square */
-function buildChocolate(cell){
+function buildChocolate(cell,fillColor,seamColor){
   const rows = [];
   for(let r=0;r<8;r++){
     let row='';
@@ -1602,11 +1663,11 @@ function buildChocolate(cell){
     }
     rows.push(row);
   }
-  return pixel(rows, {o:PAL.chocD, d:PAL.chocD, b:PAL.choc}, cell);
+  return pixel(rows, {o:seamColor||PAL.chocD, d:seamColor||PAL.chocD, b:fillColor||PAL.choc}, cell);
 }
 
 /* checkmark candy (completed) */
-function buildCheckCandy(cell){
+function buildCheckCandy(cell,bgColor){
   const rows = [
    "..mmm..",
    ".mmmmm.",
@@ -1616,7 +1677,7 @@ function buildCheckCandy(cell){
    ".mmwmm.",
    "..mmm..",
   ];
-  return pixel(rows, {m:PAL.mint, w:PAL.white}, cell);
+  return pixel(rows, {m:bgColor||PAL.mint, w:PAL.white}, cell);
 }
 
 /* plain mint circle bullet (list bullet) */
@@ -1740,7 +1801,7 @@ place('sb-icon-month', buildBattery(3));
 
 place('streak-icon', buildChocolate(2));
 /* category icons: shape carries meaning, not just color */
-function buildHeart(cell){
+function buildHeart(cell,color){
   const rows = [
    ".11.11.",
    "1111111",
@@ -1749,9 +1810,9 @@ function buildHeart(cell){
    "..111..",
    "...1...",
   ];
-  return pixel(rows, {'1':PAL.pinkD}, cell);
+  return pixel(rows, {'1':color||PAL.pinkD}, cell);
 }
-function buildGem(cell){
+function buildGem(cell,color){
   const rows = [
    "...1...",
    "..111..",
@@ -1761,9 +1822,9 @@ function buildGem(cell){
    "..111..",
    "...1...",
   ];
-  return pixel(rows, {'1':PAL.purpleD}, cell);
+  return pixel(rows, {'1':color||PAL.purpleD}, cell);
 }
-function buildLeaf(cell){
+function buildLeaf(cell,color){
   const rows = [
    "..1....",
    ".111...",
@@ -1773,7 +1834,7 @@ function buildLeaf(cell){
    "...111.",
    "....11.",
   ];
-  return pixel(rows, {'1':PAL.mintD}, cell);
+  return pixel(rows, {'1':color||PAL.mintD}, cell);
 }
 
 place('task-icon-1', buildGem(4));
@@ -1797,8 +1858,8 @@ function buildBottomNav(containerId, activeIndex, theme){
   const isSpace = theme === 'space';
   const navColor = isSpace ? '#C9B8FF' : (isDark ? '#D4C2FA' : PAL.purpleD);
   const items = isSpace ? [
-    {label:'TODAY', icon:()=>buildRocket(2)},
-    {label:'WEEK', icon:()=>buildRingPlanet(2)},
+    {label:'TODAY', icon:()=>buildRocketIcon(2)},
+    {label:'WEEK', icon:()=>buildRingPlanetIcon(2)},
     {label:'MONTH', icon:()=>buildGridIcon(3,navColor)},
     {label:'SETTINGS', icon:()=>buildGearIcon(3,navColor)},
   ] : [
@@ -2123,7 +2184,7 @@ place('flow-icon-4', buildGearIcon(4,'#6B5A4B'));
 place('flow-icon-5', buildCheckCandy(4));
 
 
-/* ---------- theme toggle ---------- */
+/* ---------- theme system: 2 independent axes = 4 combinations ---------- */
 function buildMoon(cell,color){
   const rows = [
    "..111.",
@@ -2135,7 +2196,7 @@ function buildMoon(cell,color){
   ];
   return pixel(rows, {'1':color||'#FFDB70'}, cell);
 }
-function buildSun(cell){
+function buildSun(cell,color){
   const rows = [
    ".1.1.1",
    "1.111.",
@@ -2143,9 +2204,9 @@ function buildSun(cell){
    "11111.",
    ".1.1.1",
   ];
-  return pixel(rows, {'1':'#FFD23F'}, cell);
+  return pixel(rows, {'1':color||'#FFD23F'}, cell);
 }
-function buildRocketIcon(cell){
+function buildRocketIcon(cell,bodyColor,windowColor,finColor,flameColor){
   const rows = [
    "....1....",
    "...111...",
@@ -2159,9 +2220,9 @@ function buildRocketIcon(cell){
    "...fff...",
    "....f....",
   ];
-  return pixel(rows, {'1':'#ECEFF7','o':'#5FE6E0','2':'#FF6AC8','f':'#FFD466'}, cell);
+  return pixel(rows, {'1':bodyColor||'#ECEFF7','o':windowColor||'#5FE6E0','2':finColor||'#FF6AC8','f':flameColor||'#FFD466'}, cell);
 }
-function buildRingPlanetIcon(cell){
+function buildRingPlanetIcon(cell,planetColor,ringColor){
   const rows = [
    "...pppp...",
    "..pppppp..",
@@ -2172,7 +2233,7 @@ function buildRingPlanetIcon(cell){
    "..pppppp..",
    "...pppp...",
   ];
-  return pixel(rows, {'p':'#33C8C2','r':'#FFD466'}, cell);
+  return pixel(rows, {'p':planetColor||'#33C8C2','r':ringColor||'#FFD466'}, cell);
 }
 function buildStarShape(cell,color){
   const rows = [
@@ -2184,7 +2245,7 @@ function buildStarShape(cell,color){
   ];
   return pixel(rows, {'1':color||'#FF6AC8'}, cell);
 }
-function buildComet(cell){
+function buildComet(cell,headColor,tailColor){
   const rows = [
    "..11....",
    ".1111...",
@@ -2193,9 +2254,17 @@ function buildComet(cell){
    "..11fff.",
    "...1fff.",
   ];
-  return pixel(rows, {'1':'#ECEFF7','f':'#FFD466'}, cell);
+  return pixel(rows, {'1':headColor||'#ECEFF7','f':tailColor||'#FFD466'}, cell);
 }
-function buildAstroCheck(cell){
+function buildSatellite(cell,bodyColor,panelColor){
+  const rows = [
+   "....1....",
+   "pp.111.pp",
+   "pp.111.pp",
+  ];
+  return pixel(rows, {'1':bodyColor||'#ECEFF7', p:panelColor||'#FFD466'}, cell);
+}
+function buildAstroCheck(cell,bgColor){
   const rows = [
    "..mmm..",
    ".mmmmm.",
@@ -2205,93 +2274,167 @@ function buildAstroCheck(cell){
    ".mmwmm.",
    "..mmm..",
   ];
-  return pixel(rows, {m:'#33C8C2', w:'#EDEBFF'}, cell);
-}
-place('theme-icon', buildMoon(2));
-
-/* candy-vs-space icon swap map: id -> [candyBuilder, spaceBuilder] */
-function renderSpaceIcons(isSpace){
-  place('hero-lollipop', isSpace ? buildRocketIcon(7) : buildLollipop(8));
-  place('deco-mint-tl', isSpace ? buildStarShape(3,'#FFD466') : buildPeppermint(4));
-  place('deco-lemon-tr', isSpace ? buildRingPlanetIcon(2) : buildGumdrop(3));
-  place('deco-choc-bl', isSpace ? buildComet(3) : buildChocolate(4));
-  place('chip-icon-1', isSpace ? buildRingPlanetIcon(1) : buildPeppermint(2));
-  place('chip-icon-2', isSpace ? buildAstroCheck(2) : buildCheckCandy(2));
-  place('chip-icon-3', isSpace ? buildComet(2) : buildChocolate(2));
-  place('fab-home', isSpace ? buildRocketIcon(2) : buildGumdrop(3));
-  place('fab-week', isSpace ? buildRocketIcon(2) : buildGumdrop(3));
-  place('fab-month', isSpace ? buildRocketIcon(2) : buildGumdrop(3));
-  place('fab-daydetail', isSpace ? buildRocketIcon(2) : buildGumdrop(3));
-  place('fab-empty', isSpace ? buildRocketIcon(2) : buildGumdrop(3));
-  place('task-icon-1', isSpace ? buildRocketIcon(3) : buildGem(4));
-  place('task-icon-2', isSpace ? buildStarShape(3) : buildHeart(4));
-  place('task-icon-3', isSpace ? buildRingPlanetIcon(2) : buildLeaf(4));
-  place('wtask-icon-1', isSpace ? buildRocketIcon(3) : buildGem(4));
-  place('wtask-icon-2', isSpace ? buildStarShape(3) : buildHeart(4));
-  place('wtask-icon-3', isSpace ? buildRingPlanetIcon(2) : buildLeaf(4));
-  place('wtask-icon-4', isSpace ? buildRocketIcon(3) : buildGem(4));
-  place('dtask-icon-1', isSpace ? buildRingPlanetIcon(2) : buildLeaf(4));
-  place('swatch-icon-personal', isSpace ? buildStarShape(4) : buildHeart(3));
-  place('swatch-icon-home', isSpace ? buildRingPlanetIcon(2) : buildLeaf(3));
-  place('swatch-icon-work', isSpace ? buildRocketIcon(3) : buildGem(3));
-  place('badge-icon', isSpace ? buildRingPlanetIcon(1) : buildLeaf(2));
-  place('streak-icon', isSpace ? buildComet(2) : buildChocolate(2));
-  place('profile-icon', isSpace ? buildRocketIcon(2) : buildLollipop(3));
-  place('widget-icon-1', isSpace ? buildRocketIcon(2) : buildLollipop(2));
-  place('widget-app-icon', isSpace ? buildRocketIcon(2) : buildLollipop(2));
-  place('empty-icon', isSpace ? buildMoon(8,'#8B6FEF') : buildIceCream(8));
-  place('holiday-hero-icon', isSpace ? buildRingPlanetIcon(4) : buildPeppermint(9));
-  place('snack-icon-1', isSpace ? buildRocketIcon(3) : buildGem(4));
-  place('snack-icon-2', isSpace ? buildStarShape(3) : buildHeart(4));
-  place('snack-icon-3', isSpace ? buildRingPlanetIcon(2) : buildLeaf(4));
+  return pixel(rows, {m:bgColor||'#33C8C2', w:'#EDEBFF'}, cell);
 }
 
-function renderThemedIcons(theme){
-  const isDark = theme === 'dark';
-  const isSpace = theme === 'space';
-  const navColor = isSpace ? '#C9B8FF' : (isDark ? '#D4C2FA' : PAL.purpleD);
-  const searchColor = isSpace ? '#B3A8E0' : (isDark ? '#C9B8DE' : '#B7A493');
-  const warnColor = isSpace ? '#FFD466' : (isDark ? '#EFD3AE' : PAL.chocD);
-  place('icon-cal-mini', buildCalIcon(2,navColor));
-  place('icon-clock-mini', buildClockIcon(2,navColor));
-  place('icon-cal-mini2', buildCalIcon(2,navColor));
-  place('icon-clock-mini2', buildClockIcon(2,navColor));
-  place('src-icon', buildCalIcon(2,navColor));
-  place('search-icon', buildSearchIcon(3,searchColor));
-  place('warn-icon', buildWarnIcon(2,warnColor));
-  place('set-icon-1', buildCalIcon(2,navColor));
-  place('set-icon-2', buildCalIcon(2,navColor));
-  buildBottomNav('bottomnav-home', 0, theme);
-  buildBottomNav('bottomnav-week', 1, theme);
-  buildBottomNav('bottomnav-month', 2, theme);
-  buildBottomNav('bottomnav-empty', 0, theme);
-  buildBottomNav('bottomnav-archive', 0, theme);
-  buildBottomNav('bottomnav-stats', 3, theme);
-  buildBottomNav('bottomnav-snackbar', 0, theme);
-  renderSpaceIcons(isSpace);
+/* one full icon-color palette per (family, mode) combination */
+const ICON_PALETTES = {
+  'candy-light': {
+    heart:'#E0487F', gem:'#5B3F82', leaf:'#4FB894', lollipopHead:'#FF6FA5',
+    chocFill:'#8A5A38', chocSeam:'#5A3A22', checkBg:'#7FDCB8', gumBody:'#9B7ED8', gumWrap:'#FFD23F', gumHi:'#C3AEEF',
+    navColor:PAL.purpleD, searchColor:'#B7A493', warnColor:PAL.chocD
+  },
+  'candy-dark': {
+    heart:'#FF8FBB', gem:'#C3AEEF', leaf:'#6FE0B4', lollipopHead:'#FF8CBE',
+    chocFill:'#C99770', chocSeam:'#8A6B4E', checkBg:'#6FE0B4', gumBody:'#C3AEEF', gumWrap:'#FFDB70', gumHi:'#E4D9FB',
+    navColor:'#D4C2FA', searchColor:'#C9B8DE', warnColor:'#EFD3AE'
+  },
+  'space-light': {
+    rocketBody:'#C9BFF2', rocketWindow:'#1F9E98', rocketFin:'#D63F9E', rocketFlame:'#DE9F14',
+    planetBody:'#1F9E98', planetRing:'#DE9F14', star:'#D63F9E', cometHead:'#6B4FD6', cometTail:'#DE9F14',
+    moon:'#6B4FD6', astroBg:'#1F9E98', satBody:'#6B4FD6', satPanel:'#DE9F14',
+    navColor:'#6B4FD6', searchColor:'#8B84C4', warnColor:'#DE9F14'
+  },
+  'space-dark': {
+    rocketBody:'#ECEFF7', rocketWindow:'#5FE6E0', rocketFin:'#FF6AC8', rocketFlame:'#FFD466',
+    planetBody:'#33C8C2', planetRing:'#FFD466', star:'#FF6AC8', cometHead:'#ECEFF7', cometTail:'#FFD466',
+    moon:'#8B6FEF', astroBg:'#33C8C2', satBody:'#ECEFF7', satPanel:'#FFD466',
+    navColor:'#C9B8FF', searchColor:'#B3A8E0', warnColor:'#FFD466'
+  },
+};
+
+function renderCategoryIcons(family, mode){
+  const P = ICON_PALETTES[family+'-'+mode];
+  const isSpace = family === 'space';
+  if(isSpace){
+    place('hero-lollipop', buildRocketIcon(7,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('deco-mint-tl', buildStarShape(3,P.star));
+    place('deco-lemon-tr', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('deco-choc-bl', buildComet(3,P.cometHead,P.cometTail));
+    place('chip-icon-1', buildRingPlanetIcon(1,P.planetBody,P.planetRing));
+    place('chip-icon-2', buildAstroCheck(2,P.astroBg));
+    place('chip-icon-3', buildSatellite(3,P.satBody,P.satPanel));
+    const rocketFab = ()=>buildRocketIcon(2,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame);
+    place('fab-home', rocketFab()); place('fab-week', rocketFab()); place('fab-month', rocketFab());
+    place('fab-daydetail', rocketFab()); place('fab-empty', rocketFab());
+    place('task-icon-1', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('task-icon-2', buildStarShape(3,P.star));
+    place('task-icon-3', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('wtask-icon-1', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('wtask-icon-2', buildStarShape(3,P.star));
+    place('wtask-icon-3', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('wtask-icon-4', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('dtask-icon-1', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('swatch-icon-personal', buildStarShape(4,P.star));
+    place('swatch-icon-home', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('swatch-icon-work', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('badge-icon', buildRingPlanetIcon(1,P.planetBody,P.planetRing));
+    place('streak-icon', buildComet(2,P.cometHead,P.cometTail));
+    place('profile-icon', buildRocketIcon(2,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('widget-icon-1', buildRocketIcon(2,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('widget-app-icon', buildRocketIcon(2,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('widget-task-icon-1', buildRocketIcon(2,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('widget-task-icon-2', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+    place('widget-task-icon-3', buildStarShape(2,P.star));
+    place('widget-jar-icon', buildComet(4,P.cometHead,P.cometTail));
+    document.getElementById('widget-stat-label').textContent = "MISSION STATUS";
+    place('empty-icon', buildMoon(8,P.moon));
+    place('holiday-hero-icon', buildRingPlanetIcon(4,P.planetBody,P.planetRing));
+    place('offline-icon', buildSatellite(9,P.satBody,P.satPanel));
+    place('snack-icon-1', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+    place('snack-icon-2', buildStarShape(3,P.star));
+    place('snack-icon-3', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
+  } else {
+    place('hero-lollipop', buildLollipop(8,P.lollipopHead));
+    place('deco-mint-tl', buildPeppermint(4));
+    place('deco-lemon-tr', buildGumdrop(3,P.gumBody,P.gumWrap,P.gumHi));
+    place('deco-choc-bl', buildChocolate(4,P.chocFill,P.chocSeam));
+    place('chip-icon-1', buildPeppermint(2));
+    place('chip-icon-2', buildCheckCandy(2,P.checkBg));
+    place('chip-icon-3', buildChocolate(2,P.chocFill,P.chocSeam));
+    const gumFab = ()=>buildGumdrop(3,P.gumBody,P.gumWrap,P.gumHi);
+    place('fab-home', gumFab()); place('fab-week', gumFab()); place('fab-month', gumFab());
+    place('fab-daydetail', gumFab()); place('fab-empty', gumFab());
+    place('task-icon-1', buildGem(4,P.gem));
+    place('task-icon-2', buildHeart(4,P.heart));
+    place('task-icon-3', buildLeaf(4,P.leaf));
+    place('wtask-icon-1', buildGem(4,P.gem));
+    place('wtask-icon-2', buildHeart(4,P.heart));
+    place('wtask-icon-3', buildLeaf(4,P.leaf));
+    place('wtask-icon-4', buildGem(4,P.gem));
+    place('dtask-icon-1', buildLeaf(4,P.leaf));
+    place('swatch-icon-personal', buildHeart(3,P.heart));
+    place('swatch-icon-home', buildLeaf(3,P.leaf));
+    place('swatch-icon-work', buildGem(3,P.gem));
+    place('badge-icon', buildLeaf(2,P.leaf));
+    place('streak-icon', buildChocolate(2,P.chocFill,P.chocSeam));
+    place('profile-icon', buildLollipop(3,P.lollipopHead));
+    place('widget-icon-1', buildLollipop(2,P.lollipopHead));
+    place('widget-app-icon', buildLollipop(2,P.lollipopHead));
+    place('widget-task-icon-1', buildGem(3,P.gem));
+    place('widget-task-icon-2', buildLeaf(3,P.leaf));
+    place('widget-task-icon-3', buildHeart(3,P.heart));
+    place('widget-jar-icon', buildChocolate(4,P.chocFill,P.chocSeam));
+    document.getElementById('widget-stat-label').textContent = "TODAY'S JAR";
+    place('empty-icon', buildIceCream(8));
+    place('holiday-hero-icon', buildPeppermint(9));
+    place('offline-icon', buildMeltedCandy(8));
+    place('snack-icon-1', buildGem(4,P.gem));
+    place('snack-icon-2', buildHeart(4,P.heart));
+    place('snack-icon-3', buildLeaf(4,P.leaf));
+  }
 }
 
-const themeOrder = ['light','space','dark'];
-const themeNextLabel = {light:'SPACE THEME', space:'DARK MODE', dark:'LIGHT MODE'};
-let currentTheme = 'light';
-function applyTheme(theme){
-  currentTheme = theme;
+function renderThemedIcons(family, mode){
+  const P = ICON_PALETTES[family+'-'+mode];
+  place('icon-cal-mini', buildCalIcon(2,P.navColor));
+  place('icon-clock-mini', buildClockIcon(2,P.navColor));
+  place('icon-cal-mini2', buildCalIcon(2,P.navColor));
+  place('icon-clock-mini2', buildClockIcon(2,P.navColor));
+  place('src-icon', buildCalIcon(2,P.navColor));
+  place('search-icon', buildSearchIcon(3,P.searchColor));
+  place('warn-icon', buildWarnIcon(2,P.warnColor));
+  place('set-icon-1', buildCalIcon(2,P.navColor));
+  place('set-icon-2', buildCalIcon(2,P.navColor));
+  const navTheme = family === 'space' ? 'space' : (mode === 'dark' ? 'dark' : 'light');
+  buildBottomNav('bottomnav-home', 0, navTheme);
+  buildBottomNav('bottomnav-week', 1, navTheme);
+  buildBottomNav('bottomnav-month', 2, navTheme);
+  buildBottomNav('bottomnav-empty', 0, navTheme);
+  buildBottomNav('bottomnav-archive', 0, navTheme);
+  buildBottomNav('bottomnav-stats', 3, navTheme);
+  buildBottomNav('bottomnav-snackbar', 0, navTheme);
+  renderCategoryIcons(family, mode);
+}
+
+let currentFamily = 'candy';
+let currentMode = 'light';
+function applyThemeState(){
   document.body.classList.remove('dark','space');
-  if(theme !== 'light') document.body.classList.add(theme);
-  document.getElementById('theme-label').textContent = themeNextLabel[theme];
-  const iconBuilder = theme === 'light' ? buildRocketIcon(1) : (theme === 'space' ? buildMoon(2,'#FFDB70') : buildSun(2));
-  place('theme-icon', iconBuilder);
-  renderThemedIcons(theme);
+  if(currentFamily === 'space') document.body.classList.add('space');
+  if(currentMode === 'dark') document.body.classList.add('dark');
+
+  document.getElementById('family-label').textContent = currentFamily === 'candy' ? 'CANDY THEME' : 'SPACE THEME';
+  document.getElementById('mode-label').textContent = currentMode === 'light' ? 'LIGHT MODE' : 'DARK MODE';
+  const P = ICON_PALETTES[currentFamily+'-'+currentMode];
+  place('family-icon', currentFamily === 'candy' ? buildLollipop(1,P.lollipopHead) : buildRocketIcon(1,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
+  place('mode-icon', currentMode === 'light' ? buildSun(2) : buildMoon(2));
+
+  renderThemedIcons(currentFamily, currentMode);
 }
-document.getElementById('theme-toggle').addEventListener('click', ()=>{
-  const idx = themeOrder.indexOf(currentTheme);
-  const next = themeOrder[(idx+1) % themeOrder.length];
-  applyTheme(next);
+document.getElementById('family-toggle').addEventListener('click', ()=>{
+  currentFamily = currentFamily === 'candy' ? 'space' : 'candy';
+  applyThemeState();
 });
+document.getElementById('mode-toggle').addEventListener('click', ()=>{
+  currentMode = currentMode === 'light' ? 'dark' : 'light';
+  applyThemeState();
+});
+applyThemeState();
 
 
 /* ---------- tab switching ---------- */
-const tabBtns = document.querySelectorAll('.tab-btn');
+const tabBtns = document.querySelectorAll('.tabs .tab-btn');
 const screens = document.querySelectorAll('.screen');
 const phoneStage = document.getElementById('phone-stage');
 const flowStage = document.getElementById('flow-stage');
