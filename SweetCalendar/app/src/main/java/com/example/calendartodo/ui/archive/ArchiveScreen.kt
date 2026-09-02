@@ -1,14 +1,17 @@
 package com.example.calendartodo.ui.archive
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,22 +27,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.ui.components.SweetTaskCard
+import com.example.calendartodo.ui.components.TaskCardStyle
 import com.example.calendartodo.ui.stats.ArchiveFilter
 import com.example.calendartodo.ui.stats.computeMonthCompletionPercent
 import com.example.calendartodo.ui.stats.filterCompletedTasks
 import com.example.calendartodo.ui.stats.groupTasksByDay
-import com.example.calendartodo.ui.today.computeStreak
+import com.example.calendartodo.ui.theme.BodyFont
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
+import com.example.calendartodo.ui.today.computeStreak
+
+private val ArchiveStatLabelColor = Color(0xFF9A8878)
+private val ArchiveDayLabelColor = Color(0xFFB39D89)
 
 @Composable
 fun ArchiveScreen(
     tasks: List<TaskEntity>,
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
-    onCompleteTask: (TaskEntity) -> Unit = {},
     onDeleteTask: (TaskEntity) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -51,111 +63,197 @@ fun ArchiveScreen(
     val streak = remember(tasks) { computeStreak(tasks) }
     val monthPct = remember(tasks) { computeMonthCompletionPercent(tasks) }
 
+    BackHandler(onBack = onBack)
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "←",
-                style = MaterialTheme.typography.bodyMedium,
-                color = colors.purpleDeep,
-                modifier = Modifier
-                    .clickable(onClick = onBack)
-                    .padding(end = 12.dp)
+        Text(
+            "Completed",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.ARCHIVE_TITLE),
+                lineHeight = mockupSp(20f)
+            ),
+            color = colors.ink,
+            modifier = Modifier.padding(
+                start = mockupDp(18),
+                end = mockupDp(18),
+                top = mockupDp(16),
+                bottom = mockupDp(4)
             )
-            Text("Completed", style = MaterialTheme.typography.titleMedium, color = colors.ink)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(14),
+                    bottom = mockupDp(4)
+                ),
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
+        ) {
+            ArchiveStatCard("$totalDone", "TOTAL DONE", modifier = Modifier.weight(1f))
+            ArchiveStatCard("$streak", "DAY STREAK", modifier = Modifier.weight(1f))
+            ArchiveStatCard("$monthPct%", "THIS MONTH", modifier = Modifier.weight(1f))
         }
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(14),
+                    bottom = mockupDp(4)
+                ),
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
         ) {
-            StatCard("$totalDone", "TOTAL DONE", modifier = Modifier.weight(1f))
-            StatCard("$streak", "DAY STREAK", modifier = Modifier.weight(1f))
-            StatCard("$monthPct%", "THIS MONTH", modifier = Modifier.weight(1f))
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            ArchiveFilter.entries.forEach { f ->
-                val active = f == filter
-                Text(
-                    f.label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (active) Color.White else colors.muted,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(9.dp))
-                        .background(if (active) colors.purple else colors.paper)
-                        .clickable { filter = f }
-                        .padding(horizontal = 12.dp, vertical = 7.dp)
+            ArchiveFilter.entries.forEach { option ->
+                ArchiveFilterChip(
+                    label = option.label,
+                    selected = option == filter,
+                    onClick = { filter = option }
                 )
             }
         }
 
-        LazyColumn(modifier = Modifier.padding(horizontal = 18.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = mockupDp(18))
+        ) {
             if (grouped.isEmpty()) {
                 item {
                     Text(
                         "No completed tasks in this period",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = mockupSp(12f)
+                        ),
                         color = colors.muted,
-                        modifier = Modifier.padding(vertical = 24.dp)
+                        modifier = Modifier.padding(vertical = mockupDp(24))
                     )
                 }
             } else {
                 grouped.forEach { (label, dayTasks) ->
                     item {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = colors.muted,
-                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                        )
+                        ArchiveDayLabel(label)
                     }
-                    items(dayTasks, key = { it.id }) { task ->
+                    items(
+                        dayTasks.sortedBy { it.reminderTime.orEmpty() },
+                        key = { it.id }
+                    ) { task ->
                         SweetTaskCard(
                             task = task,
                             onClick = { onTaskClick(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            onDelete = { onDeleteTask(task) }
+                            style = TaskCardStyle.Mockup
                         )
                     }
                 }
             }
-            item { Spacer(Modifier.height(32.dp)) }
+            item { Spacer(Modifier.height(mockupDp(24))) }
         }
     }
 }
 
 @Composable
-private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
+private fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(colors.paper)
-            .padding(vertical = 12.dp, horizontal = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(value, style = MaterialTheme.typography.headlineMedium, color = colors.purpleDeep)
+    val shape = RoundedCornerShape(mockupDp(MockupDimens.ARCHIVE_STAT_RADIUS))
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.ARCHIVE_STAT_SHADOW))
+                .clip(shape)
+                .background(colors.line)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(colors.paper)
+                .padding(horizontal = mockupDp(10), vertical = mockupDp(12)),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.ARCHIVE_STAT_NUM),
+                    lineHeight = mockupSp(22f)
+                ),
+                color = colors.purpleDeep
+            )
+            Text(
+                label,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.ARCHIVE_STAT_LBL),
+                    lineHeight = mockupSp(11f),
+                    letterSpacing = mockupSp(0.2f)
+                ),
+                color = ArchiveStatLabelColor,
+                modifier = Modifier.padding(top = mockupDp(2))
+            )
+        }
+    }
+}
+
+@Composable
+private fun ArchiveFilterChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = SweetTheme.colors
+    val shape = RoundedCornerShape(mockupDp(MockupDimens.ARCHIVE_FILTER_RADIUS))
+
+    Box {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.ARCHIVE_FILTER_SHADOW))
+                .clip(shape)
+                .background(if (selected) colors.purpleDeep else colors.line)
+        )
         Text(
             label,
-            style = MaterialTheme.typography.labelSmall,
-            color = colors.muted,
-            modifier = Modifier.padding(top = 2.dp)
+            style = TextStyle(
+                fontFamily = BodyFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.ARCHIVE_FILTER_TEXT),
+                lineHeight = mockupSp(13f)
+            ),
+            color = if (selected) Color.White else ArchiveStatLabelColor,
+            modifier = Modifier
+                .clip(shape)
+                .background(if (selected) colors.purple else colors.paper)
+                .clickable(onClick = onClick)
+                .padding(horizontal = mockupDp(12), vertical = mockupDp(7))
         )
     }
+}
+
+@Composable
+private fun ArchiveDayLabel(text: String) {
+    Text(
+        text,
+        style = TextStyle(
+            fontFamily = PixelFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = mockupSp(MockupDimens.ARCHIVE_DAY_LABEL),
+            lineHeight = mockupSp(12f),
+            letterSpacing = mockupSp(0.3f)
+        ),
+        color = ArchiveDayLabelColor,
+        modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
+    )
 }

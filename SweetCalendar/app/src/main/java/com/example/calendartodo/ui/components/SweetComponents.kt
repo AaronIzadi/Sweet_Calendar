@@ -3,6 +3,7 @@ package com.example.calendartodo.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -165,7 +167,13 @@ fun SweetTaskCard(
     style: TaskCardStyle = TaskCardStyle.Interactive
 ) {
     when (style) {
-        TaskCardStyle.Mockup -> MockupTaskCard(task, onClick, modifier, showDate)
+        TaskCardStyle.Mockup -> MockupTaskCard(
+            task = task,
+            onClick = onClick,
+            onToggleComplete = onToggleComplete,
+            modifier = modifier,
+            showDate = showDate
+        )
         TaskCardStyle.Interactive -> InteractiveTaskCard(
             task, onClick, onToggleComplete, onDelete, modifier, showDate
         )
@@ -176,6 +184,7 @@ fun SweetTaskCard(
 private fun MockupTaskCard(
     task: TaskEntity,
     onClick: () -> Unit,
+    onToggleComplete: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     showDate: Boolean = false
 ) {
@@ -201,14 +210,14 @@ private fun MockupTaskCard(
                 .fillMaxWidth()
                 .alpha(if (task.isDone) 0.55f else 1f)
                 .clip(shape)
-                .background(colors.paper)
-                .clickable(onClick = onClick),
+                .background(colors.paper),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(width = mockupDp(MockupDimens.TASK_ACCENT_W), height = taskAccentH)
                     .background(accent)
+                    .clickable(onClick = onClick)
             )
             Row(
                 modifier = Modifier
@@ -220,11 +229,31 @@ private fun MockupTaskCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (task.isDone) {
-                    CheckCandyIcon(size = taskIcon)
+                    CheckCandyIcon(
+                        size = taskIcon,
+                        modifier = Modifier.clickable(
+                            onClick = onToggleComplete ?: onClick,
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        )
+                    )
                 } else {
-                    TaskCategoryIcon(category = category, size = taskIcon)
+                    Box(
+                        modifier = Modifier.clickable(
+                            onClick = onClick,
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        )
+                    ) {
+                        TaskCategoryIcon(category = category, size = taskIcon)
+                    }
                 }
-                Column(modifier = Modifier.padding(start = mockupDp(10)).weight(1f)) {
+                Column(
+                    modifier = Modifier
+                        .padding(start = mockupDp(10))
+                        .weight(1f)
+                        .clickable(onClick = onClick)
+                ) {
                     Text(
                         task.title,
                         style = MaterialTheme.typography.bodyMedium.copy(
@@ -439,9 +468,9 @@ fun JalaliDate.formatAlternateCalendarLine(calendarSystem: CalendarSystem): Stri
 /** Square paper icon button matching mockup `.icon-btn` (detail headers, etc.). */
 @Composable
 fun SweetIconButton(
-    label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
 ) {
     val colors = SweetTheme.colors
     val radius = mockupDp(MockupDimens.DETAIL_ICON_BTN_RADIUS)
@@ -462,16 +491,28 @@ fun SweetIconButton(
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                label,
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.DETAIL_ICON_BTN_FONT)
-                ),
-                color = colors.purpleDeep
-            )
+            content()
         }
+    }
+}
+
+@Composable
+fun SweetIconButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    SweetIconButton(onClick = onClick, modifier = modifier) {
+        Text(
+            label,
+            style = TextStyle(
+                fontFamily = BodyFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.DETAIL_ICON_BTN_FONT)
+            ),
+            color = colors.purpleDeep
+        )
     }
 }
 

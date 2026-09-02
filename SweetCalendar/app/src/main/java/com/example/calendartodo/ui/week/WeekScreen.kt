@@ -23,10 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,7 +46,6 @@ import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
-import kotlinx.coroutines.launch
 
 private val ChipDowColor = Color(0xFF9A8878)
 private val ChipSelectedDowColor = Color(0xFFEFE6FA)
@@ -66,7 +65,6 @@ fun WeekScreen(
     val weekDays = remember(weekStartsOn) { JalaliDate.weekContaining(today, weekStartsOn) }
     var selectedDay by remember { mutableStateOf(today) }
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
 
     val weekStart = weekDays.first()
     val weekEnd = weekDays.last()
@@ -76,16 +74,15 @@ fun WeekScreen(
                 .sortedWith(compareBy({ it.isDone }, { it.reminderTime.orEmpty() }))
         }
     }
-    val daysWithTasks = remember(tasksByDay) {
-        weekDays.filter { tasksByDay[it].orEmpty().isNotEmpty() }
+    val selectedDayTasks = remember(tasksByDay, selectedDay) {
+        tasksByDay[selectedDay].orEmpty()
     }
-    val scrollIndexByDay = remember(daysWithTasks, tasksByDay) {
-        var index = 0
-        daysWithTasks.associateWith { day ->
-            val start = index
-            index += 1 + tasksByDay[day].orEmpty().size
-            start
-        }
+    val weekHasTasks = remember(tasksByDay) {
+        tasksByDay.values.any { it.isNotEmpty() }
+    }
+
+    LaunchedEffect(selectedDay) {
+        listState.animateScrollToItem(0)
     }
 
     Column(
@@ -151,12 +148,7 @@ fun WeekScreen(
                     calendarSystem = calendarSystem,
                     pendingCount = pendingCount,
                     selected = day == selectedDay,
-                    onClick = {
-                        selectedDay = day
-                        scrollIndexByDay[day]?.let { index ->
-                            scope.launch { listState.animateScrollToItem(index) }
-                        }
-                    }
+                    onClick = { selectedDay = day }
                 )
             }
         }
@@ -169,7 +161,7 @@ fun WeekScreen(
                 .padding(horizontal = mockupDp(18))
                 .padding(top = mockupDp(8))
         ) {
-            if (daysWithTasks.isEmpty()) {
+            if (!weekHasTasks) {
                 item {
                     Text(
                         "No tasks this week",
@@ -178,19 +170,25 @@ fun WeekScreen(
                         modifier = Modifier.padding(vertical = mockupDp(12))
                     )
                 }
+            } else if (selectedDayTasks.isEmpty()) {
+                item {
+                    Text(
+                        "No tasks on this day",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.muted,
+                        modifier = Modifier.padding(vertical = mockupDp(12))
+                    )
+                }
             } else {
-                daysWithTasks.forEach { day ->
-                    val dayTasks = tasksByDay[day].orEmpty()
-                    item(key = "label-${day.formatIso()}") {
-                        WeekDayLabel(day, calendarSystem)
-                    }
-                    items(dayTasks, key = { it.id }) { task ->
-                        SweetTaskCard(
-                            task = task,
-                            onClick = { onEditTask(task) },
-                            style = TaskCardStyle.Mockup
-                        )
-                    }
+                item(key = "label-${selectedDay.formatIso()}") {
+                    WeekDayLabel(selectedDay, calendarSystem)
+                }
+                items(selectedDayTasks, key = { it.id }) { task ->
+                    SweetTaskCard(
+                        task = task,
+                        onClick = { onEditTask(task) },
+                        style = TaskCardStyle.Mockup
+                    )
                 }
             }
             item { Spacer(Modifier.height(mockupDp(90))) }

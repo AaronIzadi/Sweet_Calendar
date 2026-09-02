@@ -190,6 +190,50 @@ fun TaskLeafIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     )
 }
 
+/** Pencil glyph for mockup task-detail `.icon-btn` edit action. */
+@Composable
+fun EditPencilIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 13.dp,
+    color: Color = PurpleDeep
+) {
+    PixelIcon(
+        rows = listOf(
+            "11......",
+            "111.....",
+            ".111....",
+            "..111...",
+            "...111..",
+            "....111.",
+            ".....11.",
+            "......1."
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Large bell from mockup `buildBigBell` (cell × 8). */
+@Composable
+fun BigBellIcon(modifier: Modifier = Modifier, size: Dp = 72.dp, color: Color = BubblegumPink) {
+    PixelIcon(
+        rows = listOf(
+            "...111...",
+            "..11111..",
+            ".1111111.",
+            ".1111111.",
+            ".1111111.",
+            "111111111",
+            "....1....",
+            "...111..."
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
 /** Completed-task candy from mockup `buildCheckCandy`. */
 @Composable
 fun CheckCandyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {

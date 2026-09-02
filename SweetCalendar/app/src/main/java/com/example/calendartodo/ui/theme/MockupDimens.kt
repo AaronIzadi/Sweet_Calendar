@@ -41,6 +41,11 @@ object MockupDimens {
     const val COMPLETED_LABEL = 10
     const val COMPLETED_LABEL_F = 10.5f
 
+    // Empty state
+    const val EMPTY_ICON = 64
+    const val EMPTY_TITLE = 15
+    const val EMPTY_SUB = 12
+
     // Week
     const val WEEK_TITLE = 16
     const val WEEK_RANGE = 11
@@ -120,6 +125,14 @@ object MockupDimens {
     const val DAY_DETAIL_SUB_F = 11f
     const val DAY_DETAIL_HEADER_GAP = 12
     const val HOLIDAY_EVENT_ICON = 24
+    const val HOLIDAY_HERO_H = 170
+    const val HOLIDAY_HERO_ICON = 72
+    const val HOLIDAY_TAG_F = 9.5f
+    const val HOLIDAY_TITLE = 18
+    const val HOLIDAY_DATE_F = 12f
+    const val HOLIDAY_BODY_F = 12.5f
+    const val HOLIDAY_SOURCE_F = 10.5f
+    const val HOLIDAY_SOURCE_ICON = 16
 
     // Settings
     const val SETTINGS_TITLE = 18
@@ -138,4 +151,23 @@ object MockupDimens {
     const val SETTINGS_PROFILE_SUB_F = 10f
     const val SETTINGS_PROFILE_ICON = 24
     const val SETTINGS_CHEVRON_F = 13f
+
+    // Archive / Completed
+    const val ARCHIVE_TITLE = 16
+    const val ARCHIVE_STAT_NUM = 18
+    const val ARCHIVE_STAT_LBL = 8.5f
+    const val ARCHIVE_STAT_RADIUS = 14
+    const val ARCHIVE_STAT_SHADOW = 2
+    const val ARCHIVE_FILTER_TEXT = 9.5f
+    const val ARCHIVE_FILTER_RADIUS = 9
+    const val ARCHIVE_FILTER_SHADOW = 2
+    const val ARCHIVE_DAY_LABEL = 8
+
+    // Reminders / notification permission
+    const val PERMISSION_BELL = 72
+    const val PERMISSION_TITLE = 16
+    const val PERMISSION_SUB = 12
+    const val PERMISSION_SECONDARY = 12
+    const val PERMISSION_PAD_H = 30
+    const val PERMISSION_PAD_BOTTOM = 40
 }

@@ -3,6 +3,7 @@ package com.example.calendartodo.ui.today
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,12 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CheckCandyIcon
-import com.example.calendartodo.ui.components.IceCreamIcon
+import com.example.calendartodo.ui.components.EmptyStateContent
 import com.example.calendartodo.ui.components.JarProgressCard
 import com.example.calendartodo.ui.components.StreakPill
 import com.example.calendartodo.ui.components.SweetSectionLabel
@@ -77,6 +77,7 @@ fun TodayScreen(
     userName: String,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onEditTask: (TaskEntity) -> Unit,
+    onAddTask: () -> Unit = {},
     onCompleteTask: (TaskEntity) -> Unit = {},
     onDeleteTask: (TaskEntity) -> Unit = {},
     onOpenSearch: () -> Unit = {},
@@ -97,76 +98,69 @@ fun TodayScreen(
             .fillMaxSize()
             .background(colors.cream)
     ) {
-        LazyColumn(
+        Column(
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()
                 .padding(horizontal = 18.dp)
         ) {
-            item {
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.Top,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            "${timeOfDayGreeting()}, $userName",
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = mockupSp(MockupDimens.GREET_TITLE),
-                                lineHeight = mockupSp(22f)
-                            ),
-                            color = colors.ink
-                        )
-                        Text(
-                            today.formatDisplayWithWeekday(calendarSystem),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = mockupSp(MockupDimens.GREET_DATE_F),
-                                lineHeight = mockupSp(16f)
-                            ),
-                            color = colors.muted,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-                    if (streak > 0) {
-                        StreakPill(streak, modifier = Modifier.clickable(onClick = onOpenStats))
-                    }
+            Spacer(Modifier.height(6.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        "${timeOfDayGreeting()}, $userName",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = mockupSp(MockupDimens.GREET_TITLE),
+                            lineHeight = mockupSp(22f)
+                        ),
+                        color = colors.ink
+                    )
+                    Text(
+                        today.formatDisplayWithWeekday(calendarSystem),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = mockupSp(MockupDimens.GREET_DATE_F),
+                            lineHeight = mockupSp(16f)
+                        ),
+                        color = colors.muted,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
-                JarProgressCard(
-                    label = "Today's jar",
-                    completed = done.size,
-                    total = todayTasks.size,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
+                if (todayTasks.isNotEmpty() && streak > 0) {
+                    StreakPill(streak, modifier = Modifier.clickable(onClick = onOpenStats))
+                }
             }
+        }
 
-            if (todayTasks.isEmpty()) {
+        if (todayTasks.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(start = 32.dp, end = 32.dp, bottom = 60.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyStateContent(onAddTask = onAddTask)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 18.dp)
+            ) {
                 item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 48.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        IceCreamIcon(size = 120.dp)
-                        Spacer(Modifier.height(18.dp))
-                        Text(
-                            "Nothing on the menu today",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = colors.ink
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            "Your jar is empty — add a task and watch it fill up with candy as you check things off.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = colors.muted,
-                            modifier = Modifier.padding(horizontal = 14.dp)
-                        )
-                    }
+                    JarProgressCard(
+                        label = "Today's jar",
+                        completed = done.size,
+                        total = todayTasks.size,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
                 }
-            } else {
+
                 if (pending.isNotEmpty()) {
                     item { SweetSectionLabel("TODAY") }
                     items(pending, key = { it.id }) { task ->
@@ -205,8 +199,8 @@ fun TodayScreen(
                         )
                     }
                 }
+                item { Spacer(Modifier.height(90.dp)) }
             }
-            item { Spacer(Modifier.height(90.dp)) }
         }
     }
 }

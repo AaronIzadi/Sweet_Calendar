@@ -31,6 +31,7 @@ import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
 import com.example.calendartodo.ui.components.ClockMiniIcon
+import com.example.calendartodo.ui.components.EditPencilIcon
 import com.example.calendartodo.ui.components.SparkleIcon
 import com.example.calendartodo.ui.components.TaskCategory
 import com.example.calendartodo.ui.components.TaskGemIcon
@@ -92,7 +93,12 @@ fun TaskDetailScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             SweetIconButton(label = "←", onClick = onBack)
-            SweetIconButton(label = "✎", onClick = onEdit)
+            SweetIconButton(onClick = onEdit) {
+                EditPencilIcon(
+                    size = mockupDp(MockupDimens.DETAIL_ICON_BTN_FONT.toInt()),
+                    color = colors.purpleDeep
+                )
+            }
         }
 
         Column(

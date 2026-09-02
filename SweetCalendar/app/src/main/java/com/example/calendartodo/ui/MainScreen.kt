@@ -62,7 +62,7 @@ private sealed class SheetState {
 
 private sealed class OverlayState {
     data object None : OverlayState()
-    data class TaskDetail(val task: TaskEntity) : OverlayState()
+    data class TaskDetail(val task: TaskEntity, val returnTo: OverlayState = None) : OverlayState()
     data class DayDetail(val date: JalaliDate) : OverlayState()
     data object Search : OverlayState()
     data object Archive : OverlayState()
@@ -106,7 +106,7 @@ fun MainScreen(
         viewModel.deleteTask(task)
         undoTask = task
         if (overlay is OverlayState.TaskDetail) {
-            overlay = OverlayState.None
+            overlay = (overlay as OverlayState.TaskDetail).returnTo
         }
     }
 
@@ -118,8 +118,8 @@ fun MainScreen(
         }
     }
 
-    fun openTaskDetail(task: TaskEntity) {
-        overlay = OverlayState.TaskDetail(task)
+    fun openTaskDetail(task: TaskEntity, returnTo: OverlayState = OverlayState.None) {
+        overlay = OverlayState.TaskDetail(task, returnTo)
     }
 
     fun showSnackbar(message: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
@@ -162,7 +162,6 @@ fun MainScreen(
             showSnackbar(if (willFillJar) "Jar full for the day!" else "Task completed!")
         } else {
             viewModel.toggleTaskDone(task)
-            showSnackbar("Task marked incomplete")
         }
     }
 
@@ -194,7 +193,7 @@ fun MainScreen(
             return@ProvideMockupScale
         }
 
-        val showMainChrome = overlay == OverlayState.None
+        val showMainChrome = overlay == OverlayState.None || overlay == OverlayState.Archive
 
         Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -216,7 +215,15 @@ fun MainScreen(
                             modifier = Modifier
                                 .background(colors.paper)
                         ) {
-                            SweetBottomNav(selected = destination, onSelect = { destination = it })
+                            SweetBottomNav(
+                                selected = destination,
+                                onSelect = {
+                                    destination = it
+                                    if (overlay == OverlayState.Archive) {
+                                        overlay = OverlayState.None
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -235,6 +242,7 @@ fun MainScreen(
                                 userName = userName,
                                 calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
+                                onAddTask = { sheetState = SheetState.Add(JalaliDate.today()) },
                                 onCompleteTask = { completeTask(it) },
                                 onDeleteTask = { deleteWithUndo(it) },
                                 onOpenSearch = { overlay = OverlayState.Search },
@@ -311,14 +319,13 @@ fun MainScreen(
                         tasks = allTasks,
                         recentSearches = preferences.recentSearches,
                         onBack = { overlay = OverlayState.None },
-                        onTaskClick = { openTaskDetail(it) },
+                        onTaskClick = { openTaskDetail(it, OverlayState.Search) },
                         onSearchSubmitted = { preferences.addRecentSearch(it) }
                     )
                     OverlayState.Archive -> ArchiveScreen(
                         tasks = allTasks,
                         onBack = { overlay = OverlayState.None },
-                        onTaskClick = { openTaskDetail(it) },
-                        onCompleteTask = { completeTask(it) },
+                        onTaskClick = { openTaskDetail(it, OverlayState.Archive) },
                         onDeleteTask = { deleteWithUndo(it) }
                     )
                     OverlayState.Stats -> StatsScreen(
@@ -329,7 +336,7 @@ fun MainScreen(
                         val liveTask = allTasks.find { it.id == current.task.id } ?: current.task
                         TaskDetailScreen(
                             task = liveTask,
-                            onBack = { overlay = OverlayState.None },
+                            onBack = { overlay = current.returnTo },
                             onEdit = { sheetState = SheetState.Edit(liveTask) },
                             onComplete = { completeTask(liveTask) },
                             onDelete = { taskToDelete = liveTask }
@@ -352,7 +359,7 @@ fun MainScreen(
                             events = dayEvents,
                             calendarSystem = calendarState.calendarSystem,
                             onBack = { overlay = OverlayState.None },
-                            onTaskClick = { openTaskDetail(it) },
+                            onTaskClick = { openTaskDetail(it, current) },
                             onAddTask = { sheetState = SheetState.Add(current.date) },
                             onHolidayClick = { event ->
                                 overlay = OverlayState.HolidayDetail(current.date, event)
@@ -364,6 +371,7 @@ fun MainScreen(
                         title = current.event.description,
                         description = current.event.additionalDescription.ifBlank { current.event.description },
                         isHoliday = current.event.isHoliday,
+                        calendarSystem = calendarState.calendarSystem,
                         onBack = { overlay = OverlayState.DayDetail(current.date) }
                     )
                     OverlayState.Offline -> OfflineScreen(
@@ -428,7 +436,8 @@ fun MainScreen(
                                 category = form.category,
                                 priority = form.priority,
                                 repeatWeekly = form.repeatWeekly
-                            )
+                            ),
+                            returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
                         )
                         onTaskSaved(form)
                         showSnackbar("Task updated!")
@@ -447,7 +456,7 @@ fun MainScreen(
             onConfirm = {
                 viewModel.deleteTask(task)
                 taskToDelete = null
-                overlay = OverlayState.None
+                overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
                 undoTask = task
             },
             onDismiss = { taskToDelete = null }

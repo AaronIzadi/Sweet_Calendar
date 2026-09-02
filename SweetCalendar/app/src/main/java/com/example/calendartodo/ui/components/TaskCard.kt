@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,11 +31,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.ui.theme.ProvideMockupScale
+import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.BubblegumPink
 import com.example.calendartodo.ui.theme.CaramelOrange
 import com.example.calendartodo.ui.theme.ChocolateBrown
@@ -235,33 +243,35 @@ fun PixelConfirmDialog(
 
 @Composable
 fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        PixelPanel(modifier = Modifier.fillMaxWidth(), backgroundColor = MintGreen.copy(alpha = 0.95f)) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                ChocolateIcon(size = 72.dp)
-                Spacer(Modifier.height(12.dp))
-                Text(
-                    "Sweet job!",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = ChocolateBrown
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    "You completed the task successfully!",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = ChocolateBrown,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                Spacer(Modifier.height(20.dp))
-                PixelButton(
-                    onClick = onDismiss,
+    val colors = SweetTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK", color = colors.pinkDeep)
+            }
+        },
+        title = { Text("Sweet job!", color = colors.ink) },
+        text = {
+            ProvideMockupScale {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = BubblegumPink,
-                    contentDescription = "Done"
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Done", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
+                    CheckCandyIcon(size = mockupDp(56))
+                    Spacer(Modifier.height(mockupDp(12)))
+                    Text(
+                        "You completed the task successfully!",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = mockupSp(12f),
+                            lineHeight = mockupSp(16f)
+                        ),
+                        color = colors.muted,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
-    }
+    )
 }
