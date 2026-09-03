@@ -284,6 +284,7 @@ fun MainScreen(
                                 showHolidays = preferences.showHolidays,
                                 weekStartsOn = preferences.weekStartsOn,
                                 calendarSystem = preferences.calendarSystem,
+                                exportRunner = viewModel.taskExportRunner,
                                 onDarkModeChange = { enabled ->
                                     preferences.darkMode = enabled
                                     onDarkModeChange(enabled)

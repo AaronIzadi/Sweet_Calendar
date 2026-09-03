@@ -53,4 +53,10 @@ interface TaskDao {
             "ORDER BY isDone ASC, createdAt ASC"
     )
     suspend fun getForDate(jalaliDate: String): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks WHERE deletedAt IS NULL ORDER BY jalaliDate ASC, createdAt ASC")
+    suspend fun getAllActive(): List<TaskEntity>
+
+    @Query("SELECT * FROM tasks ORDER BY jalaliDate DESC, createdAt ASC")
+    suspend fun getAllIncludingDeleted(): List<TaskEntity>
 }

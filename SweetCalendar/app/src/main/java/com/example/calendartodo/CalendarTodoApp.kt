@@ -3,6 +3,7 @@ package com.example.calendartodo
 import android.app.Application
 import com.example.calendartodo.data.local.AppDatabase
 import com.example.calendartodo.data.remote.NetworkModule
+import com.example.calendartodo.export.TaskExportRepository
 import com.example.calendartodo.reminder.NotificationHelper
 import com.example.calendartodo.repository.EventRepository
 import com.example.calendartodo.repository.TaskRepository
@@ -21,5 +22,9 @@ class CalendarTodoApp : Application() {
     val eventRepository: EventRepository by lazy {
         val db = AppDatabase.get(this)
         EventRepository(db.eventCacheDao(), db.eventMonthCacheDao(), NetworkModule.timeIrApi)
+    }
+
+    val taskExportRepository: TaskExportRepository by lazy {
+        TaskExportRepository(this, AppDatabase.get(this).taskDao())
     }
 }

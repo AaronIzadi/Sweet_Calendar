@@ -334,5 +334,6 @@ int styleable GradientColor_android_endY 11
 int[] styleable GradientColorItem { 0x010101a5, 0x01010514 }
 int styleable GradientColorItem_android_color 0
 int styleable GradientColorItem_android_offset 1
-int xml widget_jar_small_info 0x7f0d0000
-int xml widget_today_info 0x7f0d0001
+int xml file_paths 0x7f0d0000
+int xml widget_jar_small_info 0x7f0d0001
+int xml widget_today_info 0x7f0d0002

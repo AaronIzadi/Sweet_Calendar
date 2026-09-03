@@ -35,5 +35,6 @@ string widget_description
 string widget_jar_description
 string widget_jar_label
 style Theme.CalendarTodo
+xml file_paths
 xml widget_jar_small_info
 xml widget_today_info

@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import com.example.calendartodo.BuildConfig
 import com.example.calendartodo.calendar.CalendarSystem
+import com.example.calendartodo.export.TaskExportRunner
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
@@ -74,6 +75,7 @@ fun SettingsScreen(
     showHolidays: Boolean,
     weekStartsOn: Int,
     calendarSystem: CalendarSystem,
+    exportRunner: TaskExportRunner,
     onDarkModeChange: (Boolean) -> Unit,
     onShowHolidaysChange: (Boolean) -> Unit,
     onWeekStartsOnChange: (Int) -> Unit,
@@ -92,6 +94,7 @@ fun SettingsScreen(
     var showWeekDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    var showBackupDialog by remember { mutableStateOf(false) }
     var taskRemindersEnabled by remember { mutableStateOf(true) }
     val rowIconSlot = mockupDp(MockupDimens.SETTINGS_ROW_ICON)
     val miniIcon = mockupDp(MockupDimens.MINI_FIELD_ICON)
@@ -298,7 +301,8 @@ fun SettingsScreen(
                     SettingsBoxUncheckedIcon(size = mockupDp(10))
                 }
             },
-            label = "Backup & export"
+            label = "Backup & export",
+            onClick = { showBackupDialog = true }
         )
         SettingsRow(
             icon = {
@@ -349,6 +353,15 @@ fun SettingsScreen(
 
     if (showAboutDialog) {
         AboutDialog(onDismiss = { showAboutDialog = false })
+    }
+
+    if (showBackupDialog) {
+        BackupExportDialog(
+            userName = userName,
+            calendarSystem = calendarSystem,
+            exportRunner = exportRunner,
+            onDismiss = { showBackupDialog = false }
+        )
     }
 }
 

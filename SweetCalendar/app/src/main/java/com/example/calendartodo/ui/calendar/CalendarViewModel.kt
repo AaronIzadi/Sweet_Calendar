@@ -9,6 +9,8 @@ import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
+import com.example.calendartodo.export.TaskExportRepository
+import com.example.calendartodo.export.TaskExportRunner
 import com.example.calendartodo.reminder.TaskReminderScheduler
 import com.example.calendartodo.repository.EventRepository
 import com.example.calendartodo.repository.TaskRepository
@@ -57,8 +59,11 @@ data class CalendarUiState(
 class CalendarViewModel(
     application: Application,
     private val taskRepository: TaskRepository,
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    taskExportRepository: TaskExportRepository
 ) : AndroidViewModel(application) {
+
+    val taskExportRunner: TaskExportRunner = TaskExportRunner(application, taskExportRepository)
 
     private val reminderScheduler = TaskReminderScheduler(application)
     private val visiblePersianMonth = MutableStateFlow(JalaliDate.today().firstOfMonth())
@@ -454,11 +459,17 @@ class CalendarViewModel(
     class Factory(
         private val application: Application,
         private val taskRepository: TaskRepository,
-        private val eventRepository: EventRepository
+        private val eventRepository: EventRepository,
+        private val taskExportRepository: TaskExportRepository
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             @Suppress("UNCHECKED_CAST")
-            return CalendarViewModel(application, taskRepository, eventRepository) as T
+            return CalendarViewModel(
+                application,
+                taskRepository,
+                eventRepository,
+                taskExportRepository
+            ) as T
         }
     }
 }
