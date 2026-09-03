@@ -394,9 +394,8 @@ fun MainScreen(
                         }
                     )
                     OverlayState.RecoverSnackbar -> RecoverSnackbarScreen(
-                        userName = userName,
-                        calendarSystem = calendarState.calendarSystem,
                         deletedTasks = deletedTasks,
+                        onBack = { overlay = OverlayState.None },
                         onRestore = { viewModel.restoreTask(it) },
                         onPermanentDelete = { viewModel.permanentlyDeleteTask(it) }
                     )

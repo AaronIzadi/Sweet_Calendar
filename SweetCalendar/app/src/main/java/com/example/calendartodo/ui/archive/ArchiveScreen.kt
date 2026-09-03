@@ -162,7 +162,7 @@ fun ArchiveScreen(
 }
 
 @Composable
-private fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier) {
+fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
     val shape = RoundedCornerShape(mockupDp(MockupDimens.ARCHIVE_STAT_RADIUS))
 
@@ -208,7 +208,7 @@ private fun ArchiveStatCard(value: String, label: String, modifier: Modifier = M
 }
 
 @Composable
-private fun ArchiveFilterChip(
+fun ArchiveFilterChip(
     label: String,
     selected: Boolean,
     onClick: () -> Unit
@@ -243,7 +243,7 @@ private fun ArchiveFilterChip(
 }
 
 @Composable
-private fun ArchiveDayLabel(text: String) {
+fun ArchiveDayLabel(text: String) {
     Text(
         text,
         style = TextStyle(

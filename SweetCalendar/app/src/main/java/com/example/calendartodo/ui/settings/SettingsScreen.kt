@@ -35,6 +35,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
+import com.example.calendartodo.BuildConfig
 import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
@@ -90,6 +91,7 @@ fun SettingsScreen(
     var showNameDialog by remember { mutableStateOf(false) }
     var showWeekDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
     var taskRemindersEnabled by remember { mutableStateOf(true) }
     val rowIconSlot = mockupDp(MockupDimens.SETTINGS_ROW_ICON)
     val miniIcon = mockupDp(MockupDimens.MINI_FIELD_ICON)
@@ -305,7 +307,8 @@ fun SettingsScreen(
                 }
             },
             label = "About Sweet Calendar",
-            value = "v1.0"
+            value = "v${BuildConfig.VERSION_NAME}",
+            onClick = { showAboutDialog = true }
         )
 
         Spacer(Modifier.height(mockupDp(24)))
@@ -342,6 +345,10 @@ fun SettingsScreen(
                 showCalendarDialog = false
             }
         )
+    }
+
+    if (showAboutDialog) {
+        AboutDialog(onDismiss = { showAboutDialog = false })
     }
 }
 
