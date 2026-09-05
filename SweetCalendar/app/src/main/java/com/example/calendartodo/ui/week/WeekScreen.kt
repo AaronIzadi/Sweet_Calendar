@@ -47,8 +47,18 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val ChipDowColor = Color(0xFF9A8878)
-private val ChipSelectedDowColor = Color(0xFFEFE6FA)
+private val WeekChipDowLight = Color(0xFF9A8878)
+private val WeekChipDowSelected = Color(0xFFEFE6FA)
+
+@Composable
+private fun weekChipDowColor(selected: Boolean): Color {
+    val colors = SweetTheme.colors
+    return when {
+        selected -> WeekChipDowSelected
+        colors.isDark -> colors.muted
+        else -> WeekChipDowLight
+    }
+}
 
 @Composable
 fun WeekScreen(
@@ -272,7 +282,7 @@ private fun DayChip(
                     fontSize = mockupSp(MockupDimens.DAY_CHIP_DOW),
                     lineHeight = mockupSp(11f)
                 ),
-                color = if (selected) ChipSelectedDowColor else ChipDowColor,
+                color = weekChipDowColor(selected),
                 maxLines = 1,
                 textAlign = TextAlign.Center
             )

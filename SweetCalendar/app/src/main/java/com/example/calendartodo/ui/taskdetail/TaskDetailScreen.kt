@@ -46,10 +46,22 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val MetaTextColor = Color(0xFF6B5A4B)
-private val FieldLabelColor = Color(0xFF9A8878)
+private val DetailMetaTextLight = Color(0xFF6B5A4B)
+private val DetailFieldLabelLight = Color(0xFF9A8878)
 private val DeleteLinkColor = Color(0xFFD9455E)
 private val CompleteBtnShadow = Color(0xFF3C9679)
+
+@Composable
+private fun detailMetaTextColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else DetailMetaTextLight
+}
+
+@Composable
+private fun detailFieldLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else DetailFieldLabelLight
+}
 
 @Composable
 fun TaskDetailScreen(
@@ -228,7 +240,7 @@ private fun DetailFieldLabel(text: String) {
             letterSpacing = mockupSp(0.3f),
             lineHeight = mockupSp(14f)
         ),
-        color = FieldLabelColor,
+        color = detailFieldLabelColor(),
         modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
     )
 }
@@ -253,7 +265,7 @@ private fun NotesBox(text: String) {
                 fontSize = mockupSp(MockupDimens.DETAIL_NOTES_F),
                 lineHeight = mockupSp(20f)
             ),
-            color = MetaTextColor,
+            color = detailMetaTextColor(),
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
@@ -346,7 +358,7 @@ private fun MetaRow(icon: @Composable () -> Unit, text: String) {
                 fontSize = mockupSp(MockupDimens.DETAIL_META_F),
                 lineHeight = mockupSp(17f)
             ),
-            color = MetaTextColor
+            color = detailMetaTextColor()
         )
     }
 }

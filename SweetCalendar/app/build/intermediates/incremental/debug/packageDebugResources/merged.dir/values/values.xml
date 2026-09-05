@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#A8D8F0</color>
+    <string name="app_name">Sweet Calendar</string>
+    <string name="reminder_channel_desc">Notifications when a sweet task is due</string>
+    <string name="reminder_channel_name">Task reminders</string>
+    <string name="widget_description">Today\'s jar and tasks at a glance</string>
+    <string name="widget_jar_description">Today\'s jar progress at a glance</string>
+    <string name="widget_jar_label">TODAY\'S JAR</string>
+    <style name="Theme.CalendarTodo" parent="android:Theme.Material.Light.NoActionBar"/>
+</resources>

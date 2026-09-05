@@ -48,8 +48,20 @@ import com.example.calendartodo.ui.theme.mockupSp
 import java.text.DateFormatSymbols
 import java.util.Locale
 
-private val WeekdayHeaderColor = Color(0xFFB39D89)
-private val LegendTextColor = Color(0xFF7A6A5C)
+private val MonthWeekdayHeaderLight = Color(0xFFB39D89)
+private val MonthLegendTextLight = Color(0xFF7A6A5C)
+
+@Composable
+private fun monthWeekdayHeaderColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else MonthWeekdayHeaderLight
+}
+
+@Composable
+private fun monthLegendTextColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else MonthLegendTextLight
+}
 
 @Composable
 fun MonthScreen(
@@ -88,7 +100,7 @@ fun MonthScreen(
                     Text(
                         "Couldn't load holidays",
                         style = MaterialTheme.typography.bodySmall,
-                        color = colors.chocDeep
+                        color = if (colors.isDark) colors.lemon else colors.chocDeep
                     )
                 }
                 Text(
@@ -175,7 +187,7 @@ fun MonthScreen(
                         lineHeight = mockupSp(12f),
                         fontWeight = FontWeight.Bold
                     ),
-                    color = WeekdayHeaderColor
+                    color = monthWeekdayHeaderColor()
                 )
             }
         }
@@ -425,7 +437,7 @@ private fun LegendItem(color: Color, shape: DotShape, label: String) {
                 fontSize = mockupSp(MockupDimens.MONTH_LEGEND_TEXT_F),
                 lineHeight = mockupSp(13f)
             ),
-            color = LegendTextColor
+            color = monthLegendTextColor()
         )
     }
 }

@@ -28,18 +28,41 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import com.example.calendartodo.ui.components.ChocolateIcon
-import com.example.calendartodo.ui.components.GummyIcon
-import com.example.calendartodo.ui.components.LollipopIcon
-import com.example.calendartodo.ui.components.PeppermintCandyIcon
+import com.example.calendartodo.ui.components.CheckCandyIcon
+import com.example.calendartodo.ui.components.MockupChocolateIcon
+import com.example.calendartodo.ui.components.NavLollipopIcon
+import com.example.calendartodo.ui.components.NavPeppermintIcon
+import com.example.calendartodo.ui.components.SettingsGumdropIcon
 import com.example.calendartodo.ui.components.SweetPixelButton
-import com.example.calendartodo.ui.components.WrappedCandyIcon
 import com.example.calendartodo.ui.theme.LemonYellow
+import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.PixelFont
+import com.example.calendartodo.ui.theme.PixelPurple
+import com.example.calendartodo.ui.theme.PixelPurpleHighlight
+import com.example.calendartodo.ui.theme.PinkDeep
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
+
+private val WelcomeTagLight = Color(0xFF6B5A4B)
+private val WelcomeGradientLight = listOf(
+    Color(0xFFFFE1EE),
+    Color(0xFFF3E3FB),
+    Color(0xFFE3F7EE)
+)
+private val WelcomeGradientDark = listOf(
+    Color(0xFF2E1E3B),
+    Color(0xFF241C36),
+    Color(0xFF16281F)
+)
+private val MockupLollipopStick = Color(0xFFE8A857)
+private val MockupChocFillLight = Color(0xFF8A5A38)
+private val MockupChocSeamLight = Color(0xFF5A3A22)
+private val MockupChocFillDark = Color(0xFFC99770)
+private val MockupChocSeamDark = Color(0xFF8A6B4E)
+private val MockupGumBodyDark = Color(0xFFC3AEEF)
+private val MockupGumHiDark = Color(0xFFE4D9FB)
 
 @Composable
 fun WelcomeScreen(
@@ -47,12 +70,8 @@ fun WelcomeScreen(
     onSkip: () -> Unit
 ) {
     val colors = SweetTheme.colors
-    val welcomeGradient = if (colors.isDark) {
-        listOf(Color(0xFF2E1E3B), Color(0xFF241C36), Color(0xFF16281F))
-    } else {
-        listOf(Color(0xFFFFE1EE), Color(0xFFF3E3FB), Color(0xFFE3F7EE))
-    }
-    val tagColor = if (colors.isDark) colors.muted else Color(0xFF6B5A4B)
+    val welcomeGradient = if (colors.isDark) WelcomeGradientDark else WelcomeGradientLight
+    val tagColor = if (colors.isDark) colors.muted else WelcomeTagLight
 
     Box(
         modifier = Modifier
@@ -65,7 +84,7 @@ fun WelcomeScreen(
                 .padding(start = mockupDp(20), top = mockupDp(24))
                 .alpha(0.85f)
         ) {
-            PeppermintCandyIcon(size = mockupDp(MockupDimens.DECO_ICON))
+            NavPeppermintIcon(size = mockupDp(MockupDimens.DECO_ICON))
         }
         Box(
             modifier = Modifier
@@ -73,7 +92,7 @@ fun WelcomeScreen(
                 .padding(end = mockupDp(22), top = mockupDp(36))
                 .alpha(0.85f)
         ) {
-            GummyIcon(size = mockupDp(MockupDimens.DECO_ICON_SMALL), color = LemonYellow)
+            WelcomeDecoGumdropIcon(size = mockupDp(MockupDimens.DECO_ICON_SMALL))
         }
         Box(
             modifier = Modifier
@@ -81,7 +100,7 @@ fun WelcomeScreen(
                 .padding(start = mockupDp(18), bottom = mockupDp(170))
                 .alpha(0.85f)
         ) {
-            ChocolateIcon(size = mockupDp(MockupDimens.DECO_ICON))
+            WelcomeChocolateIcon(size = mockupDp(MockupDimens.DECO_ICON))
         }
 
         Column(
@@ -91,10 +110,7 @@ fun WelcomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            LollipopIcon(
-                size = mockupDp(MockupDimens.HERO_LOLLIPOP_W),
-                height = mockupDp(MockupDimens.HERO_LOLLIPOP_H)
-            )
+            WelcomeHeroLollipopIcon(size = mockupDp(MockupDimens.HERO_LOLLIPOP_W))
             Spacer(Modifier.height(mockupDp(18)))
             Text(
                 "SWEET",
@@ -149,6 +165,38 @@ fun WelcomeScreen(
     }
 }
 
+@Composable
+private fun WelcomeHeroLollipopIcon(size: androidx.compose.ui.unit.Dp) {
+    val colors = SweetTheme.colors
+    NavLollipopIcon(
+        size = size,
+        headColor = if (colors.isDark) colors.pink else PinkDeep,
+        highlightColor = Color.White,
+        stickColor = MockupLollipopStick
+    )
+}
+
+@Composable
+private fun WelcomeDecoGumdropIcon(size: androidx.compose.ui.unit.Dp) {
+    val colors = SweetTheme.colors
+    SettingsGumdropIcon(
+        size = size,
+        wrapColor = if (colors.isDark) colors.lemon else LemonYellow,
+        bodyColor = if (colors.isDark) MockupGumBodyDark else PixelPurple,
+        highlightColor = if (colors.isDark) MockupGumHiDark else PixelPurpleHighlight
+    )
+}
+
+@Composable
+private fun WelcomeChocolateIcon(size: androidx.compose.ui.unit.Dp) {
+    val colors = SweetTheme.colors
+    MockupChocolateIcon(
+        size = size,
+        fillColor = if (colors.isDark) MockupChocFillDark else MockupChocFillLight,
+        seamColor = if (colors.isDark) MockupChocSeamDark else MockupChocSeamLight
+    )
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WelcomeFeatureChips() {
@@ -158,13 +206,17 @@ private fun WelcomeFeatureChips() {
         modifier = Modifier.padding(horizontal = mockupDp(4))
     ) {
         WelcomeFeatureChip("Persian calendar") {
-            PeppermintCandyIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+            NavPeppermintIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
         }
         WelcomeFeatureChip("Daily tasks") {
-            WrappedCandyIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+            val colors = SweetTheme.colors
+            CheckCandyIcon(
+                size = mockupDp(MockupDimens.FEAT_CHIP_ICON),
+                bgColor = if (colors.isDark) colors.mint else MintGreen
+            )
         }
         WelcomeFeatureChip("Local holidays") {
-            ChocolateIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+            WelcomeChocolateIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
         }
     }
 }

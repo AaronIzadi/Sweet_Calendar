@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
@@ -36,10 +35,9 @@ import com.example.calendartodo.ui.components.formatDisplayWithWeekday
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
+import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.SweetTheme
 import java.util.Calendar
-
-private val TaskMetaColor = Color(0xFF9A8878)
 
 private fun timeOfDayGreeting(): String {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
@@ -180,14 +178,17 @@ fun TodayScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            CheckCandyIcon(size = mockupDp(MockupDimens.COMPLETED_ROW_ICON))
+                            CheckCandyIcon(
+                                size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
+                                bgColor = if (colors.isDark) colors.mint else MintGreen
+                            )
                             Text(
                                 "${done.size} completed today",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F)
                                 ),
-                                color = TaskMetaColor
+                                color = colors.muted
                             )
                         }
                     }

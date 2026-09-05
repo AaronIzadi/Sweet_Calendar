@@ -45,12 +45,52 @@ import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.navigation.AppDestination
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.PixelPurple
 import com.example.calendartodo.ui.theme.PixelPurpleHighlight
 import com.example.calendartodo.ui.theme.SweetTheme
+
+private data class NavIconColors(
+    val primary: Color,
+    val highlight: Color,
+    val secondary: Color
+)
+
+@Composable
+private fun navIconColors(selected: Boolean): NavIconColors {
+    val colors = SweetTheme.colors
+    if (colors.isDark) {
+        return if (selected) {
+            NavIconColors(
+                primary = colors.purpleDeep,
+                highlight = Color.White,
+                secondary = colors.purple
+            )
+        } else {
+            NavIconColors(
+                primary = colors.navInactive,
+                highlight = Color(0xFF5A4F6E),
+                secondary = Color(0xFF463A56)
+            )
+        }
+    }
+    return if (selected) {
+        NavIconColors(
+            primary = colors.purpleDeep,
+            highlight = PixelPurpleHighlight,
+            secondary = PixelPurple
+        )
+    } else {
+        NavIconColors(
+            primary = Color(0xFF9A85AB),
+            highlight = Color(0xFFC4B3D4),
+            secondary = Color(0xFF7E6894)
+        )
+    }
+}
 
 enum class TaskCategory(val label: String) {
     Personal("Personal"),
@@ -76,8 +116,6 @@ enum class TaskMetaStyle {
     /** Date · time · category — used on search results. */
     SearchResult
 }
-
-private val TaskMetaColor = Color(0xFF9A8878)
 
 @Composable
 fun TaskCategory.accentColor(): Color = when (this) {
@@ -268,6 +306,7 @@ private fun MockupTaskCard(
                 if (task.isDone) {
                     CheckCandyIcon(
                         size = taskIcon,
+                        bgColor = if (colors.isDark) colors.mint else MintGreen,
                         modifier = Modifier.clickable(
                             onClick = onToggleComplete ?: onClick,
                             indication = null,
@@ -327,7 +366,7 @@ private fun MockupTaskCard(
                                 fontSize = mockupSp(MockupDimens.TASK_META_F),
                                 lineHeight = mockupSp(13f)
                             ),
-                            color = TaskMetaColor,
+                            color = colors.muted,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(top = mockupDp(2))
@@ -673,7 +712,6 @@ fun SweetBottomNav(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val navColor = colors.purpleDeep
     Column(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -698,43 +736,43 @@ fun SweetBottomNav(
                 label = "TODAY",
                 selected = selected == AppDestination.Today,
                 onClick = { onSelect(AppDestination.Today) }
-            ) {
+            ) { iconColors ->
                 NavLollipopIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
-                    headColor = navColor,
-                    highlightColor = PixelPurpleHighlight,
-                    stickColor = PixelPurple
+                    headColor = iconColors.primary,
+                    highlightColor = iconColors.highlight,
+                    stickColor = iconColors.secondary
                 )
             }
             NavItem(
                 label = "WEEK",
                 selected = selected == AppDestination.Week,
                 onClick = { onSelect(AppDestination.Week) }
-            ) {
+            ) { iconColors ->
                 NavPeppermintIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
-                    color = navColor,
-                    highlightColor = PixelPurpleHighlight
+                    color = iconColors.primary,
+                    highlightColor = iconColors.highlight
                 )
             }
             NavItem(
                 label = "MONTH",
                 selected = selected == AppDestination.Month,
                 onClick = { onSelect(AppDestination.Month) }
-            ) {
+            ) { iconColors ->
                 NavMonthGridIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
-                    color = navColor
+                    color = iconColors.primary
                 )
             }
             NavItem(
                 label = "SETTINGS",
                 selected = selected == AppDestination.Settings,
                 onClick = { onSelect(AppDestination.Settings) }
-            ) {
+            ) { iconColors ->
                 NavSettingsGearIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
-                    color = navColor
+                    color = iconColors.primary
                 )
             }
         }
@@ -746,9 +784,10 @@ private fun NavItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
-    icon: @Composable () -> Unit
+    icon: @Composable (NavIconColors) -> Unit
 ) {
     val colors = SweetTheme.colors
+    val iconColors = navIconColors(selected)
     val iconSlotW = mockupDp(MockupDimens.NAV_ICON_SLOT)
     val iconSlotH = mockupDp(MockupDimens.NAV_ICON_SLOT_H)
     Column(
@@ -766,7 +805,7 @@ private fun NavItem(
                 .height(iconSlotH),
             contentAlignment = Alignment.Center
         ) {
-            icon()
+            icon(iconColors)
         }
         Text(
             label,
@@ -775,7 +814,11 @@ private fun NavItem(
                 fontSize = mockupSp(MockupDimens.NAV_LABEL_F),
                 lineHeight = mockupSp(10f)
             ),
-            color = if (selected) colors.pinkDeep else colors.navInactive
+            color = if (selected) {
+                if (colors.isDark) colors.pink else colors.pinkDeep
+            } else {
+                colors.navInactive
+            }
         )
     }
 }
@@ -807,7 +850,7 @@ fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.STREAK_FONT)
                 ),
-                color = colors.chocDeep
+                color = if (colors.isDark) colors.lemon else colors.chocDeep
             )
         }
     }

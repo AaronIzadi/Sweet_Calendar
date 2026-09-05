@@ -28,11 +28,61 @@ import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.PixelBorder
 import com.example.calendartodo.ui.theme.PixelPurple
 import com.example.calendartodo.ui.theme.PixelPurpleHighlight
+import com.example.calendartodo.ui.theme.Pink
 import com.example.calendartodo.ui.theme.PinkDeep
 import com.example.calendartodo.ui.theme.PurpleDeep
 import com.example.calendartodo.ui.theme.SprinklesBlue
 import com.example.calendartodo.ui.theme.SprinklesGreen
 import com.example.calendartodo.ui.theme.SprinklesRed
+import com.example.calendartodo.ui.theme.SweetTheme
+
+private val MockupChocFillLight = Color(0xFF8A5A38)
+private val MockupChocSeamLight = Color(0xFF5A3A22)
+private val MockupChocFillDark = Color(0xFFC99770)
+private val MockupChocSeamDark = Color(0xFF8A6B4E)
+private val MockupGumBodyDark = Color(0xFFC3AEEF)
+private val MockupGumHiDark = Color(0xFFE4D9FB)
+private val MockupIconHeartDark = Color(0xFFFF8FBB)
+private val MockupIconGemDark = Color(0xFFC3AEEF)
+@Composable
+private fun themedCategoryHeartColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) MockupIconHeartDark else PinkDeep
+}
+
+@Composable
+private fun themedCategoryGemColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) MockupIconGemDark else PurpleDeep
+}
+
+@Composable
+private fun themedCategoryLeafColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.mint else MintDeep
+}
+
+@Composable
+private fun themedChocolateFillColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) MockupChocFillDark else MockupChocFillLight
+}
+
+@Composable
+private fun themedChocolateSeamColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) MockupChocSeamDark else MockupChocSeamLight
+}
+
+@Composable
+private fun themedGumdropColors(): Triple<Color, Color, Color> {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) {
+        Triple(colors.lemon, MockupGumBodyDark, MockupGumHiDark)
+    } else {
+        Triple(LemonYellow, PixelPurple, PixelPurpleHighlight)
+    }
+}
 
 @Composable
 private fun PixelArtImage(
@@ -148,7 +198,7 @@ fun TaskGemIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             "..111..",
             "...1..."
         ),
-        palette = mapOf('1' to GrapePurple),
+        palette = mapOf('1' to themedCategoryGemColor()),
         size = size,
         modifier = modifier
     )
@@ -166,7 +216,7 @@ fun TaskHeartIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             "..111..",
             "...1..."
         ),
-        palette = mapOf('1' to PinkDeep),
+        palette = mapOf('1' to themedCategoryHeartColor()),
         size = size,
         modifier = modifier
     )
@@ -185,7 +235,7 @@ fun TaskLeafIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             "...111.",
             "....11."
         ),
-        palette = mapOf('1' to MintDeep),
+        palette = mapOf('1' to themedCategoryLeafColor()),
         size = size,
         modifier = modifier
     )
@@ -303,7 +353,11 @@ fun BigBellIcon(modifier: Modifier = Modifier, size: Dp = 72.dp, color: Color = 
 
 /** Completed-task candy from mockup `buildCheckCandy`. */
 @Composable
-fun CheckCandyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun CheckCandyIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    bgColor: Color = MintGreen
+) {
     PixelIcon(
         rows = listOf(
             "..mmm..",
@@ -314,7 +368,7 @@ fun CheckCandyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             ".mmwmm.",
             "..mmm.."
         ),
-        palette = mapOf('m' to MintGreen, 'w' to Color.White),
+        palette = mapOf('m' to bgColor, 'w' to Color.White),
         size = size,
         modifier = modifier
     )
@@ -376,12 +430,25 @@ fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color 
 /** FAB gumdrop — mockup `buildGumdrop(3)`. */
 @Composable
 fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
-    SettingsGumdropIcon(modifier = modifier, size = size)
+    val (wrapColor, bodyColor, highlightColor) = themedGumdropColors()
+    SettingsGumdropIcon(
+        modifier = modifier,
+        size = size,
+        wrapColor = wrapColor,
+        bodyColor = bodyColor,
+        highlightColor = highlightColor
+    )
 }
 
 /** Settings row / small UI — mockup `buildGumdrop(2)`. */
 @Composable
-fun SettingsGumdropIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
+fun SettingsGumdropIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 12.dp,
+    wrapColor: Color = LemonYellow,
+    bodyColor: Color = PixelPurple,
+    highlightColor: Color = PixelPurpleHighlight
+) {
     PixelIcon(
         rows = listOf(
             ".yppppppy.",
@@ -392,9 +459,9 @@ fun SettingsGumdropIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
             ".yppppppy."
         ),
         palette = mapOf(
-            'y' to LemonYellow,
-            'p' to PixelPurple,
-            'h' to PixelPurpleHighlight
+            'y' to wrapColor,
+            'p' to bodyColor,
+            'h' to highlightColor
         ),
         width = size,
         height = size,
@@ -407,10 +474,15 @@ private val ChocBrownDark = Color(0xFF5A3A22)
 
 /** Mockup `buildChocolate(cell)` — 8×8 chocolate square. */
 @Composable
-fun MockupChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun MockupChocolateIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    fillColor: Color = ChocBrown,
+    seamColor: Color = ChocBrownDark
+) {
     PixelIcon(
         rows = chocolatePixelRows(),
-        palette = mapOf('o' to ChocBrownDark, 'd' to ChocBrownDark, 'b' to ChocBrown),
+        palette = mapOf('o' to seamColor, 'd' to seamColor, 'b' to fillColor),
         size = size,
         modifier = modifier
     )
@@ -419,7 +491,12 @@ fun MockupChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
 /** Settings row — mockup `buildChocolate(2)`. */
 @Composable
 fun SettingsChocolateIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
-    MockupChocolateIcon(modifier = modifier, size = size)
+    MockupChocolateIcon(
+        modifier = modifier,
+        size = size,
+        fillColor = themedChocolateFillColor(),
+        seamColor = themedChocolateSeamColor()
+    )
 }
 
 /** Stats jar — mockup `buildChocolate(5)`. */

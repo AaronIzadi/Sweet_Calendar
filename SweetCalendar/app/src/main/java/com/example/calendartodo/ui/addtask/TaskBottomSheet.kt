@@ -67,9 +67,47 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val FieldLabelColor = Color(0xFF9A8878)
-private val PlaceholderColor = Color(0xFFB7A493)
-private val MetaMutedColor = Color(0xFF9A8878)
+private val FormFieldLabelLight = Color(0xFF9A8878)
+private val FormPlaceholderLight = Color(0xFFB7A493)
+private val FormMetaMutedLight = Color(0xFF9A8878)
+private val SelectedChipTextColor = Color.Black
+
+@Composable
+private fun formFieldLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else FormFieldLabelLight
+}
+
+@Composable
+private fun formPlaceholderColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.navInactive else FormPlaceholderLight
+}
+
+@Composable
+private fun formMetaMutedColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else FormMetaMutedLight
+}
+
+@Composable
+private fun priorityChipFillColor(selected: Boolean): Color {
+    if (!selected) return SweetTheme.colors.paper
+    val colors = SweetTheme.colors
+    return if (colors.isDark) PriorityChipFillDark else PriorityChipFillLight
+}
+
+@Composable
+private fun priorityChipShadowColor(selected: Boolean): Color {
+    if (!selected) return SweetTheme.colors.line
+    val colors = SweetTheme.colors
+    return if (colors.isDark) PriorityChipShadowDark else PriorityChipShadowLight
+}
+
+private val PriorityChipFillLight = Color(0xFFFFF0B0)
+private val PriorityChipFillDark = Color(0xFFFFF0B8)
+private val PriorityChipShadowLight = Color(0xFFFFD966)
+private val PriorityChipShadowDark = Color(0xFFFFD966)
 
 data class TaskFormData(
     val title: String,
@@ -399,34 +437,22 @@ fun TaskBottomSheet(
 private fun PaperSurface(
     shadowDepth: Dp,
     cornerRadius: Dp,
-    selectedOutline: Boolean = false,
-    selectedShadowDepth: Dp? = null,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     val colors = SweetTheme.colors
-    val depth = if (selectedOutline && selectedShadowDepth != null) selectedShadowDepth else shadowDepth
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .offset(y = depth)
+                .offset(y = shadowDepth)
                 .clip(RoundedCornerShape(cornerRadius))
-                .background(
-                    if (selectedOutline) colors.lemonDeep else colors.line
-                )
+                .background(colors.line)
         )
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(colors.paper)
-                .then(
-                    if (selectedOutline) {
-                        Modifier.border(mockupDp(2), colors.ink, RoundedCornerShape(cornerRadius))
-                    } else {
-                        Modifier
-                    }
-                )
         ) {
             content()
         }
@@ -477,7 +503,7 @@ private fun FieldLabel(text: String) {
             letterSpacing = mockupSp(0.3f),
             lineHeight = mockupSp(14f)
         ),
-        color = FieldLabelColor,
+        color = formFieldLabelColor(),
         modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
     )
 }
@@ -551,7 +577,7 @@ private fun SweetField(
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     decorationBox = { inner ->
                         if (value.isEmpty() && placeholder.isNotEmpty()) {
-                            Text(placeholder, style = fieldTextStyle, color = PlaceholderColor)
+                            Text(placeholder, style = fieldTextStyle, color = formPlaceholderColor())
                         }
                         inner()
                     }
@@ -569,20 +595,27 @@ private fun CategorySwatch(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = SweetTheme.colors
     val iconSize = mockupDp(MockupDimens.SWATCH_ICON)
-    PaperSurface(
-        shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
-        cornerRadius = mockupDp(MockupDimens.FORM_FIELD_RADIUS),
-        selectedOutline = selected,
-        selectedShadowDepth = mockupDp(3),
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
     ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(
+                    y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
+                )
+                .clip(RoundedCornerShape(radius))
+                .background(priorityChipShadowColor(selected))
+        )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .clip(RoundedCornerShape(radius))
+                .background(priorityChipFillColor(selected))
                 .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(mockupDp(6))
@@ -601,12 +634,31 @@ private fun CategorySwatch(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
                 ),
-                color = if (selected) colors.ink else MetaMutedColor,
+                color = if (selected) SelectedChipTextColor else formMetaMutedColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+}
+
+@Composable
+private fun PrioritySparkleRow(priority: TaskPriority) {
+    val count = priority.sparkleCount
+    val sparkleSize = when (count) {
+        1 -> mockupDp(MockupDimens.PRIORITY_SPARKLE_SLOT)
+        2 -> mockupDp(8)
+        else -> mockupDp(6)
+    }
+    val gap = if (count == 1) mockupDp(0) else mockupDp(1)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(count) {
+            SparkleIcon(size = sparkleSize)
         }
     }
 }
@@ -618,69 +670,47 @@ private fun PriorityChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val colors = SweetTheme.colors
+    val iconSize = mockupDp(MockupDimens.SWATCH_ICON)
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    val sparkleSize = mockupDp(MockupDimens.PRIORITY_SPARKLE_SLOT)
-    val chipHeight = mockupDp(MockupDimens.PRIORITY_CHIP_MIN_H)
-    val labelStyle = TextStyle(
-        fontFamily = BodyFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = mockupSp(MockupDimens.PRIORITY_CHIP_TEXT),
-        lineHeight = mockupSp(MockupDimens.PRIORITY_CHIP_LINE.toFloat())
-    )
-
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(chipHeight)
             .clickable(onClick = onClick)
     ) {
-        if (selected) {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .offset(y = mockupDp(3))
-                    .clip(RoundedCornerShape(radius))
-                    .background(colors.lemonDeep)
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
-                    .clip(RoundedCornerShape(radius))
-                    .background(colors.line)
-            )
-        }
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .matchParentSize()
+                .offset(
+                    y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
+                )
                 .clip(RoundedCornerShape(radius))
-                .background(if (selected) colors.lemon else colors.paper)
-                .padding(
-                    horizontal = mockupDp(MockupDimens.PRIORITY_CHIP_PAD_H),
-                    vertical = mockupDp(MockupDimens.PRIORITY_CHIP_PAD_V)
-                )
+                .background(priorityChipShadowColor(selected))
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(radius))
+                .background(priorityChipFillColor(selected))
+                .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(mockupDp(6))
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = if (selected) Arrangement.Top else Arrangement.Center
-            ) {
-                if (selected) {
-                    SparkleIcon(size = sparkleSize)
-                    Spacer(Modifier.height(mockupDp(MockupDimens.PRIORITY_CHIP_GAP)))
-                }
-                Text(
-                    priority.label,
-                    style = labelStyle,
-                    color = if (selected) colors.chocDeep else MetaMutedColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            FormIconSlot(iconSize) {
+                PrioritySparkleRow(priority = priority)
             }
+            Text(
+                priority.label,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
+                ),
+                color = if (selected) SelectedChipTextColor else formMetaMutedColor(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

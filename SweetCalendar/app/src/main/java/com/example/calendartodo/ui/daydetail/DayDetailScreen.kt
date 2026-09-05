@@ -44,8 +44,20 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val DayDetailSubColor = Color(0xFF8A7867)
-private val TaskMetaColor = Color(0xFF9A8878)
+private val DayDetailSubLight = Color(0xFF8A7867)
+private val DayEventMetaLight = Color(0xFF9A8878)
+
+@Composable
+private fun dayDetailSubColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else DayDetailSubLight
+}
+
+@Composable
+private fun dayEventMetaColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else DayEventMetaLight
+}
 
 @Composable
 fun DayDetailScreen(
@@ -107,7 +119,7 @@ fun DayDetailScreen(
                             fontSize = mockupSp(MockupDimens.DAY_DETAIL_SUB_F),
                             lineHeight = mockupSp(15f)
                         ),
-                        color = DayDetailSubColor
+                        color = dayDetailSubColor()
                     )
                 }
             }
@@ -171,7 +183,7 @@ fun DayDetailScreen(
                                 fontSize = mockupSp(MockupDimens.DAY_DETAIL_SUB_F),
                                 lineHeight = mockupSp(15f)
                             ),
-                            color = DayDetailSubColor,
+                            color = dayDetailSubColor(),
                             modifier = Modifier.padding(vertical = mockupDp(24))
                         )
                     }
@@ -255,7 +267,7 @@ private fun DayEventCard(
                             fontSize = mockupSp(MockupDimens.TASK_META_F),
                             lineHeight = mockupSp(13f)
                         ),
-                        color = TaskMetaColor,
+                        color = dayEventMetaColor(),
                         modifier = Modifier.padding(top = mockupDp(2))
                     )
                 }
