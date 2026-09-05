@@ -32,7 +32,7 @@ import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.calendar.DayEvent
 import com.example.calendartodo.ui.components.JarProgressCard
-import com.example.calendartodo.ui.components.NavPeppermintIcon
+import com.example.calendartodo.ui.components.ThemeHolidayHeroIcon
 import com.example.calendartodo.ui.components.SweetFab
 import com.example.calendartodo.ui.components.SweetIconButton
 import com.example.calendartodo.ui.components.SweetSectionLabel
@@ -157,7 +157,7 @@ fun DayDetailScreen(
                             title = event.description,
                             meta = "Calendar occasion · time.ir",
                             accentColor = colors.purpleDeep,
-                            icon = { NavPeppermintIcon(size = eventIconSize) },
+                            icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                             onClick = { onHolidayClick(event) }
                         )
                     }
@@ -170,7 +170,7 @@ fun DayDetailScreen(
                             title = event.description,
                             meta = "Official occasion · time.ir",
                             accentColor = colors.mintDeep,
-                            icon = { NavPeppermintIcon(size = eventIconSize) },
+                            icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                             onClick = { onHolidayClick(event) }
                         )
                     }

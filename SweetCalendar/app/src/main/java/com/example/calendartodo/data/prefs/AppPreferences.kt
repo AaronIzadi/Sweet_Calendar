@@ -2,6 +2,7 @@ package com.example.calendartodo.data.prefs
 
 import android.content.Context
 import com.example.calendartodo.calendar.CalendarSystem
+import com.example.calendartodo.ui.theme.ThemeFamily
 
 class AppPreferences(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -13,6 +14,10 @@ class AppPreferences(context: Context) {
     var darkMode: Boolean
         get() = prefs.getBoolean(KEY_DARK_MODE, false)
         set(value) = prefs.edit().putBoolean(KEY_DARK_MODE, value).apply()
+
+    var themeFamily: ThemeFamily
+        get() = ThemeFamily.fromPref(prefs.getString(KEY_THEME_FAMILY, ThemeFamily.Candy.name) ?: "")
+        set(value) = prefs.edit().putString(KEY_THEME_FAMILY, value.name).apply()
 
     var userName: String
         get() = prefs.getString(KEY_USER_NAME, "Friend") ?: "Friend"
@@ -55,6 +60,7 @@ class AppPreferences(context: Context) {
         private const val PREFS_NAME = "sweet_calendar_prefs"
         private const val KEY_WELCOME = "has_seen_welcome"
         private const val KEY_DARK_MODE = "dark_mode"
+        private const val KEY_THEME_FAMILY = "theme_family"
         private const val KEY_USER_NAME = "user_name"
         private const val KEY_NOTIF_RATIONALE = "has_seen_notification_rationale"
         private const val KEY_SHOW_HOLIDAYS = "show_holidays"

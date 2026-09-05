@@ -28,7 +28,7 @@ import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
-import com.example.calendartodo.ui.components.NavPeppermintIcon
+import com.example.calendartodo.ui.components.ThemeHolidayHeroIcon
 import com.example.calendartodo.ui.components.SweetIconButton
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
@@ -129,7 +129,7 @@ fun HolidayDetailScreen(
                     .align(Alignment.TopStart)
                     .padding(mockupDp(16))
             )
-            NavPeppermintIcon(size = mockupDp(MockupDimens.HOLIDAY_HERO_ICON))
+            ThemeHolidayHeroIcon(size = mockupDp(MockupDimens.HOLIDAY_HERO_ICON))
         }
 
         Column(

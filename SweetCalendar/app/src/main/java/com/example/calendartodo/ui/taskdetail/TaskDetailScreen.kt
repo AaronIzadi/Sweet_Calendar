@@ -32,7 +32,7 @@ import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
 import com.example.calendartodo.ui.components.ClockMiniIcon
-import com.example.calendartodo.ui.components.SparkleIcon
+import com.example.calendartodo.ui.components.ThemeSparkleIcon
 import com.example.calendartodo.ui.components.TaskCategory
 import com.example.calendartodo.ui.components.TaskGemIcon
 import com.example.calendartodo.ui.components.TaskHeartIcon
@@ -178,7 +178,7 @@ fun TaskDetailScreen(
                     )
                 }
                 MetaRow(
-                    icon = { SparkleIcon(size = mockupDp(10)) },
+                    icon = { ThemeSparkleIcon(size = mockupDp(10)) },
                     text = "${priority.label} priority"
                 )
                 if (task.repeatWeekly) {

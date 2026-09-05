@@ -27,10 +27,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.calendartodo.data.local.TaskEntity
-import com.example.calendartodo.ui.components.StatsJarChocolateIcon
+import com.example.calendartodo.ui.components.ThemeStatsJarIcon
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.themeStatsSubtitle
+import com.example.calendartodo.ui.theme.themeStatsTitle
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
@@ -90,7 +92,7 @@ fun StatsScreen(
             )
     ) {
         Text(
-            "Your candy jar",
+            themeStatsTitle(),
             style = TextStyle(
                 fontFamily = BodyFont,
                 fontWeight = FontWeight.Bold,
@@ -101,7 +103,7 @@ fun StatsScreen(
             modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(4))
         )
         Text(
-            "A sweeter look at how you're doing",
+            themeStatsSubtitle(),
             style = TextStyle(
                 fontFamily = BodyFont,
                 fontWeight = FontWeight.SemiBold,
@@ -228,7 +230,7 @@ private fun StatsBigJarCard(monthPct: Int) {
                 .padding(mockupDp(18)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StatsJarChocolateIcon(size = mockupDp(MockupDimens.STATS_JAR_ICON))
+            ThemeStatsJarIcon(size = mockupDp(MockupDimens.STATS_JAR_ICON))
             Spacer(Modifier.height(mockupDp(6)))
             Text(
                 "$monthPct%",

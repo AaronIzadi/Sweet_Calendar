@@ -22,7 +22,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import com.example.calendartodo.ui.components.MeltedCandyIcon
+import com.example.calendartodo.ui.components.ThemeOfflineHeroIcon
 import com.example.calendartodo.ui.components.SweetPixelButton
 import com.example.calendartodo.ui.components.WarnIcon
 import com.example.calendartodo.ui.theme.BodyFont
@@ -123,7 +123,7 @@ fun OfflineScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            MeltedCandyIcon(
+            ThemeOfflineHeroIcon(
                 width = mockupDp(MockupDimens.OFFLINE_ICON_W),
                 height = mockupDp(MockupDimens.OFFLINE_ICON_H)
             )

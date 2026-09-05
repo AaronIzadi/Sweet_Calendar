@@ -34,7 +34,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
-import com.example.calendartodo.ui.components.CandySprinklesBackground
+import com.example.calendartodo.ui.components.ThemeDecorBackground
 import com.example.calendartodo.ui.components.EmptyTasksState
 import com.example.calendartodo.ui.components.PixelButton
 import com.example.calendartodo.ui.components.TaskCard
@@ -113,7 +113,7 @@ fun TaskListScreen(
             .fillMaxSize()
             .background(CreamFrosting)
     ) {
-        CandySprinklesBackground(modifier = Modifier.fillMaxSize())
+        ThemeDecorBackground(modifier = Modifier.fillMaxSize())
 
         Column(
             modifier = Modifier

@@ -31,11 +31,14 @@ class MainActivity : ComponentActivity() {
         val preferences = AppPreferences(this)
         setContent {
             var darkMode by remember { mutableStateOf(preferences.darkMode) }
+            var themeFamily by remember { mutableStateOf(preferences.themeFamily) }
             MainScreen(
                 viewModel = viewModel,
                 preferences = preferences,
                 darkMode = darkMode,
+                themeFamily = themeFamily,
                 onDarkModeChange = { darkMode = it },
+                onThemeFamilyChange = { themeFamily = it },
                 onRequestNotificationPermission = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)

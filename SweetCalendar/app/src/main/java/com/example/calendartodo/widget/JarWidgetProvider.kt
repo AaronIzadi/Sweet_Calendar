@@ -9,6 +9,7 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.example.calendartodo.MainActivity
 import com.example.calendartodo.R
+import com.example.calendartodo.data.prefs.AppPreferences
 
 class JarWidgetProvider : AppWidgetProvider() {
 
@@ -33,13 +34,15 @@ class JarWidgetProvider : AppWidgetProvider() {
             val theme = WidgetTheme.colors(context)
             val data = WidgetDataLoader.loadToday(context)
             val iconPx = (16f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            val themeFamily = AppPreferences(context).themeFamily
 
             views.setInt(R.id.widget_jar_root, "setBackgroundResource", theme.cardBackgroundRes)
             views.setImageViewBitmap(
                 R.id.widget_jar_icon,
-                WidgetPixelIcons.chocolateBitmap(iconPx, theme.isDark)
+                WidgetPixelIcons.jarIconBitmap(iconPx, theme.isDark, theme.isSpace)
             )
             views.setTextViewText(R.id.widget_jar_big_num, "${data.done}/${data.total}")
+            views.setTextViewText(R.id.widget_jar_label, themeFamily.widgetJarLabel)
             views.setTextColor(R.id.widget_jar_big_num, theme.purpleDeep)
             views.setTextColor(R.id.widget_jar_label, theme.muted)
 

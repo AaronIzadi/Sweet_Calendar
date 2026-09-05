@@ -103,7 +103,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val category = TaskCategory.fromString(task.category)
             views.setImageViewBitmap(
                 iconId,
-                WidgetPixelIcons.categoryBitmap(category, iconPx, theme.isDark)
+                WidgetPixelIcons.categoryBitmap(category, iconPx, theme.isDark, theme.isSpace)
             )
             views.setImageViewResource(
                 checkboxId,

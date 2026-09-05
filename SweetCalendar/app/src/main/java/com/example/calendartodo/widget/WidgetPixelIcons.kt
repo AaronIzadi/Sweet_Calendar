@@ -7,7 +7,41 @@ import com.example.calendartodo.ui.components.TaskCategory
 
 object WidgetPixelIcons {
 
-    fun categoryBitmap(category: TaskCategory, sizePx: Int, isDark: Boolean = false): Bitmap {
+    fun categoryBitmap(category: TaskCategory, sizePx: Int, isDark: Boolean = false, isSpace: Boolean = false): Bitmap {
+        if (isSpace) {
+            val rows = when (category) {
+                TaskCategory.Work -> ROCKET_ROWS
+                TaskCategory.Personal -> STAR_ROWS
+                TaskCategory.Home -> RING_PLANET_ROWS
+            }
+            val palette = when (category) {
+                TaskCategory.Work -> if (isDark) {
+                    mapOf(
+                        '1' to 0xFFECEFF7.toInt(),
+                        'o' to 0xFF5FE6E0.toInt(),
+                        '2' to 0xFFFF6AC8.toInt(),
+                        'f' to 0xFFFFD466.toInt(),
+                    )
+                } else {
+                    mapOf(
+                        '1' to 0xFFC9BFF2.toInt(),
+                        'o' to 0xFF1F9E98.toInt(),
+                        '2' to 0xFFD63F9E.toInt(),
+                        'f' to 0xFFDE9F14.toInt(),
+                    )
+                }
+                TaskCategory.Personal -> mapOf(
+                    '1' to if (isDark) 0xFFFF6AC8.toInt() else 0xFFD63F9E.toInt()
+                )
+                TaskCategory.Home -> if (isDark) {
+                    mapOf('p' to 0xFF33C8C2.toInt(), 'r' to 0xFFFFD466.toInt())
+                } else {
+                    mapOf('p' to 0xFF1F9E98.toInt(), 'r' to 0xFFDE9F14.toInt())
+                }
+            }
+            return render(rows, palette, sizePx)
+        }
+
         val rows = when (category) {
             TaskCategory.Work -> GEM_ROWS
             TaskCategory.Personal -> HEART_ROWS
@@ -22,6 +56,18 @@ object WidgetPixelIcons {
                 if (isDark) 0xFF6FE0B4.toInt() else 0xFF4FB894.toInt()
         }
         return render(rows, mapOf('1' to color), sizePx)
+    }
+
+    fun jarIconBitmap(sizePx: Int, isDark: Boolean = false, isSpace: Boolean = false): Bitmap {
+        if (isSpace) {
+            val palette = if (isDark) {
+                mapOf('1' to 0xFFECEFF7.toInt(), 'p' to 0xFFFFD466.toInt())
+            } else {
+                mapOf('1' to 0xFF6B4FD6.toInt(), 'p' to 0xFFDE9F14.toInt())
+            }
+            return render(SATELLITE_ROWS, palette, sizePx)
+        }
+        return chocolateBitmap(sizePx, isDark)
     }
 
     fun chocolateBitmap(sizePx: Int, isDark: Boolean = false): Bitmap {
@@ -58,6 +104,45 @@ object WidgetPixelIcons {
         }
         return bitmap
     }
+
+    private val ROCKET_ROWS = listOf(
+        "....1....",
+        "...111...",
+        "..11111..",
+        "..1ooo1..",
+        "..1ooo1..",
+        "..11111..",
+        "..11111..",
+        ".2.111.2.",
+        "22..1..22",
+        "...fff...",
+        "....f....",
+    )
+
+    private val RING_PLANET_ROWS = listOf(
+        "...pppp...",
+        "..pppppp..",
+        ".pppppppp.",
+        "rrrrrrrrrr",
+        "rrrrrrrrrr",
+        ".pppppppp.",
+        "..pppppp..",
+        "...pppp...",
+    )
+
+    private val STAR_ROWS = listOf(
+        "...1...",
+        "...1...",
+        "1111111",
+        "...1...",
+        "...1...",
+    )
+
+    private val SATELLITE_ROWS = listOf(
+        "....1....",
+        "pp.111.pp",
+        "pp.111.pp",
+    )
 
     private val GEM_ROWS = listOf(
         "...1...",

@@ -48,6 +48,8 @@ import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.themeCelebrationMessage
+import com.example.calendartodo.ui.theme.themeCelebrationTitle
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.BubblegumPink
@@ -330,10 +332,10 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CheckCandyIcon(size = mockupDp(56))
+                ThemeCompletedCheckIcon(size = mockupDp(56))
                 Spacer(Modifier.height(mockupDp(12)))
                 Text(
-                    "Sweet job!",
+                    themeCelebrationTitle(),
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = FontWeight.Bold,
@@ -345,7 +347,7 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(mockupDp(8)))
                 Text(
-                    "You completed the task successfully!",
+                    themeCelebrationMessage(),
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = FontWeight.SemiBold,

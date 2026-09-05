@@ -45,7 +45,9 @@ val LocalSweetColors = staticCompositionLocalOf {
     )
 }
 
-private val LightSweetColors = SweetColors(
+val LocalThemeFamily = staticCompositionLocalOf { ThemeFamily.Candy }
+
+private val LightCandyColors = SweetColors(
     cream = Cream, paper = Paper, ink = Ink, line = Line,
     pink = Pink, pinkDeep = PinkDeep, purple = Purple, purpleDeep = PurpleDeep,
     mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
@@ -55,7 +57,7 @@ private val LightSweetColors = SweetColors(
     streakBg = Color(0xFFFFF1DC), isDark = false,
 )
 
-private val DarkSweetColors = SweetColors(
+private val DarkCandyColors = SweetColors(
     cream = DarkCream, paper = DarkPaper, ink = DarkInk, line = DarkLine,
     pink = Color(0xFFFF8CBE), pinkDeep = Pink, purple = Color(0xFFB79BEB),
     purpleDeep = Color(0xFFD4C2FA), mint = Color(0xFF6FE0B4), mintDeep = Color(0xFF4FD9A0),
@@ -66,7 +68,28 @@ private val DarkSweetColors = SweetColors(
     streakBg = Color(0xFF3A2A46), isDark = true,
 )
 
-private val LightScheme = lightColorScheme(
+private val LightSpaceColors = SweetColors(
+    cream = SpaceCream, paper = SpacePaper, ink = SpaceInk, line = SpaceLine,
+    pink = SpacePink, pinkDeep = SpacePinkDeep, purple = SpacePurple, purpleDeep = SpacePurpleDeep,
+    mint = SpaceMint, mintDeep = SpaceMintDeep, lemon = SpaceLemon, lemonDeep = SpaceLemonDeep,
+    choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceMuted,
+    navInactive = SpaceNavInactive, navActiveBg = SpaceNavActiveBg,
+    weekendBg = Color(0xFFFFF1D6), holidayBg = Color(0xFFDFF7F5),
+    streakBg = Color(0xFFFFF1D6), isDark = false,
+)
+
+private val DarkSpaceColors = SweetColors(
+    cream = SpaceDarkCream, paper = SpaceDarkPaper, ink = SpaceDarkInk, line = SpaceDarkLine,
+    pink = SpaceDarkPink, pinkDeep = SpaceDarkPinkDeep, purple = SpaceDarkPurple,
+    purpleDeep = SpaceDarkPurpleDeep, mint = SpaceDarkMint, mintDeep = SpaceDarkMintDeep,
+    lemon = SpaceDarkLemon, lemonDeep = SpaceDarkLemonDeep,
+    choc = SpaceDarkChoc, chocDeep = SpaceDarkChocDeep, muted = SpaceDarkMuted,
+    navInactive = SpaceDarkNavInactive, navActiveBg = SpaceDarkNavActiveBg,
+    weekendBg = Color(0xFF2A2F72), holidayBg = Color(0xFF173A3A),
+    streakBg = Color(0xFF2A2F72), isDark = true,
+)
+
+private val LightCandyScheme = lightColorScheme(
     primary = Pink,
     onPrimary = Color.White,
     primaryContainer = PinkDeep,
@@ -82,7 +105,7 @@ private val LightScheme = lightColorScheme(
     outline = Line,
 )
 
-private val DarkScheme = darkColorScheme(
+private val DarkCandyScheme = darkColorScheme(
     primary = Color(0xFFFF8CBE),
     onPrimary = Color(0xFF1B1424),
     primaryContainer = PinkDeep,
@@ -98,17 +121,61 @@ private val DarkScheme = darkColorScheme(
     outline = DarkLine,
 )
 
+private val LightSpaceScheme = lightColorScheme(
+    primary = SpacePink,
+    onPrimary = Color.White,
+    primaryContainer = SpacePinkDeep,
+    secondary = SpacePurple,
+    onSecondary = Color.White,
+    tertiary = SpaceMint,
+    background = SpaceCream,
+    onBackground = SpaceInk,
+    surface = SpacePaper,
+    onSurface = SpaceInk,
+    surfaceVariant = SpaceLine,
+    onSurfaceVariant = SpaceInk,
+    outline = SpaceLine,
+)
+
+private val DarkSpaceScheme = darkColorScheme(
+    primary = SpaceDarkPink,
+    onPrimary = Color(0xFF0B0E24),
+    primaryContainer = SpaceDarkPinkDeep,
+    secondary = SpaceDarkPurple,
+    onSecondary = Color(0xFF0B0E24),
+    tertiary = SpaceDarkMint,
+    background = SpaceDarkCream,
+    onBackground = SpaceDarkInk,
+    surface = SpaceDarkPaper,
+    onSurface = SpaceDarkInk,
+    surfaceVariant = SpaceDarkLine,
+    onSurfaceVariant = SpaceDarkMuted,
+    outline = SpaceDarkLine,
+)
+
 @Composable
 fun CalendarTodoTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    themeFamily: ThemeFamily = ThemeFamily.Candy,
     content: @Composable () -> Unit
 ) {
-    val sweetColors = if (darkTheme) DarkSweetColors else LightSweetColors
+    val sweetColors = when (themeFamily) {
+        ThemeFamily.Candy -> if (darkTheme) DarkCandyColors else LightCandyColors
+        ThemeFamily.Space -> if (darkTheme) DarkSpaceColors else LightSpaceColors
+    }
+    val colorScheme = when (themeFamily) {
+        ThemeFamily.Candy -> if (darkTheme) DarkCandyScheme else LightCandyScheme
+        ThemeFamily.Space -> if (darkTheme) DarkSpaceScheme else LightSpaceScheme
+    }
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkScheme else LightScheme,
+        colorScheme = colorScheme,
         typography = AppTypography,
         content = {
-            CompositionLocalProvider(LocalSweetColors provides sweetColors, content = content)
+            CompositionLocalProvider(
+                LocalSweetColors provides sweetColors,
+                LocalThemeFamily provides themeFamily,
+                content = content
+            )
         }
     )
 }
@@ -116,4 +183,10 @@ fun CalendarTodoTheme(
 object SweetTheme {
     val colors: SweetColors
         @Composable get() = LocalSweetColors.current
+
+    val family: ThemeFamily
+        @Composable get() = LocalThemeFamily.current
+
+    val isSpace: Boolean
+        @Composable get() = family == ThemeFamily.Space
 }

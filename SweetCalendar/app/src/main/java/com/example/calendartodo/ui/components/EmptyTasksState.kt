@@ -18,6 +18,7 @@ import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
+import com.example.calendartodo.ui.theme.themeEmptySubtitle
 
 private val EmptySubLight = Color(0xFF8A7867)
 
@@ -33,15 +34,16 @@ fun EmptyStateContent(
     modifier: Modifier = Modifier,
     onAddTask: (() -> Unit)? = null,
     title: String = "Nothing on the menu today",
-    subtitle: String = "Your jar is empty — add a task and watch it fill up with candy as you check things off."
+    subtitle: String? = null
 ) {
     val colors = SweetTheme.colors
+    val resolvedSubtitle = subtitle ?: themeEmptySubtitle()
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        EmptyStateIceCreamIcon(size = mockupDp(MockupDimens.EMPTY_ICON))
+        ThemeEmptyStateIcon(size = mockupDp(MockupDimens.EMPTY_ICON))
         Spacer(Modifier.height(mockupDp(18)))
         Text(
             title,
@@ -56,7 +58,7 @@ fun EmptyStateContent(
         )
         Spacer(Modifier.height(mockupDp(8)))
         Text(
-            subtitle,
+            resolvedSubtitle,
             style = TextStyle(
                 fontFamily = BodyFont,
                 fontWeight = FontWeight.SemiBold,
@@ -80,5 +82,5 @@ fun EmptyTasksState(modifier: Modifier = Modifier) {
 
 @Composable
 fun AlarmBellIllustration(modifier: Modifier = Modifier) {
-    PinkLollipopIcon(modifier = modifier, size = mockupDp(140))
+    ThemeAlarmHeroIcon(modifier = modifier, size = mockupDp(140))
 }

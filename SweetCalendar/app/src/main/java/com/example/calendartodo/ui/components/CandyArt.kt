@@ -723,43 +723,6 @@ private fun peppermintPixelRows(): List<String> {
 }
 
 @Composable
-private fun PixelIcon(
-    rows: List<String>,
-    palette: Map<Char, Color>,
-    size: Dp,
-    modifier: Modifier = Modifier
-) {
-    PixelIcon(rows, palette, width = size, height = size, modifier = modifier)
-}
-
-@Composable
-private fun PixelIcon(
-    rows: List<String>,
-    palette: Map<Char, Color>,
-    width: Dp,
-    height: Dp,
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier.then(Modifier.size(width = width, height = height))) {
-        val cols = rows.maxOf { it.length }
-        val cell = minOf(this.size.width / cols, this.size.height / rows.size)
-        val offsetX = (this.size.width - cell * cols) / 2f
-        val offsetY = (this.size.height - cell * rows.size) / 2f
-        rows.forEachIndexed { rowIndex, row ->
-            row.forEachIndexed { colIndex, ch ->
-                palette[ch]?.let { color ->
-                    drawRect(
-                        color = color,
-                        topLeft = Offset(offsetX + colIndex * cell, offsetY + rowIndex * cell),
-                        size = Size(cell, cell)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun CandySprinklesBackground(modifier: Modifier = Modifier) {
     Canvas(modifier) {
         val sprinkleColors = listOf(SprinklesRed, SprinklesBlue, SprinklesGreen, LemonYellow, BubblegumPink)

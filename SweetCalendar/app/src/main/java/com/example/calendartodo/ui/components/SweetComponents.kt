@@ -62,6 +62,21 @@ private data class NavIconColors(
 @Composable
 private fun navIconColors(selected: Boolean): NavIconColors {
     val colors = SweetTheme.colors
+    if (SweetTheme.isSpace) {
+        return if (selected) {
+            NavIconColors(
+                primary = colors.purpleDeep,
+                highlight = Color.White,
+                secondary = colors.purple
+            )
+        } else {
+            NavIconColors(
+                primary = colors.navInactive,
+                highlight = colors.muted,
+                secondary = colors.purpleDeep
+            )
+        }
+    }
     if (colors.isDark) {
         return if (selected) {
             NavIconColors(
@@ -305,7 +320,7 @@ private fun MockupTaskCard(
             ) {
                 when {
                     task.isDone -> {
-                        CheckCandyIcon(
+                        ThemeCompletedCheckIcon(
                             size = taskIcon,
                             bgColor = if (colors.isDark) colors.mint else MintGreen,
                             modifier = Modifier.clickable(
@@ -398,7 +413,7 @@ private fun MockupTaskCard(
                         }
                     }
                     !task.isDone && priority == TaskPriority.High -> {
-                        SparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
+                        ThemeSparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
                     }
                 }
             }
@@ -586,20 +601,12 @@ private fun TaskCheckbox(
 
 @Composable
 private fun TaskCategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
-    when (category) {
-        TaskCategory.Personal -> TaskHeartIcon(size = size)
-        TaskCategory.Home -> TaskLeafIcon(size = size)
-        TaskCategory.Work -> TaskGemIcon(size = size)
-    }
+    ThemeCategoryTaskIcon(category = category, size = size)
 }
 
 @Composable
 private fun LegacyCategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
-    when (category) {
-        TaskCategory.Personal -> PeppermintCandyIcon(size = size)
-        TaskCategory.Home -> ChocolateIcon(size = size)
-        TaskCategory.Work -> WrappedCandyIcon(size = size)
-    }
+    ThemeCategorySwatchIcon(category = category, size = size)
 }
 
 fun formatTime12h(time24: String): String {
@@ -717,7 +724,7 @@ fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            FabGumdropIcon(size = mockupDp(MockupDimens.FAB_ICON))
+            ThemeFabIcon(size = mockupDp(MockupDimens.FAB_ICON))
         }
     }
 }
@@ -754,7 +761,7 @@ fun SweetBottomNav(
                 selected = selected == AppDestination.Today,
                 onClick = { onSelect(AppDestination.Today) }
             ) { iconColors ->
-                NavLollipopIcon(
+                ThemeNavTodayIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
                     headColor = iconColors.primary,
                     highlightColor = iconColors.highlight,
@@ -766,10 +773,11 @@ fun SweetBottomNav(
                 selected = selected == AppDestination.Week,
                 onClick = { onSelect(AppDestination.Week) }
             ) { iconColors ->
-                NavPeppermintIcon(
+                ThemeNavWeekIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
                     color = iconColors.primary,
-                    highlightColor = iconColors.highlight
+                    highlightColor = iconColors.highlight,
+                    accentColor = iconColors.secondary
                 )
             }
             NavItem(
@@ -860,7 +868,7 @@ fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
-            SettingsChocolateIcon(size = mockupDp(MockupDimens.STREAK_ICON))
+            ThemeStreakIcon(size = mockupDp(MockupDimens.STREAK_ICON))
             Text(
                 streak.toString(),
                 style = MaterialTheme.typography.bodySmall.copy(

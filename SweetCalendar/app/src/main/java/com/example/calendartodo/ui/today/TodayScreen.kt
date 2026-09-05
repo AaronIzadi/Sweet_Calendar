@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
-import com.example.calendartodo.ui.components.CheckCandyIcon
+import com.example.calendartodo.ui.components.ThemeCompletedCheckIcon
 import com.example.calendartodo.ui.components.EmptyStateContent
 import com.example.calendartodo.ui.components.JarProgressCard
 import com.example.calendartodo.ui.components.StreakPill
@@ -37,6 +37,7 @@ import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.themeTodayJarLabel
 import java.util.Calendar
 
 private fun timeOfDayGreeting(): String {
@@ -135,7 +136,7 @@ fun TodayScreen(
             }
 
             JarProgressCard(
-                label = "Today's jar",
+                label = themeTodayJarLabel(),
                 completed = done.size,
                 total = todayTasks.size,
                 modifier = Modifier.padding(top = 16.dp)
@@ -179,7 +180,7 @@ fun TodayScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            CheckCandyIcon(
+                            ThemeCompletedCheckIcon(
                                 size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
                                 bgColor = if (colors.isDark) colors.mint else MintGreen
                             )

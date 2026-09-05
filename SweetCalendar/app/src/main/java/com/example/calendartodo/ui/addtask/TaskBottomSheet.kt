@@ -49,13 +49,12 @@ import com.example.calendartodo.calendar.CalendarSystem
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
 import com.example.calendartodo.ui.components.ClockMiniIcon
-import com.example.calendartodo.ui.components.SparkleIcon
+import com.example.calendartodo.ui.components.ThemeSparkleIcon
+import com.example.calendartodo.ui.theme.themeAddTaskButtonText
 import com.example.calendartodo.ui.components.SweetBigSaveButton
 import com.example.calendartodo.ui.components.SweetSwitch
 import com.example.calendartodo.ui.components.TaskCategory
-import com.example.calendartodo.ui.components.TaskGemIcon
-import com.example.calendartodo.ui.components.TaskHeartIcon
-import com.example.calendartodo.ui.components.TaskLeafIcon
+import com.example.calendartodo.ui.components.ThemeCategorySwatchIcon
 import com.example.calendartodo.ui.components.TaskPriority
 import com.example.calendartodo.ui.components.formatDisplayShort
 import com.example.calendartodo.ui.components.formatTime12h
@@ -394,7 +393,7 @@ fun TaskBottomSheet(
 
                 Spacer(Modifier.height(mockupDp(22)))
                 SweetBigSaveButton(
-                    text = if (isEdit) "SAVE CHANGES" else "ADD TO JAR",
+                    text = themeAddTaskButtonText(isEdit),
                     onClick = { submit() }
                 )
             }
@@ -645,9 +644,9 @@ private fun CategorySwatch(
         ) {
             FormIconSlot(iconSize) {
                 when (category) {
-                    TaskCategory.Personal -> TaskHeartIcon(size = iconSize)
-                    TaskCategory.Home -> TaskLeafIcon(size = iconSize)
-                    TaskCategory.Work -> TaskGemIcon(size = iconSize)
+                    TaskCategory.Personal,
+                    TaskCategory.Home,
+                    TaskCategory.Work -> ThemeCategorySwatchIcon(category = category, size = iconSize)
                 }
             }
             Text(
@@ -681,7 +680,7 @@ private fun PrioritySparkleRow(priority: TaskPriority) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         repeat(count) {
-            SparkleIcon(size = sparkleSize)
+            ThemeSparkleIcon(size = sparkleSize)
         }
     }
 }

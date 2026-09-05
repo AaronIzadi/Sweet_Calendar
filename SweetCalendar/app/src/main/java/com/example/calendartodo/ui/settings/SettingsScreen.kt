@@ -41,13 +41,16 @@ import com.example.calendartodo.export.TaskExportRunner
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.components.CalMiniIcon
-import com.example.calendartodo.ui.components.CheckCandyIcon
 import com.example.calendartodo.ui.components.ClockMiniIcon
-import com.example.calendartodo.ui.components.NavPeppermintIcon
-import com.example.calendartodo.ui.components.ProfileLollipopIcon
 import com.example.calendartodo.ui.components.SettingsBoxUncheckedIcon
-import com.example.calendartodo.ui.components.SettingsChocolateIcon
-import com.example.calendartodo.ui.components.SettingsGumdropIcon
+import com.example.calendartodo.ui.components.ThemeCompletedCheckIcon
+import com.example.calendartodo.ui.components.ThemeProfileAvatarIcon
+import com.example.calendartodo.ui.components.ThemeSettingsDarkModeIcon
+import com.example.calendartodo.ui.components.ThemeSettingsHolidayIcon
+import com.example.calendartodo.ui.components.ThemeSettingsJarWidgetIcon
+import com.example.calendartodo.ui.components.ThemeSettingsThemeIcon
+import com.example.calendartodo.ui.components.ThemeSettingsWidgetIcon
+import com.example.calendartodo.ui.components.ThemeStreakIcon
 import com.example.calendartodo.ui.components.SweetSwitch
 import com.example.calendartodo.ui.components.TrashIcon
 import com.example.calendartodo.ui.today.computeStreak
@@ -57,8 +60,10 @@ import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.ThemeFamily
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
+import com.example.calendartodo.ui.theme.themeProfileStats
 
 private val SettingsValueLight = Color(0xFF9A8878)
 private val SettingsGroupLabelLight = Color(0xFFB39D89)
@@ -108,11 +113,13 @@ fun SettingsScreen(
     tasks: List<TaskEntity>,
     userName: String,
     darkMode: Boolean,
+    themeFamily: ThemeFamily,
     showHolidays: Boolean,
     weekStartsOn: Int,
     calendarSystem: CalendarSystem,
     exportRunner: TaskExportRunner,
     onDarkModeChange: (Boolean) -> Unit,
+    onThemeFamilyChange: (ThemeFamily) -> Unit,
     onShowHolidaysChange: (Boolean) -> Unit,
     onWeekStartsOnChange: (Int) -> Unit,
     onCalendarSystemChange: (CalendarSystem) -> Unit,
@@ -127,6 +134,7 @@ fun SettingsScreen(
     val streak = computeStreak(tasks)
     val candiesEarned = tasks.count { it.isDone }
     var showNameDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
     var showWeekDialog by remember { mutableStateOf(false) }
     var showCalendarDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -179,7 +187,7 @@ fun SettingsScreen(
                     .background(profileAvatarBackgroundColor()),
                 contentAlignment = Alignment.Center
             ) {
-                ProfileLollipopIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
+                ThemeProfileAvatarIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
             }
             Column(modifier = Modifier.padding(start = mockupDp(12))) {
                 Text(
@@ -193,7 +201,7 @@ fun SettingsScreen(
                     color = Color.White
                 )
                 Text(
-                    "$streak day streak · $candiesEarned candies earned",
+                    themeProfileStats(streak, candiesEarned),
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = FontWeight.SemiBold,
@@ -231,7 +239,7 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    NavPeppermintIcon(size = rowIconSlot)
+                    ThemeSettingsHolidayIcon(size = rowIconSlot)
                 }
             },
             label = "Show local holidays",
@@ -244,16 +252,17 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    SettingsGumdropIcon(size = miniIcon)
+                    ThemeSettingsThemeIcon(size = miniIcon)
                 }
             },
-            label = "Candy theme",
-            value = "Bubblegum"
+            label = "App theme",
+            value = themeFamily.settingsValue,
+            onClick = { showThemeDialog = true }
         )
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    SettingsChocolateIcon(size = rowIconSlot)
+                    ThemeSettingsDarkModeIcon(size = rowIconSlot)
                 }
             },
             label = "Dark mode",
@@ -282,7 +291,7 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    SettingsGumdropIcon(size = miniIcon)
+                    ThemeSettingsWidgetIcon(size = miniIcon)
                 }
             },
             label = "Today tasks widget",
@@ -291,7 +300,7 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    SettingsChocolateIcon(size = rowIconSlot)
+                    ThemeSettingsJarWidgetIcon(size = rowIconSlot)
                 }
             },
             label = "Jar progress widget",
@@ -302,7 +311,7 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    CheckCandyIcon(
+                    ThemeCompletedCheckIcon(
                         size = mockupDp(MockupDimens.DETAIL_BADGE_ICON),
                         bgColor = if (colors.isDark) colors.mint else MintGreen
                     )
@@ -346,7 +355,7 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    CheckCandyIcon(
+                    ThemeCompletedCheckIcon(
                         size = mockupDp(MockupDimens.DETAIL_BADGE_ICON),
                         bgColor = if (colors.isDark) colors.mint else MintGreen
                     )
@@ -367,6 +376,17 @@ fun SettingsScreen(
             onConfirm = { name ->
                 onUserNameChange(name)
                 showNameDialog = false
+            }
+        )
+    }
+
+    if (showThemeDialog) {
+        ThemeFamilyDialog(
+            selected = themeFamily,
+            onDismiss = { showThemeDialog = false },
+            onSelect = { family ->
+                onThemeFamilyChange(family)
+                showThemeDialog = false
             }
         )
     }
@@ -404,6 +424,26 @@ fun SettingsScreen(
             exportRunner = exportRunner,
             onDismiss = { showBackupDialog = false }
         )
+    }
+}
+
+@Composable
+private fun ThemeFamilyDialog(
+    selected: ThemeFamily,
+    onDismiss: () -> Unit,
+    onSelect: (ThemeFamily) -> Unit
+) {
+    SettingsPickerDialog(
+        title = "App theme",
+        onDismiss = onDismiss
+    ) {
+        ThemeFamily.entries.forEach { family ->
+            SettingsPickerOption(
+                label = family.settingsValue,
+                selected = family == selected,
+                onClick = { onSelect(family) }
+            )
+        }
     }
 }
 

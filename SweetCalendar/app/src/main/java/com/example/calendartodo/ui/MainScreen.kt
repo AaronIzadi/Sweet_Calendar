@@ -49,6 +49,7 @@ import com.example.calendartodo.ui.taskdetail.TaskDetailScreen
 import com.example.calendartodo.ui.theme.CalendarTodoTheme
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.ProvideMockupScale
+import com.example.calendartodo.ui.theme.ThemeFamily
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.today.TodayScreen
@@ -83,7 +84,9 @@ fun MainScreen(
     viewModel: CalendarViewModel,
     preferences: AppPreferences,
     darkMode: Boolean,
+    themeFamily: ThemeFamily,
     onDarkModeChange: (Boolean) -> Unit,
+    onThemeFamilyChange: (ThemeFamily) -> Unit,
     onRequestNotificationPermission: () -> Unit = {}
 ) {
     val calendarState by viewModel.uiState.collectAsState()
@@ -173,7 +176,7 @@ fun MainScreen(
         }
     }
 
-    CalendarTodoTheme(darkTheme = darkMode) {
+    CalendarTodoTheme(darkTheme = darkMode, themeFamily = themeFamily) {
         ProvideMockupScale {
         val colors = SweetTheme.colors
         if (showWelcome) {
@@ -284,6 +287,7 @@ fun MainScreen(
                                 tasks = allTasks,
                                 userName = userName,
                                 darkMode = darkMode,
+                                themeFamily = themeFamily,
                                 showHolidays = preferences.showHolidays,
                                 weekStartsOn = preferences.weekStartsOn,
                                 calendarSystem = preferences.calendarSystem,
@@ -291,6 +295,11 @@ fun MainScreen(
                                 onDarkModeChange = { enabled ->
                                     preferences.darkMode = enabled
                                     onDarkModeChange(enabled)
+                                    SweetWidgets.updateAll(context)
+                                },
+                                onThemeFamilyChange = { family ->
+                                    preferences.themeFamily = family
+                                    onThemeFamilyChange(family)
                                     SweetWidgets.updateAll(context)
                                 },
                                 onShowHolidaysChange = { enabled ->
@@ -436,7 +445,7 @@ fun MainScreen(
                         viewModel.addTask(form)
                         sheetState = SheetState.Hidden
                         onTaskSaved(form)
-                        showSnackbar("Task added to jar!")
+                        showSnackbar(themeFamily.taskAddedSnackbar)
                     }
                 )
             }

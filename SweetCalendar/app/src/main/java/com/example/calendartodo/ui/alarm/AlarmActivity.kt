@@ -18,7 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.calendartodo.data.prefs.AppPreferences
-import com.example.calendartodo.ui.components.BigBellIcon
+import com.example.calendartodo.ui.components.ThemeAlarmHeroIcon
 import com.example.calendartodo.ui.components.SweetPixelButton
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.CalendarTodoTheme
@@ -44,7 +44,10 @@ class AlarmActivity : ComponentActivity() {
         }
 
         setContent {
-            CalendarTodoTheme(darkTheme = preferences.darkMode) {
+            CalendarTodoTheme(
+                darkTheme = preferences.darkMode,
+                themeFamily = preferences.themeFamily
+            ) {
                 ProvideMockupScale {
                     val colors = SweetTheme.colors
                     Column(
@@ -55,7 +58,7 @@ class AlarmActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Spacer(Modifier.height(mockupDp(80)))
-                        BigBellIcon(
+                        ThemeAlarmHeroIcon(
                             size = mockupDp(72),
                             color = colors.pink
                         )
