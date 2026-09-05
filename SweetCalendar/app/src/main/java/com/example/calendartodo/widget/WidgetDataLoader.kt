@@ -45,10 +45,10 @@ fun formatWidgetTime(time24: String): String {
     return "$hour12:${m.toString().padStart(2, '0')} $amPm"
 }
 
-fun taskLineText(task: TaskEntity): String {
-    val prefix = if (task.isDone) "✓ " else "○ "
+fun widgetTaskTitle(task: TaskEntity): String {
+    if (task.isDone) return task.title
     val timeSuffix = task.reminderTime?.let { " · ${formatWidgetTime(it)}" }.orEmpty()
-    return prefix + task.title + timeSuffix
+    return task.title + timeSuffix
 }
 
 object SweetWidgets {

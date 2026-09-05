@@ -6,11 +6,13 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Paint
 import android.view.View
 import android.widget.RemoteViews
 import com.example.calendartodo.MainActivity
 import com.example.calendartodo.R
 import com.example.calendartodo.data.local.TaskEntity
+import com.example.calendartodo.ui.components.TaskCategory
 
 class TodayWidgetProvider : AppWidgetProvider() {
 
@@ -33,34 +35,88 @@ class TodayWidgetProvider : AppWidgetProvider() {
         private fun buildViews(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_today)
             val data = WidgetDataLoader.loadToday(context)
+            val iconPx = (14f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
 
             views.setTextViewText(R.id.widget_date, data.dateLabel)
-            views.setTextViewText(R.id.widget_jar_count, "${data.done}/${data.total}")
             views.setProgressBar(R.id.widget_progress, 100, data.progress, false)
 
-            bindTaskLine(views, R.id.widget_task_1, data.displayTasks.getOrNull(0))
-            bindTaskLine(views, R.id.widget_task_2, data.displayTasks.getOrNull(1))
-            bindTaskLine(views, R.id.widget_task_3, data.displayTasks.getOrNull(2))
-
-            val openApp = PendingIntent.getActivity(
-                context,
-                0,
-                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            bindTaskRow(
+                views = views,
+                rowId = R.id.widget_task_row_1,
+                iconId = R.id.widget_task_1_icon,
+                checkboxId = R.id.widget_task_1_checkbox,
+                titleId = R.id.widget_task_1_title,
+                iconPx = iconPx,
+                task = data.displayTasks.getOrNull(0)
             )
+            bindTaskRow(
+                views = views,
+                rowId = R.id.widget_task_row_2,
+                iconId = R.id.widget_task_2_icon,
+                checkboxId = R.id.widget_task_2_checkbox,
+                titleId = R.id.widget_task_2_title,
+                iconPx = iconPx,
+                task = data.displayTasks.getOrNull(1)
+            )
+            bindTaskRow(
+                views = views,
+                rowId = R.id.widget_task_row_3,
+                iconId = R.id.widget_task_3_icon,
+                checkboxId = R.id.widget_task_3_checkbox,
+                titleId = R.id.widget_task_3_title,
+                iconPx = iconPx,
+                task = data.displayTasks.getOrNull(2)
+            )
+
+            val openApp = openAppIntent(context, 0)
             views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            views.setOnClickPendingIntent(R.id.widget_add_button, openApp)
             return views
         }
 
-        private fun bindTaskLine(views: RemoteViews, viewId: Int, task: TaskEntity?) {
+        private fun bindTaskRow(
+            views: RemoteViews,
+            rowId: Int,
+            iconId: Int,
+            checkboxId: Int,
+            titleId: Int,
+            iconPx: Int,
+            task: TaskEntity?
+        ) {
             if (task == null) {
-                views.setViewVisibility(viewId, View.GONE)
+                views.setViewVisibility(rowId, View.GONE)
                 return
             }
-            views.setViewVisibility(viewId, View.VISIBLE)
-            views.setTextViewText(viewId, taskLineText(task))
-            val color = if (task.isDone) 0xFFB7A493.toInt() else 0xFF3A2317.toInt()
-            views.setTextColor(viewId, color)
+
+            views.setViewVisibility(rowId, View.VISIBLE)
+            val category = TaskCategory.fromString(task.category)
+            views.setImageViewBitmap(iconId, WidgetPixelIcons.categoryBitmap(category, iconPx))
+            views.setImageViewResource(
+                checkboxId,
+                if (task.isDone) R.drawable.widget_checkbox_checked else R.drawable.widget_checkbox_unchecked
+            )
+            views.setTextViewText(titleId, widgetTaskTitle(task))
+            views.setTextColor(
+                titleId,
+                if (task.isDone) 0xFF6B4226.toInt() else 0xFF3A2317.toInt()
+            )
+            views.setInt(
+                titleId,
+                "setPaintFlags",
+                if (task.isDone) {
+                    Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
+                } else {
+                    Paint.ANTI_ALIAS_FLAG
+                }
+            )
         }
+
+        private fun openAppIntent(context: Context, requestCode: Int): PendingIntent =
+            PendingIntent.getActivity(
+                context,
+                requestCode,
+                Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
     }
 }

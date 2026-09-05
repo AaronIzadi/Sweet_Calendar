@@ -8,12 +8,13 @@
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-        android:id="@+id/widget_jar_emoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🍫"
-        android:textSize="22sp" />
+    <ImageView
+        android:id="@+id/widget_jar_icon"
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:contentDescription="@string/widget_jar_label"
+        android:scaleType="fitCenter"
+        android:src="@drawable/pixel_chocolate" />
 
     <TextView
         android:id="@+id/widget_jar_big_num"
@@ -31,8 +32,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:text="@string/widget_jar_label"
-        android:textColor="#8A7867"
-        android:textSize="9sp"
+        android:textColor="#9A8878"
+        android:textSize="8sp"
         android:textStyle="bold" />
 
 </LinearLayout>
