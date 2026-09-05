@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.ui.archive.ArchiveDayLabel
@@ -36,6 +36,7 @@ import com.example.calendartodo.ui.stats.countDeletedThisWeek
 import com.example.calendartodo.ui.stats.countExpiringDeletedTasks
 import com.example.calendartodo.ui.stats.filterDeletedTasks
 import com.example.calendartodo.ui.stats.groupDeletedTasksByDay
+import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
@@ -68,7 +69,8 @@ fun RecoverSnackbarScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
                 "Recover snackbar",
-                style = MaterialTheme.typography.titleMedium.copy(
+                style = TextStyle(
+                    fontFamily = BodyFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.ARCHIVE_TITLE),
                     lineHeight = mockupSp(20f)
@@ -127,9 +129,11 @@ fun RecoverSnackbarScreen(
                     item {
                         Text(
                             "No deleted tasks in this period",
-                            style = MaterialTheme.typography.bodySmall.copy(
+                            style = TextStyle(
+                                fontFamily = BodyFont,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = mockupSp(12f)
+                                fontSize = mockupSp(12f),
+                                lineHeight = mockupSp(16f)
                             ),
                             color = colors.muted,
                             modifier = Modifier.padding(vertical = mockupDp(24))

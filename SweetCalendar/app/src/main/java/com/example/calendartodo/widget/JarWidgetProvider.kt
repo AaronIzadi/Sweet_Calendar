@@ -30,8 +30,18 @@ class JarWidgetProvider : AppWidgetProvider() {
 
         private fun buildViews(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_jar_small)
+            val theme = WidgetTheme.colors(context)
             val data = WidgetDataLoader.loadToday(context)
+            val iconPx = (16f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+
+            views.setInt(R.id.widget_jar_root, "setBackgroundResource", theme.cardBackgroundRes)
+            views.setImageViewBitmap(
+                R.id.widget_jar_icon,
+                WidgetPixelIcons.chocolateBitmap(iconPx, theme.isDark)
+            )
             views.setTextViewText(R.id.widget_jar_big_num, "${data.done}/${data.total}")
+            views.setTextColor(R.id.widget_jar_big_num, theme.purpleDeep)
+            views.setTextColor(R.id.widget_jar_label, theme.muted)
 
             val openApp = PendingIntent.getActivity(
                 context,

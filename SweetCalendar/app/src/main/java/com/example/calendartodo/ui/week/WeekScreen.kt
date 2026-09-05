@@ -43,18 +43,19 @@ import com.example.calendartodo.ui.components.SweetTaskCard
 import com.example.calendartodo.ui.components.TaskCardStyle
 import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.PixelFont
+import com.example.calendartodo.ui.theme.selectedOnAccentTextColor
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
 private val WeekChipDowLight = Color(0xFF9A8878)
-private val WeekChipDowSelected = Color(0xFFEFE6FA)
 
 @Composable
 private fun weekChipDowColor(selected: Boolean): Color {
     val colors = SweetTheme.colors
     return when {
-        selected -> WeekChipDowSelected
+        selected && colors.isDark -> selectedOnAccentTextColor()
+        selected -> Color(0xFFEFE6FA)
         colors.isDark -> colors.muted
         else -> WeekChipDowLight
     }
@@ -293,7 +294,7 @@ private fun DayChip(
                     fontSize = mockupSp(MockupDimens.DAY_CHIP_NUM),
                     lineHeight = mockupSp(18f)
                 ),
-                color = if (selected) Color.White else colors.ink,
+                color = if (selected) selectedOnAccentTextColor() else colors.ink,
                 maxLines = 1
             )
             Row(horizontalArrangement = Arrangement.spacedBy(mockupDp(2))) {

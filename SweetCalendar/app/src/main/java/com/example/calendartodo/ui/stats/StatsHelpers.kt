@@ -120,9 +120,9 @@ fun computeMonthCompletionPercent(tasks: List<TaskEntity>): Int {
 
 data class WeekBar(val label: String, val ratio: Float, val isToday: Boolean)
 
-fun computeWeeklyBars(tasks: List<TaskEntity>): List<WeekBar> {
+fun computeWeeklyBars(tasks: List<TaskEntity>, weekStartsOn: Int = 0): List<WeekBar> {
     val today = JalaliDate.today()
-    val week = JalaliDate.weekContaining(today)
+    val week = JalaliDate.weekContaining(today, weekStartsOn)
     return week.map { day ->
         val iso = day.formatIso()
         val dayTasks = tasks.filter { it.jalaliDate == iso }
@@ -136,7 +136,16 @@ fun computeWeeklyBars(tasks: List<TaskEntity>): List<WeekBar> {
     }
 }
 
-/** Last 28 days, levels 0–4 for heatmap intensity. */
+/** Weekday labels for the heatmap bottom row (6 days ago → today). */
+fun computeHeatmapColumnLabels(): List<String> {
+    val today = JalaliDate.today()
+    return (0..6).map { column ->
+        val day = today.minusDays(6 - column)
+        JalaliDate.WEEKDAY_NAMES_EN_SHORT[day.weekdayIndex()].uppercase().take(2)
+    }
+}
+
+/** Last 28 days ending today; bottom-right cell is always today. */
 fun computeHeatmapLevels(tasks: List<TaskEntity>): List<Int> {
     val today = JalaliDate.today()
     return (27 downTo 0).map { offset ->

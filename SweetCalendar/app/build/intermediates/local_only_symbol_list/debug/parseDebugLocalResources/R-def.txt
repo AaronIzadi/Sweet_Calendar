@@ -9,10 +9,15 @@ drawable pixel_peppermint
 drawable pixel_wrapped_candy
 drawable sweet_calendar_icon
 drawable widget_add_button
+drawable widget_add_button_dark
 drawable widget_background
+drawable widget_background_dark
 drawable widget_checkbox_checked
+drawable widget_checkbox_checked_dark
 drawable widget_checkbox_unchecked
+drawable widget_checkbox_unchecked_dark
 drawable widget_progress_bar
+drawable widget_progress_bar_dark
 font press_start_2p
 font quicksand_variable
 id widget_add_button

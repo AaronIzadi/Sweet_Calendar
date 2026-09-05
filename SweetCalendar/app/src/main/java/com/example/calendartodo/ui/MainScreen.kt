@@ -54,6 +54,8 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.today.TodayScreen
 import com.example.calendartodo.ui.week.WeekScreen
 import com.example.calendartodo.ui.welcome.WelcomeScreen
+import androidx.compose.ui.platform.LocalContext
+import com.example.calendartodo.widget.SweetWidgets
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -97,6 +99,7 @@ fun MainScreen(
     var recoverTask by remember { mutableStateOf<TaskEntity?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var userName by remember { mutableStateOf(preferences.userName) }
 
     LaunchedEffect(preferences.showHolidays, preferences.weekStartsOn, preferences.calendarSystem) {
@@ -288,6 +291,7 @@ fun MainScreen(
                                 onDarkModeChange = { enabled ->
                                     preferences.darkMode = enabled
                                     onDarkModeChange(enabled)
+                                    SweetWidgets.updateAll(context)
                                 },
                                 onShowHolidaysChange = { enabled ->
                                     preferences.showHolidays = enabled
@@ -343,6 +347,7 @@ fun MainScreen(
                     )
                     OverlayState.Stats -> StatsScreen(
                         tasks = allTasks,
+                        weekStartsOn = preferences.weekStartsOn,
                         onBack = { overlay = OverlayState.None }
                     )
                     is OverlayState.TaskDetail -> {

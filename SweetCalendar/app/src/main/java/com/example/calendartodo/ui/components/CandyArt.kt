@@ -155,6 +155,46 @@ fun IceCreamIcon(modifier: Modifier = Modifier, size: Dp = 120.dp) {
     )
 }
 
+/** Empty state — mockup `buildIceCream(8)`. */
+@Composable
+fun EmptyStateIceCreamIcon(modifier: Modifier = Modifier, size: Dp = 64.dp) {
+    val colors = SweetTheme.colors
+    val cell = size / 8
+    val scoopLight = Color(0xFFFFF3E3)
+    val scoopPink = if (colors.isDark) colors.pink else Pink
+    val coneColor = Color(0xFFE8A857)
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        PixelIcon(
+            rows = listOf(
+                "..1111..",
+                ".111211.",
+                "11122211",
+                "11222211",
+                "11122211",
+                ".111111."
+            ),
+            palette = mapOf('1' to scoopLight, '2' to scoopPink),
+            width = size,
+            height = cell * 6
+        )
+        PixelIcon(
+            rows = listOf(
+                ".33333.",
+                "..333..",
+                "...3..."
+            ),
+            palette = mapOf('3' to coneColor),
+            width = cell * 5,
+            height = cell * 3,
+            modifier = Modifier
+                .offset(x = cell, y = -cell / 8)
+        )
+    }
+}
+
 @Composable
 fun ChocolateIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
     PixelArtImage(
@@ -312,8 +352,10 @@ fun MeltedCandyIcon(
     modifier: Modifier = Modifier,
     width: Dp = 64.dp,
     height: Dp = 56.dp,
-    color: Color = PixelPurple
+    color: Color? = null
 ) {
+    val colors = SweetTheme.colors
+    val candyColor = color ?: if (colors.isDark) colors.purple else PixelPurple
     PixelIcon(
         rows = listOf(
             "..1111..",
@@ -324,7 +366,7 @@ fun MeltedCandyIcon(
             "..1..1..",
             ".1....1."
         ),
-        palette = mapOf('1' to color),
+        palette = mapOf('1' to candyColor),
         width = width,
         height = height,
         modifier = modifier
@@ -427,16 +469,16 @@ fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color 
     )
 }
 
-/** FAB gumdrop — mockup `buildGumdrop(3)`. */
+/** FAB gumdrop — pink candy with white shine on the purple button face. */
 @Composable
 fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
-    val (wrapColor, bodyColor, highlightColor) = themedGumdropColors()
+    val colors = SweetTheme.colors
     SettingsGumdropIcon(
         modifier = modifier,
         size = size,
-        wrapColor = wrapColor,
-        bodyColor = bodyColor,
-        highlightColor = highlightColor
+        wrapColor = colors.pinkDeep,
+        bodyColor = colors.pink,
+        highlightColor = Color.White
     )
 }
 
@@ -445,10 +487,11 @@ fun FabGumdropIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
 fun SettingsGumdropIcon(
     modifier: Modifier = Modifier,
     size: Dp = 12.dp,
-    wrapColor: Color = LemonYellow,
-    bodyColor: Color = PixelPurple,
-    highlightColor: Color = PixelPurpleHighlight
+    wrapColor: Color? = null,
+    bodyColor: Color? = null,
+    highlightColor: Color? = null
 ) {
+    val themed = themedGumdropColors()
     PixelIcon(
         rows = listOf(
             ".yppppppy.",
@@ -459,9 +502,9 @@ fun SettingsGumdropIcon(
             ".yppppppy."
         ),
         palette = mapOf(
-            'y' to wrapColor,
-            'p' to bodyColor,
-            'h' to highlightColor
+            'y' to (wrapColor ?: themed.first),
+            'p' to (bodyColor ?: themed.second),
+            'h' to (highlightColor ?: themed.third)
         ),
         width = size,
         height = size,
@@ -508,6 +551,7 @@ fun StatsJarChocolateIcon(modifier: Modifier = Modifier, size: Dp = 40.dp) {
 /** Settings row — mockup `buildBoxUnchecked(2)`. */
 @Composable
 fun SettingsBoxUncheckedIcon(modifier: Modifier = Modifier, size: Dp = 10.dp) {
+    val colors = SweetTheme.colors
     PixelIcon(
         rows = listOf(
             "11111",
@@ -516,7 +560,7 @@ fun SettingsBoxUncheckedIcon(modifier: Modifier = Modifier, size: Dp = 10.dp) {
             "1...1",
             "11111"
         ),
-        palette = mapOf('1' to Color(0xFFEAD9C4)),
+        palette = mapOf('1' to colors.purpleDeep),
         size = size,
         modifier = modifier
     )
@@ -525,10 +569,11 @@ fun SettingsBoxUncheckedIcon(modifier: Modifier = Modifier, size: Dp = 10.dp) {
 /** Profile avatar — mockup `buildLollipop(3)`. */
 @Composable
 fun ProfileLollipopIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
+    val colors = SweetTheme.colors
     NavLollipopIcon(
         modifier = modifier,
         size = size,
-        headColor = BubblegumPink,
+        headColor = if (colors.isDark) colors.pink else BubblegumPink,
         highlightColor = Color.White,
         stickColor = LollipopTan
     )

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,10 +31,28 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val OfflineBannerBackground = Color(0xFFFFF1DC)
+private val OfflineBannerBackgroundLight = Color(0xFFFFF1DC)
 private val OfflineBannerBackgroundDark = Color(0xFF3A2A22)
-private val OfflineSubColor = Color(0xFF8A7867)
+private val OfflineSubLight = Color(0xFF8A7867)
 private val OfflineWarnColorDark = Color(0xFFEFD3AE)
+
+@Composable
+private fun offlineSubColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else OfflineSubLight
+}
+
+@Composable
+private fun offlineBannerTextColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.lemon else colors.chocDeep
+}
+
+@Composable
+private fun offlineWarnColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) OfflineWarnColorDark else colors.chocDeep
+}
 
 @Composable
 fun OfflineScreen(
@@ -44,8 +61,7 @@ fun OfflineScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val bannerBackground = if (colors.isDark) OfflineBannerBackgroundDark else OfflineBannerBackground
-    val warnColor = if (colors.isDark) OfflineWarnColorDark else colors.chocDeep
+    val bannerBackground = if (colors.isDark) OfflineBannerBackgroundDark else OfflineBannerBackgroundLight
 
     BackHandler(onBack = onBack)
 
@@ -70,7 +86,7 @@ fun OfflineScreen(
         ) {
             WarnIcon(
                 size = mockupDp(MockupDimens.OFFLINE_WARN_ICON),
-                color = warnColor
+                color = offlineWarnColor()
             )
             Text(
                 "Couldn't load holidays",
@@ -79,7 +95,7 @@ fun OfflineScreen(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.OFFLINE_BANNER_TEXT)
                 ),
-                color = colors.chocDeep,
+                color = offlineBannerTextColor(),
                 modifier = Modifier.weight(1f)
             )
             Text(
@@ -114,7 +130,8 @@ fun OfflineScreen(
             Spacer(Modifier.height(mockupDp(18)))
             Text(
                 "Holidays are offline for now",
-                style = MaterialTheme.typography.titleMedium.copy(
+                style = TextStyle(
+                    fontFamily = BodyFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.OFFLINE_TITLE),
                     lineHeight = mockupSp(20f)
@@ -131,7 +148,7 @@ fun OfflineScreen(
                     fontSize = mockupSp(MockupDimens.OFFLINE_SUB),
                     lineHeight = mockupSp(MockupDimens.OFFLINE_SUB * 1.6f)
                 ),
-                color = OfflineSubColor,
+                color = offlineSubColor(),
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(mockupDp(20)))

@@ -1,5 +1,6 @@
 package com.example.calendartodo.ui.taskdetail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,6 +73,7 @@ fun TaskDetailScreen(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler(onBack = onBack)
     val colors = SweetTheme.colors
     val date = remember(task.jalaliDate) { JalaliDate.parseIso(task.jalaliDate) }
     val category = TaskCategory.fromString(task.category)

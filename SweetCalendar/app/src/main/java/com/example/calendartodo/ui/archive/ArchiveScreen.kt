@@ -44,8 +44,31 @@ import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 import com.example.calendartodo.ui.today.computeStreak
 
-private val ArchiveStatLabelColor = Color(0xFF9A8878)
-private val ArchiveDayLabelColor = Color(0xFFB39D89)
+private val ArchiveStatLabelLight = Color(0xFF9A8878)
+private val ArchiveDayLabelLight = Color(0xFFB39D89)
+private val ArchiveFilterSelectedTextDark = Color(0xFF1B1424)
+
+@Composable
+private fun archiveStatLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else ArchiveStatLabelLight
+}
+
+@Composable
+private fun archiveDayLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.purpleDeep else ArchiveDayLabelLight
+}
+
+@Composable
+private fun archiveFilterChipTextColor(selected: Boolean): Color {
+    val colors = SweetTheme.colors
+    return when {
+        selected && colors.isDark -> ArchiveFilterSelectedTextDark
+        selected -> Color.White
+        else -> archiveStatLabelColor()
+    }
+}
 
 @Composable
 fun ArchiveScreen(
@@ -72,7 +95,8 @@ fun ArchiveScreen(
     ) {
         Text(
             "Completed",
-            style = MaterialTheme.typography.titleMedium.copy(
+            style = TextStyle(
+                fontFamily = BodyFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = mockupSp(MockupDimens.ARCHIVE_TITLE),
                 lineHeight = mockupSp(20f)
@@ -200,7 +224,7 @@ fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier)
                     lineHeight = mockupSp(11f),
                     letterSpacing = mockupSp(0.2f)
                 ),
-                color = ArchiveStatLabelColor,
+                color = archiveStatLabelColor(),
                 modifier = Modifier.padding(top = mockupDp(2))
             )
         }
@@ -232,7 +256,7 @@ fun ArchiveFilterChip(
                 fontSize = mockupSp(MockupDimens.ARCHIVE_FILTER_TEXT),
                 lineHeight = mockupSp(13f)
             ),
-            color = if (selected) Color.White else ArchiveStatLabelColor,
+            color = archiveFilterChipTextColor(selected),
             modifier = Modifier
                 .clip(shape)
                 .background(if (selected) colors.purple else colors.paper)
@@ -253,7 +277,7 @@ fun ArchiveDayLabel(text: String) {
             lineHeight = mockupSp(12f),
             letterSpacing = mockupSp(0.3f)
         ),
-        color = ArchiveDayLabelColor,
+        color = archiveDayLabelColor(),
         modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
     )
 }

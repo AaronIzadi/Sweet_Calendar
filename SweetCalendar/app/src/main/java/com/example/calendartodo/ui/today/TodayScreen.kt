@@ -128,43 +128,44 @@ fun TodayScreen(
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
-                if (todayTasks.isNotEmpty() && streak > 0) {
-                    StreakPill(streak, modifier = Modifier.clickable(onClick = onOpenStats))
-                }
+                StreakPill(
+                    streak = streak,
+                    modifier = Modifier.clickable(onClick = onOpenStats)
+                )
             }
+
+            JarProgressCard(
+                label = "Today's jar",
+                completed = done.size,
+                total = todayTasks.size,
+                modifier = Modifier.padding(top = 16.dp)
+            )
         }
 
-        if (todayTasks.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(start = 32.dp, end = 32.dp, bottom = 60.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                EmptyStateContent(onAddTask = onAddTask)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 18.dp)
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 18.dp)
+        ) {
+            if (todayTasks.isEmpty()) {
                 item {
-                    JarProgressCard(
-                        label = "Today's jar",
-                        completed = done.size,
-                        total = todayTasks.size,
-                        modifier = Modifier.padding(top = 16.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 14.dp, end = 14.dp, top = 24.dp, bottom = 60.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        EmptyStateContent(onAddTask = onAddTask)
+                    }
                 }
-
+            } else {
                 if (pending.isNotEmpty()) {
                     item { SweetSectionLabel("TODAY") }
                     items(pending, key = { it.id }) { task ->
                         SweetTaskCard(
                             task = task,
                             onClick = { onEditTask(task) },
+                            onToggleComplete = { onCompleteTask(task) },
                             style = TaskCardStyle.Mockup
                         )
                     }
@@ -196,12 +197,13 @@ fun TodayScreen(
                         SweetTaskCard(
                             task = task,
                             onClick = { onEditTask(task) },
+                            onToggleComplete = { onCompleteTask(task) },
                             style = TaskCardStyle.Mockup
                         )
                     }
                 }
-                item { Spacer(Modifier.height(90.dp)) }
             }
+            item { Spacer(Modifier.height(90.dp)) }
         }
     }
 }

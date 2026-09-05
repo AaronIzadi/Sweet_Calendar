@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.selectedOnAccentTextColor
 
 @Composable
 fun JalaliDatePickerDialog(
@@ -41,6 +42,9 @@ fun JalaliDatePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = colors.paper,
+        titleContentColor = colors.ink,
+        textContentColor = colors.ink,
         confirmButton = {
             TextButton(onClick = { onConfirm(selected) }) {
                 Text("OK", color = colors.pinkDeep)
@@ -141,9 +145,10 @@ fun JalaliDatePickerDialog(
                                     Text(
                                         date.day.toString(),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = when {
-                                            isSelected -> Color.White
-                                            else -> colors.ink
+                                        color = if (isSelected) {
+                                            selectedOnAccentTextColor()
+                                        } else {
+                                            colors.ink
                                         }
                                     )
                                 }

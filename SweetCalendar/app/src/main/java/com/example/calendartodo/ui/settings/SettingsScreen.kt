@@ -53,19 +53,55 @@ import com.example.calendartodo.ui.components.TrashIcon
 import com.example.calendartodo.ui.today.computeStreak
 import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.MintGreen
 import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val SettingsValueColor = Color(0xFF9A8878)
-private val SettingsGroupLabelColor = Color(0xFFB39D89)
-private val SettingsChevronColor = Color(0xFFC9B8A6)
-private val ProfileAvatarBackground = Color(0xFFFFF8FA)
-private val ProfileAvatarBackgroundDark = Color(0xFF3D3035)
-private val FieldLabelColor = Color(0xFF9A8878)
-private val FieldPlaceholderColor = Color(0xFFB7A493)
+private val SettingsValueLight = Color(0xFF9A8878)
+private val SettingsGroupLabelLight = Color(0xFFB39D89)
+private val SettingsChevronLight = Color(0xFFC9B8A6)
+private val ProfileAvatarBackgroundLight = Color(0xFFFFF8FA)
+private val SettingsFieldLabelLight = Color(0xFF9A8878)
+private val SettingsFieldPlaceholderLight = Color(0xFFB7A493)
+
+@Composable
+private fun settingsValueColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else SettingsValueLight
+}
+
+@Composable
+private fun settingsGroupLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.purpleDeep else SettingsGroupLabelLight
+}
+
+@Composable
+private fun settingsChevronColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else SettingsChevronLight
+}
+
+@Composable
+private fun settingsFieldLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else SettingsFieldLabelLight
+}
+
+@Composable
+private fun settingsFieldPlaceholderColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.navInactive else SettingsFieldPlaceholderLight
+}
+
+@Composable
+private fun profileAvatarBackgroundColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) Color.Black.copy(alpha = 0.2f) else ProfileAvatarBackgroundLight
+}
 
 @Composable
 fun SettingsScreen(
@@ -140,7 +176,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .size(mockupDp(MockupDimens.SETTINGS_PROFILE_AVATAR))
                     .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
-                    .background(if (colors.isDark) ProfileAvatarBackgroundDark else ProfileAvatarBackground),
+                    .background(profileAvatarBackgroundColor()),
                 contentAlignment = Alignment.Center
             ) {
                 ProfileLollipopIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
@@ -266,7 +302,10 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    CheckCandyIcon(size = mockupDp(MockupDimens.DETAIL_BADGE_ICON))
+                    CheckCandyIcon(
+                        size = mockupDp(MockupDimens.DETAIL_BADGE_ICON),
+                        bgColor = if (colors.isDark) colors.mint else MintGreen
+                    )
                 }
             },
             label = "Completed tasks",
@@ -307,7 +346,10 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    CheckCandyIcon(size = mockupDp(MockupDimens.DETAIL_BADGE_ICON))
+                    CheckCandyIcon(
+                        size = mockupDp(MockupDimens.DETAIL_BADGE_ICON),
+                        bgColor = if (colors.isDark) colors.mint else MintGreen
+                    )
                 }
             },
             label = "About Sweet Calendar",
@@ -484,7 +526,7 @@ private fun NameEditDialog(
                         letterSpacing = mockupSp(0.3f),
                         lineHeight = mockupSp(14f)
                     ),
-                    color = FieldLabelColor,
+                    color = settingsFieldLabelColor(),
                     modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
                 )
                 Box(modifier = Modifier.fillMaxWidth()) {
@@ -522,7 +564,7 @@ private fun NameEditDialog(
                                         fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
                                         lineHeight = mockupSp(18f)
                                     ),
-                                    color = FieldPlaceholderColor
+                                    color = settingsFieldPlaceholderColor()
                                 )
                             }
                             inner()
@@ -662,7 +704,7 @@ private fun SettingsGroupLabel(text: String) {
             lineHeight = mockupSp(12f),
             letterSpacing = mockupSp(0.5f)
         ),
-        color = SettingsGroupLabelColor,
+        color = settingsGroupLabelColor(),
         modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
     )
 }
@@ -721,7 +763,7 @@ private fun SettingsRow(
                         fontSize = mockupSp(MockupDimens.SETTINGS_ROW_VALUE_F),
                         lineHeight = mockupSp(15f)
                     ),
-                    color = SettingsValueColor
+                    color = settingsValueColor()
                 )
             }
             trailing?.invoke()
@@ -733,7 +775,7 @@ private fun SettingsRow(
                         fontWeight = FontWeight.Bold,
                         fontSize = mockupSp(MockupDimens.SETTINGS_CHEVRON_F)
                     ),
-                    color = SettingsChevronColor,
+                    color = settingsChevronColor(),
                     modifier = Modifier.padding(start = mockupDp(8))
                 )
             }

@@ -11,17 +11,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.example.calendartodo.ui.components.AlarmBellIllustration
-import com.example.calendartodo.ui.components.PixelButton
-import com.example.calendartodo.ui.theme.BubblegumPink
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import com.example.calendartodo.data.prefs.AppPreferences
+import com.example.calendartodo.ui.components.BigBellIcon
+import com.example.calendartodo.ui.components.SweetPixelButton
+import com.example.calendartodo.ui.theme.BodyFont
 import com.example.calendartodo.ui.theme.CalendarTodoTheme
-import com.example.calendartodo.ui.theme.ChocolateBrown
-import com.example.calendartodo.ui.theme.CreamFrosting
+import com.example.calendartodo.ui.theme.MockupDimens
+import com.example.calendartodo.ui.theme.ProvideMockupScale
+import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.mockupDp
+import com.example.calendartodo.ui.theme.mockupSp
 
 class AlarmActivity : ComponentActivity() {
 
@@ -30,6 +35,7 @@ class AlarmActivity : ComponentActivity() {
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
         val description = intent.getStringExtra(EXTRA_DESCRIPTION).orEmpty()
         val dateTime = intent.getStringExtra(EXTRA_DATE_TIME).orEmpty()
+        val preferences = AppPreferences(this)
 
         runCatching {
             val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
@@ -38,38 +44,67 @@ class AlarmActivity : ComponentActivity() {
         }
 
         setContent {
-            CalendarTodoTheme {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(CreamFrosting)
-                        .padding(horizontal = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(Modifier.height(80.dp))
-                    AlarmBellIllustration()
-                    Spacer(Modifier.height(40.dp))
-                    Text(title, style = MaterialTheme.typography.titleMedium, color = ChocolateBrown)
-                    if (description.isNotBlank()) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = ChocolateBrown.copy(alpha = 0.8f)
-                        )
-                    }
-                    if (dateTime.isNotBlank()) {
-                        Spacer(Modifier.height(12.dp))
-                        Text(dateTime, style = MaterialTheme.typography.bodyMedium, color = ChocolateBrown)
-                    }
-                    Spacer(Modifier.height(40.dp))
-                    PixelButton(
-                        onClick = { finish() },
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = BubblegumPink,
-                        contentDescription = "Close alarm"
+            CalendarTodoTheme(darkTheme = preferences.darkMode) {
+                ProvideMockupScale {
+                    val colors = SweetTheme.colors
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(colors.cream)
+                            .padding(horizontal = mockupDp(30)),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("Close", style = MaterialTheme.typography.labelSmall, color = CreamFrosting)
+                        Spacer(Modifier.height(mockupDp(80)))
+                        BigBellIcon(
+                            size = mockupDp(72),
+                            color = colors.pink
+                        )
+                        Spacer(Modifier.height(mockupDp(24)))
+                        Text(
+                            title,
+                            style = TextStyle(
+                                fontFamily = BodyFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = mockupSp(MockupDimens.OFFLINE_TITLE),
+                                lineHeight = mockupSp(20f)
+                            ),
+                            color = colors.ink,
+                            textAlign = TextAlign.Center
+                        )
+                        if (description.isNotBlank()) {
+                            Spacer(Modifier.height(mockupDp(8)))
+                            Text(
+                                description,
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = mockupSp(12f),
+                                    lineHeight = mockupSp(18f)
+                                ),
+                                color = colors.muted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        if (dateTime.isNotBlank()) {
+                            Spacer(Modifier.height(mockupDp(12)))
+                            Text(
+                                dateTime,
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = mockupSp(13f),
+                                    lineHeight = mockupSp(18f)
+                                ),
+                                color = colors.muted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        Spacer(Modifier.height(mockupDp(32)))
+                        SweetPixelButton(
+                            text = "CLOSE",
+                            onClick = { finish() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             }

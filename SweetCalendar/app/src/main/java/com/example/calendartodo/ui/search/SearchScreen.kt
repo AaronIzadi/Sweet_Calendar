@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,9 +45,16 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val SearchPlaceholderColor = Color(0xFFB7A493)
-private val RecentChipBackground = Color(0xFFF1E9FB)
+private val SearchPlaceholderLight = Color(0xFFB7A493)
+private val SearchPlaceholderDark = Color(0xFFC9B8DE)
+private val RecentChipBackgroundLight = Color(0xFFF1E9FB)
 private val RecentChipBackgroundDark = Color(0xFF3A2C4C)
+
+@Composable
+private fun searchPlaceholderColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) SearchPlaceholderDark else SearchPlaceholderLight
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -63,7 +69,8 @@ fun SearchScreen(
     val colors = SweetTheme.colors
     var query by remember { mutableStateOf("") }
     val results = remember(tasks, query) { searchTasks(tasks, query) }
-    val chipBackground = if (colors.isDark) RecentChipBackgroundDark else RecentChipBackground
+    val chipBackground = if (colors.isDark) RecentChipBackgroundDark else RecentChipBackgroundLight
+    val placeholderColor = searchPlaceholderColor()
 
     BackHandler(onBack = onBack)
 
@@ -105,7 +112,7 @@ fun SearchScreen(
                 ) {
                     SearchIcon(
                         size = mockupDp(MockupDimens.SEARCH_ICON),
-                        color = SearchPlaceholderColor
+                        color = placeholderColor
                     )
                     BasicTextField(
                         value = query,
@@ -128,7 +135,7 @@ fun SearchScreen(
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = mockupSp(MockupDimens.SEARCH_TEXT)
                                     ),
-                                    color = SearchPlaceholderColor
+                                    color = placeholderColor
                                 )
                             }
                             inner()
@@ -151,9 +158,11 @@ fun SearchScreen(
                     item {
                         Text(
                             "No matching tasks",
-                            style = MaterialTheme.typography.bodySmall.copy(
+                            style = TextStyle(
+                                fontFamily = BodyFont,
                                 fontWeight = FontWeight.SemiBold,
-                                fontSize = mockupSp(12f)
+                                fontSize = mockupSp(12f),
+                                lineHeight = mockupSp(16f)
                             ),
                             color = colors.muted,
                             modifier = Modifier.padding(bottom = mockupDp(8))

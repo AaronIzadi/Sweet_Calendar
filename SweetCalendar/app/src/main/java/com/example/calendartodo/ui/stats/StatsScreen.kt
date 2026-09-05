@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -26,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import com.example.calendartodo.data.local.TaskEntity
 import com.example.calendartodo.ui.components.StatsJarChocolateIcon
 import com.example.calendartodo.ui.theme.BodyFont
@@ -34,22 +34,46 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val StatsSubColor = Color(0xFF8A7867)
-private val StatsFieldLabelColor = Color(0xFF9A8878)
-private val StatsBarDayColor = Color(0xFFB39D89)
-private val HeatLevel1 = Color(0xFFD9F0E4)
-private val HeatLevel2 = Color(0xFFA9E6C9)
+private val StatsSubLight = Color(0xFF8A7867)
+private val StatsFieldLabelLight = Color(0xFF9A8878)
+private val StatsBarDayLight = Color(0xFFB39D89)
+private val HeatLevel1Light = Color(0xFFD9F0E4)
+private val HeatLevel2Light = Color(0xFFA9E6C9)
+private val HeatLevel3Dark = Color(0xFF2F8A6A)
+
+@Composable
+private fun statsSubColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else StatsSubLight
+}
+
+@Composable
+private fun statsFieldLabelColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else StatsFieldLabelLight
+}
+
+@Composable
+private fun statsBarDayColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else StatsBarDayLight
+}
 
 @Composable
 fun StatsScreen(
     tasks: List<TaskEntity>,
+    weekStartsOn: Int = 0,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val normalizedWeekStart = weekStartsOn.coerceIn(0, 6)
     val monthPct = remember(tasks) { computeMonthCompletionPercent(tasks) }
-    val weekBars = remember(tasks) { computeWeeklyBars(tasks) }
+    val weekBars = remember(tasks, normalizedWeekStart) {
+        computeWeeklyBars(tasks, normalizedWeekStart)
+    }
     val heatmap = remember(tasks) { computeHeatmapLevels(tasks) }
+    val heatmapColumnLabels = remember { computeHeatmapColumnLabels() }
 
     BackHandler(onBack = onBack)
 
@@ -67,7 +91,8 @@ fun StatsScreen(
     ) {
         Text(
             "Your candy jar",
-            style = MaterialTheme.typography.titleMedium.copy(
+            style = TextStyle(
+                fontFamily = BodyFont,
                 fontWeight = FontWeight.Bold,
                 fontSize = mockupSp(MockupDimens.STATS_TITLE),
                 lineHeight = mockupSp(22f)
@@ -82,7 +107,7 @@ fun StatsScreen(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = mockupSp(MockupDimens.STATS_SUB)
             ),
-            color = StatsSubColor,
+            color = statsSubColor(),
             modifier = Modifier.padding(bottom = mockupDp(14))
         )
 
@@ -127,7 +152,7 @@ fun StatsScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = mockupSp(MockupDimens.STATS_BAR_DAY)
                             ),
-                            color = StatsBarDayColor,
+                            color = statsBarDayColor(),
                             modifier = Modifier.padding(top = mockupDp(6))
                         )
                     }
@@ -151,6 +176,26 @@ fun StatsScreen(
                         week.forEach { level ->
                             HeatCell(level, Modifier.weight(1f))
                         }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = mockupDp(6)),
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(MockupDimens.STATS_HEAT_GAP))
+                ) {
+                    heatmapColumnLabels.forEach { label ->
+                        Text(
+                            label,
+                            style = TextStyle(
+                                fontFamily = BodyFont,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = mockupSp(MockupDimens.STATS_BAR_DAY)
+                            ),
+                            color = statsBarDayColor(),
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
             }
@@ -187,7 +232,8 @@ private fun StatsBigJarCard(monthPct: Int) {
             Spacer(Modifier.height(mockupDp(6)))
             Text(
                 "$monthPct%",
-                style = MaterialTheme.typography.headlineMedium.copy(
+                style = TextStyle(
+                    fontFamily = BodyFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.STATS_BIG_NUM),
                     lineHeight = mockupSp(MockupDimens.STATS_BIG_NUM)
@@ -201,7 +247,7 @@ private fun StatsBigJarCard(monthPct: Int) {
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.STATS_BIG_LBL)
                 ),
-                color = StatsFieldLabelColor,
+                color = statsFieldLabelColor(),
                 modifier = Modifier.padding(top = mockupDp(4))
             )
         }
@@ -247,7 +293,7 @@ private fun StatsFieldLabel(text: String) {
             fontSize = mockupSp(MockupDimens.FIELD_LABEL),
             letterSpacing = mockupSp(0.3f)
         ),
-        color = StatsFieldLabelColor,
+        color = statsFieldLabelColor(),
         modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
     )
 }
@@ -256,10 +302,10 @@ private fun StatsFieldLabel(text: String) {
 private fun HeatCell(level: Int, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
     val cellBg = when (level) {
-        0 -> colors.line
-        1 -> if (colors.isDark) colors.holidayBg else HeatLevel1
-        2 -> if (colors.isDark) Color(0xFF245E4C) else HeatLevel2
-        3 -> colors.mint
+        0 -> if (colors.isDark) colors.cream else colors.line
+        1 -> if (colors.isDark) colors.holidayBg else HeatLevel1Light
+        2 -> if (colors.isDark) Color(0xFF245E4C) else HeatLevel2Light
+        3 -> if (colors.isDark) HeatLevel3Dark else colors.mint
         else -> colors.mintDeep
     }
     Box(

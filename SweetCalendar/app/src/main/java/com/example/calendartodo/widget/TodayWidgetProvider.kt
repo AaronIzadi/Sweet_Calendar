@@ -34,14 +34,22 @@ class TodayWidgetProvider : AppWidgetProvider() {
 
         private fun buildViews(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_today)
+            val theme = WidgetTheme.colors(context)
             val data = WidgetDataLoader.loadToday(context)
             val iconPx = (14f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
 
+            views.setInt(R.id.widget_root, "setBackgroundResource", theme.cardBackgroundRes)
+            views.setTextColor(R.id.widget_title, theme.ink)
             views.setTextViewText(R.id.widget_date, data.dateLabel)
+            views.setTextColor(R.id.widget_date, theme.muted)
             views.setProgressBar(R.id.widget_progress, 100, data.progress, false)
+            views.setInt(R.id.widget_progress, "setProgressDrawable", theme.progressDrawableRes)
+            views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
+            views.setTextColor(R.id.widget_add_button, theme.addButtonText)
 
             bindTaskRow(
                 views = views,
+                theme = theme,
                 rowId = R.id.widget_task_row_1,
                 iconId = R.id.widget_task_1_icon,
                 checkboxId = R.id.widget_task_1_checkbox,
@@ -51,6 +59,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             )
             bindTaskRow(
                 views = views,
+                theme = theme,
                 rowId = R.id.widget_task_row_2,
                 iconId = R.id.widget_task_2_icon,
                 checkboxId = R.id.widget_task_2_checkbox,
@@ -60,6 +69,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             )
             bindTaskRow(
                 views = views,
+                theme = theme,
                 rowId = R.id.widget_task_row_3,
                 iconId = R.id.widget_task_3_icon,
                 checkboxId = R.id.widget_task_3_checkbox,
@@ -76,6 +86,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
 
         private fun bindTaskRow(
             views: RemoteViews,
+            theme: WidgetTheme.Colors,
             rowId: Int,
             iconId: Int,
             checkboxId: Int,
@@ -90,15 +101,18 @@ class TodayWidgetProvider : AppWidgetProvider() {
 
             views.setViewVisibility(rowId, View.VISIBLE)
             val category = TaskCategory.fromString(task.category)
-            views.setImageViewBitmap(iconId, WidgetPixelIcons.categoryBitmap(category, iconPx))
+            views.setImageViewBitmap(
+                iconId,
+                WidgetPixelIcons.categoryBitmap(category, iconPx, theme.isDark)
+            )
             views.setImageViewResource(
                 checkboxId,
-                if (task.isDone) R.drawable.widget_checkbox_checked else R.drawable.widget_checkbox_unchecked
+                if (task.isDone) theme.checkboxCheckedRes else theme.checkboxUncheckedRes
             )
             views.setTextViewText(titleId, widgetTaskTitle(task))
             views.setTextColor(
                 titleId,
-                if (task.isDone) 0xFF6B4226.toInt() else 0xFF3A2317.toInt()
+                if (task.isDone) theme.choc else theme.ink
             )
             views.setInt(
                 titleId,

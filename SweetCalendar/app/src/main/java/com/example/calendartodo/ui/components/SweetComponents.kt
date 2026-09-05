@@ -303,25 +303,35 @@ private fun MockupTaskCard(
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (task.isDone) {
-                    CheckCandyIcon(
-                        size = taskIcon,
-                        bgColor = if (colors.isDark) colors.mint else MintGreen,
-                        modifier = Modifier.clickable(
-                            onClick = onToggleComplete ?: onClick,
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
+                when {
+                    task.isDone -> {
+                        CheckCandyIcon(
+                            size = taskIcon,
+                            bgColor = if (colors.isDark) colors.mint else MintGreen,
+                            modifier = Modifier.clickable(
+                                onClick = onToggleComplete ?: onClick,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
                         )
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier.clickable(
-                            onClick = onClick,
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
+                    }
+                    onToggleComplete != null -> {
+                        TaskCheckbox(
+                            checked = false,
+                            onClick = onToggleComplete,
+                            modifier = Modifier.size(taskIcon)
                         )
-                    ) {
-                        TaskCategoryIcon(category = category, size = taskIcon)
+                    }
+                    else -> {
+                        Box(
+                            modifier = Modifier.clickable(
+                                onClick = onClick,
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            )
+                        ) {
+                            TaskCategoryIcon(category = category, size = taskIcon)
+                        }
                     }
                 }
                 Column(
@@ -448,7 +458,12 @@ private fun buildMockupTaskTitle(
         var idx = lower.indexOf(q)
         while (idx >= 0) {
             append(title.substring(start, idx))
-            withStyle(SpanStyle(background = colors.lemon, color = colors.ink)) {
+            withStyle(
+                SpanStyle(
+                    background = colors.lemon,
+                    color = if (colors.isDark) Color(0xFF1B1424) else colors.ink
+                )
+            ) {
                 append(title.substring(idx, idx + q.length))
             }
             start = idx + q.length
@@ -684,19 +699,21 @@ fun SweetIconButton(
 fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors
     val shape = RoundedCornerShape(16.dp)
+    val faceColor = if (colors.isDark) Color(0xFF8A6BC0) else colors.purple
+    val shadowColor = if (colors.isDark) Color(0xFF472F52) else colors.purpleDeep
     Box(modifier = modifier.size(mockupDp(MockupDimens.FAB_SIZE))) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(y = mockupDp(4))
                 .clip(shape)
-                .background(colors.purpleDeep)
+                .background(shadowColor)
         )
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .clip(shape)
-                .background(colors.purple)
+                .background(faceColor)
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {

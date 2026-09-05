@@ -64,6 +64,8 @@ import com.example.calendartodo.ui.theme.MockupDimens
 import com.example.calendartodo.ui.theme.PixelFont
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.selectedOnAccentTextColor
+import androidx.compose.material3.TimePickerDefaults
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
@@ -473,20 +475,41 @@ private fun TimePickerDialog(
     val timeState = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = false)
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = colors.paper,
+        titleContentColor = colors.ink,
+        textContentColor = colors.ink,
         confirmButton = {
             TextButton(onClick = {
                 onConfirm("%02d:%02d".format(timeState.hour, timeState.minute))
-            }) { Text("OK", color = colors.ink) }
+            }) { Text("OK", color = colors.pinkDeep) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = colors.ink)
+                Text("Cancel", color = colors.muted)
             }
         },
         title = { Text("Set time", color = colors.ink) },
         text = {
             ProvideMockupScale {
-                TimePicker(state = timeState)
+                TimePicker(
+                    state = timeState,
+                    colors = TimePickerDefaults.colors(
+                        clockDialColor = colors.line,
+                        clockDialSelectedContentColor = selectedOnAccentTextColor(),
+                        clockDialUnselectedContentColor = colors.ink,
+                        selectorColor = colors.purple,
+                        containerColor = colors.paper,
+                        periodSelectorBorderColor = colors.line,
+                        periodSelectorSelectedContainerColor = colors.purple,
+                        periodSelectorUnselectedContainerColor = colors.paper,
+                        periodSelectorSelectedContentColor = selectedOnAccentTextColor(),
+                        periodSelectorUnselectedContentColor = colors.muted,
+                        timeSelectorSelectedContainerColor = colors.purple,
+                        timeSelectorUnselectedContainerColor = colors.line,
+                        timeSelectorSelectedContentColor = selectedOnAccentTextColor(),
+                        timeSelectorUnselectedContentColor = colors.ink,
+                    )
+                )
             }
         }
     )

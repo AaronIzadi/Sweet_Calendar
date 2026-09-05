@@ -1,5 +1,6 @@
 package com.example.calendartodo.ui.daydetail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +72,7 @@ fun DayDetailScreen(
     onHolidayClick: (DayEvent) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    BackHandler(onBack = onBack)
     val colors = SweetTheme.colors
     val weekday = JalaliDate.WEEKDAY_NAMES_EN[date.weekdayIndex()]
     val primaryTitle = when (calendarSystem) {

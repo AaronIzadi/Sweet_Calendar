@@ -1,5 +1,6 @@
 package com.example.calendartodo.ui.holiday
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,13 +36,45 @@ import com.example.calendartodo.ui.theme.SweetTheme
 import com.example.calendartodo.ui.theme.mockupDp
 import com.example.calendartodo.ui.theme.mockupSp
 
-private val HolidayDateColor = Color(0xFF8A7867)
-private val HolidayBodyColor = Color(0xFF6B5A4B)
-private val HolidaySourceColor = Color(0xFFB39D89)
-private val HolidayTagHolidayBg = Color(0xFFE3F7EE)
-private val HolidayTagOccasionBg = Color(0xFFFFF5D6)
-private val HeroGradientStart = Color(0xFFDFF7EC)
-private val HeroGradientEnd = Color(0xFFF3E3FB)
+private val HolidayDateLight = Color(0xFF8A7867)
+private val HolidayBodyLight = Color(0xFF6B5A4B)
+private val HolidaySourceLight = Color(0xFFB39D89)
+private val HolidayTagHolidayBgLight = Color(0xFFE3F7EE)
+private val HolidayTagOccasionBgLight = Color(0xFFFFF5D6)
+private val HeroGradientStartLight = Color(0xFFDFF7EC)
+private val HeroGradientEndLight = Color(0xFFF3E3FB)
+private val HeroGradientStartDark = Color(0xFF1E3A32)
+private val HeroGradientEndDark = Color(0xFF241C36)
+
+@Composable
+private fun holidayDateColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else HolidayDateLight
+}
+
+@Composable
+private fun holidayBodyColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else HolidayBodyLight
+}
+
+@Composable
+private fun holidaySourceColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.muted else HolidaySourceLight
+}
+
+@Composable
+private fun holidayTagStyle(isHoliday: Boolean): Pair<Color, Color> {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) {
+        if (isHoliday) colors.holidayBg to colors.mint
+        else colors.streakBg to colors.purpleDeep
+    } else {
+        if (isHoliday) HolidayTagHolidayBgLight to colors.mintDeep
+        else HolidayTagOccasionBgLight to colors.purpleDeep
+    }
+}
 
 @Composable
 fun HolidayDetailScreen(
@@ -53,16 +86,18 @@ fun HolidayDetailScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler(onBack = onBack)
     val colors = SweetTheme.colors
+    val (tagBg, tagText) = holidayTagStyle(isHoliday)
     val heroGradient = if (colors.isDark) {
         Brush.linearGradient(
-            colors = listOf(colors.holidayBg, colors.paper),
+            colors = listOf(HeroGradientStartDark, HeroGradientEndDark),
             start = Offset.Zero,
             end = Offset(400f, 700f)
         )
     } else {
         Brush.linearGradient(
-            colors = listOf(HeroGradientStart, HeroGradientEnd),
+            colors = listOf(HeroGradientStartLight, HeroGradientEndLight),
             start = Offset.Zero,
             end = Offset(400f, 700f)
         )
@@ -116,10 +151,10 @@ fun HolidayDetailScreen(
                     fontSize = mockupSp(MockupDimens.HOLIDAY_TAG_F),
                     lineHeight = mockupSp(12f)
                 ),
-                color = if (isHoliday) colors.mintDeep else colors.purpleDeep,
+                color = tagText,
                 modifier = Modifier
                     .clip(RoundedCornerShape(mockupDp(8)))
-                    .background(if (isHoliday) HolidayTagHolidayBg else HolidayTagOccasionBg)
+                    .background(tagBg)
                     .padding(horizontal = mockupDp(10), vertical = mockupDp(5))
             )
             Spacer(Modifier.height(mockupDp(10)))
@@ -141,7 +176,7 @@ fun HolidayDetailScreen(
                     fontSize = mockupSp(MockupDimens.HOLIDAY_DATE_F),
                     lineHeight = mockupSp(16f)
                 ),
-                color = HolidayDateColor,
+                color = holidayDateColor(),
                 modifier = Modifier.padding(top = mockupDp(6), bottom = mockupDp(16))
             )
             HolidayNotesBox(text = bodyText)
@@ -162,7 +197,7 @@ fun HolidayDetailScreen(
                         fontSize = mockupSp(MockupDimens.HOLIDAY_SOURCE_F),
                         lineHeight = mockupSp(14f)
                     ),
-                    color = HolidaySourceColor
+                    color = holidaySourceColor()
                 )
             }
         }
@@ -201,7 +236,7 @@ private fun HolidayNotesBox(text: String) {
                 fontSize = mockupSp(MockupDimens.HOLIDAY_BODY_F),
                 lineHeight = mockupSp(20f)
             ),
-            color = HolidayBodyColor,
+            color = holidayBodyColor(),
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))

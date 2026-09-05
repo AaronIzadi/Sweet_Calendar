@@ -28,6 +28,7 @@ import com.example.calendartodo.jalali.GregorianDate
 import com.example.calendartodo.jalali.JalaliDate
 import com.example.calendartodo.ui.theme.ProvideMockupScale
 import com.example.calendartodo.ui.theme.SweetTheme
+import com.example.calendartodo.ui.theme.selectedOnAccentTextColor
 
 @Composable
 fun GregorianDatePickerDialog(
@@ -43,6 +44,9 @@ fun GregorianDatePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = colors.paper,
+        titleContentColor = colors.ink,
+        textContentColor = colors.ink,
         confirmButton = {
             TextButton(onClick = { onConfirm(selectedGregorian.toJalali()) }) {
                 Text("OK", color = colors.pinkDeep)
@@ -143,7 +147,11 @@ fun GregorianDatePickerDialog(
                                         Text(
                                             date.day.toString(),
                                             style = MaterialTheme.typography.bodySmall,
-                                            color = if (isSelected) Color.White else colors.ink
+                                            color = if (isSelected) {
+                                                selectedOnAccentTextColor()
+                                            } else {
+                                                colors.ink
+                                            }
                                         )
                                     }
                                 }
