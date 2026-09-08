@@ -4,7 +4,7 @@ import com.example.calendartodo.data.local.EventCacheDao
 import com.example.calendartodo.data.local.EventCacheEntity
 import com.example.calendartodo.data.local.EventMonthCacheDao
 import com.example.calendartodo.data.local.EventMonthCacheEntity
-import com.example.calendartodo.data.remote.TimeIrApiService
+import com.example.calendartodo.data.remote.TimeIrCalendarClient
 import com.example.calendartodo.data.remote.TimeIrEventDto
 import com.example.calendartodo.jalali.GregorianDate
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.combine
 class EventRepository(
     private val dao: EventCacheDao,
     private val monthCacheDao: EventMonthCacheDao,
-    private val api: TimeIrApiService
+    private val timeIrClient: TimeIrCalendarClient
 ) {
 
     fun observeForMonth(jalaliYear: Int, jalaliMonth: Int): Flow<List<EventCacheEntity>> =
@@ -50,14 +50,12 @@ class EventRepository(
             monthCacheDao.delete(yearMonth)
         }
 
-        val envelope = api.getMonthEvents(jalaliYear, jalaliMonth)
-        val calendar = envelope.data
-            ?: error("time.ir returned no calendar data for $yearMonth")
+        val calendar = timeIrClient.fetchMonth(jalaliYear, jalaliMonth)
 
         val entities = calendar.eventList
-            .filter { it.title.isNotBlank() }
-            .distinctBy { Pair(it.id, it.jalaliDateKey()) }
-            .map { it.toCacheEntity() }
+            .mapNotNull { it.toCacheEntityOrNull() }
+            .distinctBy { Pair(it.sourceEventId, it.gregorianDateKey) }
+            .map { it.entity }
 
         dao.deleteForMonth(yearMonth)
         if (entities.isNotEmpty()) {
@@ -82,16 +80,32 @@ class EventRepository(
         }
     }
 
+    private data class MappedEvent(
+        val sourceEventId: Int,
+        val gregorianDateKey: String,
+        val entity: EventCacheEntity
+    )
+
+    private fun TimeIrEventDto.toCacheEntityOrNull(): MappedEvent? {
+        if (title.isBlank()) return null
+        if (gregorianYear <= 0 || gregorianMonth !in 1..12 || gregorianDay !in 1..31) return null
+        if (jalaliYear <= 0 || jalaliMonth !in 1..12 || jalaliDay !in 1..31) return null
+
+        val gregorianKey = "%04d-%02d-%02d".format(gregorianYear, gregorianMonth, gregorianDay)
+        return MappedEvent(
+            sourceEventId = id,
+            gregorianDateKey = gregorianKey,
+            entity = EventCacheEntity(
+                jalaliDate = jalaliDateKey(),
+                description = title.trim(),
+                additionalDescription = body.orEmpty().trim(),
+                isHoliday = isHoliday
+            )
+        )
+    }
+
     private fun TimeIrEventDto.jalaliDateKey(): String =
         "%04d-%02d-%02d".format(jalaliYear, jalaliMonth, jalaliDay)
-
-    private fun TimeIrEventDto.toCacheEntity(): EventCacheEntity =
-        EventCacheEntity(
-            jalaliDate = jalaliDateKey(),
-            description = title.trim(),
-            additionalDescription = body.orEmpty().trim(),
-            isHoliday = isHoliday
-        )
 
     private fun buildSourceVersion(persianYear: Int, createdDate: String?): String {
         val stamp = createdDate?.filter { it.isDigit() }?.take(14).orEmpty()

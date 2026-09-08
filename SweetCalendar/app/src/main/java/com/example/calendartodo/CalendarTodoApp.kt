@@ -21,7 +21,7 @@ class CalendarTodoApp : Application() {
 
     val eventRepository: EventRepository by lazy {
         val db = AppDatabase.get(this)
-        EventRepository(db.eventCacheDao(), db.eventMonthCacheDao(), NetworkModule.timeIrApi)
+        EventRepository(db.eventCacheDao(), db.eventMonthCacheDao(), NetworkModule.timeIrCalendarClient)
     }
 
     val taskExportRepository: TaskExportRepository by lazy {

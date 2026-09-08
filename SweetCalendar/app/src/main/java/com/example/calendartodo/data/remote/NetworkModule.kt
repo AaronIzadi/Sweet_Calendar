@@ -26,4 +26,8 @@ object NetworkModule {
             .build()
             .create(TimeIrApiService::class.java)
     }
+
+    val timeIrCalendarClient: TimeIrCalendarClient by lazy {
+        TimeIrCalendarClient(timeIrApi)
+    }
 }

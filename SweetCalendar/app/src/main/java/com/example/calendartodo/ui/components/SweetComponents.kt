@@ -881,7 +881,7 @@ fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Primary CTA matching mockup `.pixel-btn` (Press Start 2P + purple depth shadow). */
+/** Primary CTA matching mockup `.pixel-btn` (Press Start 2P). */
 @Composable
 fun SweetPixelButton(
     text: String,
@@ -889,36 +889,30 @@ fun SweetPixelButton(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(y = mockupDp(4))
-                .clip(RoundedCornerShape(mockupDp(12)))
-                .background(colors.purpleDeep)
+    val fontSize = mockupSp(MockupDimens.PIXEL_BTN)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(mockupDp(12)))
+            .background(colors.purple)
+            .clickable(onClick = onClick)
+            .padding(
+                horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
+                vertical = mockupDp(MockupDimens.PIXEL_BTN_PAD_V)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            style = TextStyle(
+                fontFamily = PixelFont,
+                fontSize = fontSize,
+                letterSpacing = mockupSp(0.5f),
+                lineHeight = fontSize,
+                textAlign = TextAlign.Center
+            ),
+            color = Color.White,
+            modifier = Modifier.fillMaxWidth()
         )
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(mockupDp(12)))
-                .background(colors.purple)
-                .clickable(onClick = onClick)
-                .padding(
-                    horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
-                    vertical = mockupDp(MockupDimens.PIXEL_BTN_PAD_V)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                style = TextStyle(
-                    fontFamily = PixelFont,
-                    fontSize = mockupSp(MockupDimens.PIXEL_BTN),
-                    letterSpacing = mockupSp(0.5f),
-                    lineHeight = mockupSp(14f)
-                ),
-                color = Color.White
-            )
-        }
     }
 }
 
