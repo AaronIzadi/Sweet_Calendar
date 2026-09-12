@@ -160,9 +160,9 @@ fun IceCreamIcon(modifier: Modifier = Modifier, size: Dp = 120.dp) {
 fun EmptyStateIceCreamIcon(modifier: Modifier = Modifier, size: Dp = 64.dp) {
     val colors = SweetTheme.colors
     val cell = size / 8
-    val scoopLight = Color(0xFFFFF3E3)
-    val scoopPink = if (colors.isDark) colors.pink else Pink
-    val coneColor = Color(0xFFE8A857)
+    val scoopLight = if (colors.isDark) Color(0xFFFFF3E3) else Color(0xFFF9DCC0)
+    val scoopPink = if (colors.isDark) colors.pink else Color(0xFFFF6FA8)
+    val coneColor = if (colors.isDark) Color(0xFFE8A857) else Color(0xFFB85B1E)
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally

@@ -17,22 +17,32 @@ data class TodayWidgetData(
 object WidgetDataLoader {
 
     fun loadToday(context: Context): TodayWidgetData = runBlocking {
-        val today = JalaliDate.today()
-        val tasks = AppDatabase.get(context).taskDao().getForDate(today.formatIso())
-        val done = tasks.count { it.isDone }
-        val total = tasks.size
-        val progress = if (total > 0) (done * 100) / total else 0
-        val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[today.weekdayIndex()]
-        val month = JalaliDate.MONTH_NAMES_EN[today.month - 1]
-        val pending = tasks.filter { !it.isDone }.take(3)
-        val doneTasks = tasks.filter { it.isDone }.take(3 - pending.size)
-        TodayWidgetData(
-            dateLabel = "$month ${today.day} · $weekday",
-            done = done,
-            total = total,
-            progress = progress,
-            displayTasks = pending + doneTasks
-        )
+        try {
+            val today = JalaliDate.today()
+            val tasks = AppDatabase.get(context).taskDao().getForDate(today.formatIso())
+            val done = tasks.count { it.isDone }
+            val total = tasks.size
+            val progress = if (total > 0) (done * 100) / total else 0
+            val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[today.weekdayIndex()]
+            val month = JalaliDate.MONTH_NAMES_EN[today.month - 1]
+            val pending = tasks.filter { !it.isDone }.take(3)
+            val doneTasks = tasks.filter { it.isDone }.take(3 - pending.size)
+            TodayWidgetData(
+                dateLabel = "$month ${today.day} · $weekday",
+                done = done,
+                total = total,
+                progress = progress,
+                displayTasks = pending + doneTasks
+            )
+        } catch (_: Exception) {
+            TodayWidgetData(
+                dateLabel = "Today",
+                done = 0,
+                total = 0,
+                progress = 0,
+                displayTasks = emptyList()
+            )
+        }
     }
 }
 

@@ -5,15 +5,17 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Adds [x-api-key] when [BuildConfig.TIME_IR_API_KEY] is set (same as cm-calendar-service).
- * When no key is configured, sends an empty header so time.ir accepts anonymous requests
- * without waiting through the service's 65s rate-limit retry window.
+ * Adds [x-api-key] only when the app is configured with a real key. Some time.ir
+ * anonymous requests get rejected or rate-limited when an empty header is sent.
  */
 class TimeIrApiInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val builder = chain.request().newBuilder()
+        val request = chain.request()
         val apiKey = BuildConfig.TIME_IR_API_KEY.trim()
-        builder.addHeader("x-api-key", apiKey)
-        return chain.proceed(builder.build())
+        return if (apiKey.isEmpty()) {
+            chain.proceed(request)
+        } else {
+            chain.proceed(request.newBuilder().addHeader("x-api-key", apiKey).build())
+        }
     }
 }

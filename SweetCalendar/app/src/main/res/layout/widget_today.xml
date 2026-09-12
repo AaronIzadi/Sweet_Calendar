@@ -74,6 +74,18 @@
         android:progress="0"
         android:progressDrawable="@drawable/widget_progress_bar" />
 
+    <TextView
+        android:id="@+id/widget_empty_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="No tasks today"
+        android:textColor="#9A8878"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/widget_task_row_1"
         android:layout_width="match_parent"

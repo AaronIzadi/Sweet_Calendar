@@ -53,6 +53,7 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+drawable ic_launcher_foreground
 drawable notification_action_background
 drawable notification_bg
 drawable notification_bg_low
@@ -173,6 +174,7 @@ id view_tree_saved_state_registry_owner
 id view_tree_view_model_store_owner
 id widget_add_button
 id widget_date
+id widget_empty_state
 id widget_header_icon
 id widget_jar_big_num
 id widget_jar_icon

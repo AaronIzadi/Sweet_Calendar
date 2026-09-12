@@ -104,13 +104,15 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var userName by remember { mutableStateOf(preferences.userName) }
+    var showHolidays by remember { mutableStateOf(preferences.showHolidays) }
+    var weekStartsOn by remember { mutableStateOf(preferences.weekStartsOn) }
+    var calendarSystem by remember { mutableStateOf(preferences.calendarSystem) }
 
-    LaunchedEffect(preferences.showHolidays, preferences.weekStartsOn, preferences.calendarSystem) {
-        viewModel.applyPreferences(
-            preferences.showHolidays,
-            preferences.weekStartsOn,
-            preferences.calendarSystem
-        )
+    LaunchedEffect(showHolidays, weekStartsOn, calendarSystem) {
+        preferences.showHolidays = showHolidays
+        preferences.weekStartsOn = weekStartsOn
+        preferences.calendarSystem = calendarSystem
+        viewModel.applyPreferences(showHolidays, weekStartsOn, calendarSystem)
     }
 
     fun deleteWithRecover(task: TaskEntity) {
@@ -288,9 +290,9 @@ fun MainScreen(
                                 userName = userName,
                                 darkMode = darkMode,
                                 themeFamily = themeFamily,
-                                showHolidays = preferences.showHolidays,
-                                weekStartsOn = preferences.weekStartsOn,
-                                calendarSystem = preferences.calendarSystem,
+                                showHolidays = showHolidays,
+                                weekStartsOn = weekStartsOn,
+                                calendarSystem = calendarSystem,
                                 exportRunner = viewModel.taskExportRunner,
                                 onDarkModeChange = { enabled ->
                                     preferences.darkMode = enabled
@@ -303,14 +305,17 @@ fun MainScreen(
                                     SweetWidgets.updateAll(context)
                                 },
                                 onShowHolidaysChange = { enabled ->
+                                    showHolidays = enabled
                                     preferences.showHolidays = enabled
                                     viewModel.setShowHolidays(enabled)
                                 },
                                 onWeekStartsOnChange = { day ->
+                                    weekStartsOn = day
                                     preferences.weekStartsOn = day
                                     viewModel.setWeekStartsOn(day)
                                 },
                                 onCalendarSystemChange = { system ->
+                                    calendarSystem = system
                                     preferences.calendarSystem = system
                                     viewModel.setCalendarSystem(system)
                                 },

@@ -2,6 +2,7 @@ package com.example.calendartodo.ui.welcome
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,23 +12,32 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.example.calendartodo.ui.components.RingPlanetIcon
 import com.example.calendartodo.ui.components.StarIcon
 import com.example.calendartodo.ui.components.SweetPixelButton
@@ -66,24 +76,86 @@ private val SpaceWelcomeGradientDark = listOf(
     Color(0xFF0B0E24)
 )
 
+private data class WelcomeSlide(
+    val topTitle: String,
+    val bottomTitle: String,
+    val subtitle: String,
+    val chips: List<String>,
+    val gradient: List<Color>
+)
+
+private val welcomeSlides = listOf(
+    WelcomeSlide(
+        topTitle = "SWEET",
+        bottomTitle = "CALENDAR",
+        subtitle = "A softer way to keep your day in rhythm.",
+        chips = listOf("Persian calendar", "Daily tasks", "Local holidays"),
+        gradient = CandyWelcomeGradientLight
+    ),
+    WelcomeSlide(
+        topTitle = "PLAN",
+        bottomTitle = "YOUR DAY",
+        subtitle = "Turn your little wins into a jar full of momentum.",
+        chips = listOf("Focus blocks", "Checklists", "Quick wins"),
+        gradient = listOf(
+            Color(0xFFFFF0D7),
+            Color(0xFFEAF7FF),
+            Color(0xFFE9F9E9)
+        )
+    ),
+    WelcomeSlide(
+        topTitle = "KEEP",
+        bottomTitle = "IT SWEET",
+        subtitle = "Celebrate the dates, routines, and moments that matter.",
+        chips = listOf("Holiday cues", "Streaks", "Joyful planning"),
+        gradient = listOf(
+            Color(0xFFE9E9FF),
+            Color(0xFFFEEAF8),
+            Color(0xFFEAFBF7)
+        )
+    )
+)
+
 @Composable
 fun WelcomeScreen(
     onStart: () -> Unit,
     onSkip: () -> Unit
 ) {
     val colors = SweetTheme.colors
+    var currentPage by remember { mutableStateOf(0) }
+    val dragOffset = remember { mutableStateOf(0f) }
+    val slide = welcomeSlides[currentPage]
     val welcomeGradient = when {
         SweetTheme.isSpace && colors.isDark -> SpaceWelcomeGradientDark
         SweetTheme.isSpace -> SpaceWelcomeGradientLight
         colors.isDark -> CandyWelcomeGradientDark
-        else -> CandyWelcomeGradientLight
+        else -> slide.gradient
     }
     val tagColor = if (colors.isDark || SweetTheme.isSpace) colors.muted else WelcomeTagLight
+    val isLastPage = currentPage == welcomeSlides.lastIndex
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Brush.verticalGradient(welcomeGradient))
+            .pointerInput(currentPage, welcomeSlides.size) {
+                detectDragGestures(
+                    onDrag = { _, dragAmount ->
+                        dragOffset.value += dragAmount.x
+                    },
+                    onDragEnd = {
+                        if (dragOffset.value > 60f && currentPage > 0) {
+                            currentPage--
+                        } else if (dragOffset.value < -60f && currentPage < welcomeSlides.lastIndex) {
+                            currentPage++
+                        }
+                        dragOffset.value = 0f
+                    },
+                    onDragCancel = {
+                        dragOffset.value = 0f
+                    }
+                )
+            }
     ) {
         Box(
             modifier = Modifier
@@ -120,28 +192,34 @@ fun WelcomeScreen(
             ThemeHeroIcon(size = mockupDp(MockupDimens.HERO_LOLLIPOP_W))
             Spacer(Modifier.height(mockupDp(18)))
             Text(
-                "SWEET",
+                slide.topTitle,
                 style = TextStyle(
                     fontFamily = PixelFont,
                     fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
                     lineHeight = mockupSp(29f)
                 ),
                 color = colors.pinkDeep,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                minLines = 1,
+                maxLines = 1,
+                modifier = Modifier.widthIn(max = 220.dp)
             )
             Text(
-                "CALENDAR",
+                slide.bottomTitle,
                 style = TextStyle(
                     fontFamily = PixelFont,
                     fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
                     lineHeight = mockupSp(29f)
                 ),
                 color = colors.purpleDeep,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                minLines = 1,
+                maxLines = 1,
+                modifier = Modifier.widthIn(max = 220.dp)
             )
             Spacer(Modifier.height(mockupDp(8)))
             Text(
-                themeWelcomeTagline(),
+                slide.subtitle,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.WELCOME_TAG),
@@ -149,12 +227,22 @@ fun WelcomeScreen(
                 ),
                 color = tagColor,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = mockupDp(10))
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .widthIn(max = 260.dp)
+                    .padding(horizontal = mockupDp(10))
             )
             Spacer(Modifier.height(mockupDp(22)))
-            WelcomeFeatureChips()
+            WelcomeFeatureChips(slide.chips)
             Spacer(Modifier.height(mockupDp(26)))
-            SweetPixelButton(text = "START PLANNING", onClick = onStart)
+            SweetPixelButton(
+                text = if (isLastPage) "START PLANNING" else "NEXT",
+                onClick = {
+                    if (isLastPage) onStart() else currentPage++
+                }
+            )
             Spacer(Modifier.height(mockupDp(14)))
             Text(
                 "Skip intro",
@@ -167,34 +255,49 @@ fun WelcomeScreen(
                 modifier = Modifier.clickable(onClick = onSkip)
             )
             Spacer(Modifier.height(mockupDp(20)))
-            WelcomePageDots()
+            WelcomePageDots(
+                currentPage = currentPage,
+                totalPages = welcomeSlides.size,
+                onPageSelected = { currentPage = it }
+            )
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun WelcomeFeatureChips() {
+private fun WelcomeFeatureChips(chips: List<String>) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(mockupDp(8), Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(mockupDp(8)),
-        modifier = Modifier.padding(horizontal = mockupDp(4))
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .padding(horizontal = mockupDp(4))
     ) {
-        WelcomeFeatureChip("Persian calendar") {
-            if (SweetTheme.isSpace) {
-                RingPlanetIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
-            } else {
-                NavPeppermintIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
-            }
-        }
-        WelcomeFeatureChip("Daily tasks") {
-            ThemeCompletedCheckIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
-        }
-        WelcomeFeatureChip("Local holidays") {
-            if (SweetTheme.isSpace) {
-                StarIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
-            } else {
-                ThemeWelcomeDecoBottomStart(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+        chips.forEach { label ->
+            WelcomeFeatureChip(label) {
+                when (label) {
+                    "Persian calendar", "Focus blocks", "Holiday cues" -> {
+                        if (SweetTheme.isSpace) {
+                            RingPlanetIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                        } else {
+                            NavPeppermintIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                        }
+                    }
+                    "Daily tasks", "Checklists", "Streaks" -> {
+                        ThemeCompletedCheckIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                    }
+                    "Local holidays", "Quick wins", "Joyful planning" -> {
+                        if (SweetTheme.isSpace) {
+                            StarIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                        } else {
+                            ThemeWelcomeDecoBottomStart(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                        }
+                    }
+                    else -> {
+                        ThemeCompletedCheckIcon(size = mockupDp(MockupDimens.FEAT_CHIP_ICON))
+                    }
+                }
             }
         }
     }
@@ -236,21 +339,20 @@ private fun WelcomeFeatureChip(
 }
 
 @Composable
-private fun WelcomePageDots() {
+private fun WelcomePageDots(
+    currentPage: Int,
+    totalPages: Int,
+    onPageSelected: (Int) -> Unit
+) {
     val colors = SweetTheme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(mockupDp(6))) {
-        Box(
-            Modifier
-                .size(mockupDp(MockupDimens.PAGE_DOT))
-                .clip(RoundedCornerShape(mockupDp(2)))
-                .background(colors.pinkDeep)
-        )
-        repeat(2) {
+        repeat(totalPages) { index ->
             Box(
                 Modifier
                     .size(mockupDp(MockupDimens.PAGE_DOT))
                     .clip(RoundedCornerShape(mockupDp(2)))
-                    .background(colors.line)
+                    .background(if (index == currentPage) colors.pinkDeep else colors.line)
+                    .clickable { onPageSelected(index) }
             )
         }
     }

@@ -4,20 +4,12 @@
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\pixel_lollipop.png"
     },
     {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_widget_checkbox_checked_dark.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/widget_checkbox_checked_dark.xml"
-    },
-    {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_widget_background_dark.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/widget_background_dark.xml"
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_background_dark.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_background_dark.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\mipmap-xxhdpi_ic_launcher.png.flat",
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\mipmap-xxhdpi\\ic_launcher.png"
-    },
-    {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_widget_checkbox_unchecked_dark.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/widget_checkbox_unchecked_dark.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_pixel_lollipop_swirl.png.flat",
@@ -32,6 +24,14 @@
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\xml\\file_paths.xml"
     },
     {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_checkbox_checked_dark.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_checkbox_checked_dark.xml"
+    },
+    {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_checkbox_unchecked_dark.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_checkbox_unchecked_dark.xml"
+    },
+    {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\xml_widget_jar_small_info.xml.flat",
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\xml\\widget_jar_small_info.xml"
     },
@@ -40,16 +40,16 @@
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_background.xml"
     },
     {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_widget_progress_bar_dark.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/widget_progress_bar_dark.xml"
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_progress_bar_dark.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_progress_bar_dark.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_add_button.xml.flat",
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_add_button.xml"
-    },
-    {
-        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\mipmap-anydpi-v26\\ic_launcher.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\layout_widget_today.xml.flat",
@@ -64,8 +64,16 @@
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\font\\quicksand_variable.ttf"
     },
     {
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\font_press_start_2p.ttf.flat",
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\font\\press_start_2p.ttf"
+    },
+    {
+        "merged": "com.example.calendartodo.app-debug-49:/layout_widget_today.xml.flat",
+        "source": "com.example.calendartodo.app-main-51:/layout/widget_today.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\mipmap-xxxhdpi_ic_launcher.png.flat",
@@ -76,8 +84,8 @@
         "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\mipmap-xxxhdpi\\ic_launcher_round.png"
     },
     {
-        "merged": "com.example.calendartodo.app-debug-49:/drawable_widget_add_button_dark.xml.flat",
-        "source": "com.example.calendartodo.app-main-51:/drawable/widget_add_button_dark.xml"
+        "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_add_button_dark.xml.flat",
+        "source": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-main-51:\\drawable\\widget_add_button_dark.xml"
     },
     {
         "merged": "C:\\Users\\M2\\.gradle\\daemon\\8.7\\com.example.calendartodo.app-debug-49:\\drawable_widget_progress_bar.xml.flat",

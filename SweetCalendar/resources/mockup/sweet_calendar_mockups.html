@@ -966,27 +966,51 @@
     <div class="notch"></div>
     <div class="screen-body">
 
-      <!-- ============ WELCOME ============ -->
+      <!-- ============ WELCOME (3-slide onboarding carousel) ============ -->
       <div class="screen active" id="screen-welcome">
         <div class="welcome-bg">
           <div class="deco" id="deco-mint-tl" style="top:24px;left:20px;"></div>
           <div class="deco" id="deco-lemon-tr" style="top:36px;right:22px;"></div>
-          <div class="deco" id="deco-choc-bl" style="bottom:170px;left:18px;"></div>
 
-          <div class="icon-wrap" id="hero-lollipop"></div>
-          <div class="welcome-word"><span class="l1">SWEET</span><br><span class="l2">CALENDAR</span></div>
-          <p class="welcome-tag">A Jalali calendar to-do list, decorated one candy at a time.</p>
-
-          <div class="chip-row">
-            <div class="feat-chip"><span id="chip-icon-1"></span> Jalali calendar</div>
-            <div class="feat-chip"><span id="chip-icon-2"></span> Daily tasks</div>
-            <div class="feat-chip"><span id="chip-icon-3"></span> Local holidays</div>
+          <div class="onboard-slide" id="onboard-slide-0">
+            <div class="icon-wrap" id="hero-lollipop"></div>
+            <div class="welcome-word"><span class="l1">SWEET</span><br><span class="l2">CALENDAR</span></div>
+            <p class="welcome-tag">A Jalali calendar to-do list, decorated one candy at a time.</p>
+            <div class="chip-row">
+              <div class="feat-chip"><span id="chip-icon-1"></span> Jalali calendar</div>
+              <div class="feat-chip"><span id="chip-icon-2"></span> Daily tasks</div>
+              <div class="feat-chip"><span id="chip-icon-3"></span> Local holidays</div>
+            </div>
           </div>
 
-          <button class="pixel-btn">START PLANNING</button>
-          <div class="skip-link">Skip intro</div>
-          <div class="dots-row">
-            <div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+          <div class="onboard-slide" id="onboard-slide-1" style="display:none;">
+            <div class="icon-wrap" id="onboard-icon-1"></div>
+            <div class="welcome-word" style="font-size:14px;"><span class="l2">NEVER MISS</span><br><span class="l1">A SWEET MOMENT</span></div>
+            <p class="welcome-tag">Set a time for any task and we'll nudge you a little before it's due.</p>
+            <div class="chip-row">
+              <div class="feat-chip"><span id="onboard-chip-1"></span> Custom reminders</div>
+              <div class="feat-chip"><span id="onboard-chip-2"></span> Daily &amp; weekly repeats</div>
+            </div>
+          </div>
+
+          <div class="onboard-slide" id="onboard-slide-2" style="display:none;">
+            <div class="icon-wrap" id="onboard-icon-2"></div>
+            <div class="welcome-word" style="font-size:14px;"><span class="l1">WATCH YOUR</span><br><span class="l2">JAR FILL UP</span></div>
+            <p class="welcome-tag">Every completed task tops up today's jar — keep your streak alive to see how far it goes.</p>
+            <div class="jar-card" style="width:100%;margin-bottom:16px;">
+              <div class="jar-top"><span>Today's jar</span><span>4 / 5</span></div>
+              <div class="jar-track"><div class="jar-fill" style="width:80%;"></div></div>
+            </div>
+            <div class="chip-row">
+              <div class="feat-chip"><span id="onboard-chip-3"></span> Daily streaks</div>
+              <div class="feat-chip"><span id="onboard-chip-4"></span> Monthly stats</div>
+            </div>
+          </div>
+
+          <button class="pixel-btn" id="onboard-cta">NEXT</button>
+          <div class="skip-link" id="onboard-skip">Skip intro</div>
+          <div class="dots-row" id="onboard-dots">
+            <div class="dot on" data-i="0"></div><div class="dot" data-i="1"></div><div class="dot" data-i="2"></div>
           </div>
         </div>
       </div>
@@ -1790,7 +1814,6 @@ function place(id, node){
 place('hero-lollipop', buildLollipop(8));
 place('deco-mint-tl', buildPeppermint(4));
 place('deco-lemon-tr', buildGumdrop(3));
-place('deco-choc-bl', buildChocolate(4));
 place('chip-icon-1', buildPeppermint(2));
 place('chip-icon-2', buildCheckCandy(2));
 place('chip-icon-3', buildChocolate(2));
@@ -2037,7 +2060,7 @@ function buildBellIcon(cell){
   ];
   return pixel(rows, {'1':PAL.purpleD}, cell);
 }
-function buildBigBell(cell){
+function buildBigBell(cell,color){
   const rows = [
    "...111...",
    "..11111..",
@@ -2048,7 +2071,7 @@ function buildBigBell(cell){
    "....1....",
    "...111...",
   ];
-  return pixel(rows, {'1':PAL.pink}, cell);
+  return pixel(rows, {'1':color||PAL.pink}, cell);
 }
 
 place('sb-icon-empty', buildBattery(3));
@@ -2310,7 +2333,6 @@ function renderCategoryIcons(family, mode){
     place('hero-lollipop', buildRocketIcon(7,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
     place('deco-mint-tl', buildStarShape(3,P.star));
     place('deco-lemon-tr', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
-    place('deco-choc-bl', buildComet(3,P.cometHead,P.cometTail));
     place('chip-icon-1', buildRingPlanetIcon(1,P.planetBody,P.planetRing));
     place('chip-icon-2', buildAstroCheck(2,P.astroBg));
     place('chip-icon-3', buildSatellite(3,P.satBody,P.satPanel));
@@ -2341,6 +2363,10 @@ function renderCategoryIcons(family, mode){
     place('empty-icon', buildMoon(8,P.moon));
     place('holiday-hero-icon', buildRingPlanetIcon(4,P.planetBody,P.planetRing));
     place('offline-icon', buildSatellite(9,P.satBody,P.satPanel));
+    place('onboard-icon-1', buildSatellite(7,P.satBody,P.satPanel));
+    place('onboard-icon-2', buildComet(6,P.cometHead,P.cometTail));
+    place('onboard-chip-3', buildAstroCheck(2,P.astroBg));
+    place('onboard-chip-4', buildComet(2,P.cometHead,P.cometTail));
     place('snack-icon-1', buildRocketIcon(3,P.rocketBody,P.rocketWindow,P.rocketFin,P.rocketFlame));
     place('snack-icon-2', buildStarShape(3,P.star));
     place('snack-icon-3', buildRingPlanetIcon(2,P.planetBody,P.planetRing));
@@ -2348,7 +2374,6 @@ function renderCategoryIcons(family, mode){
     place('hero-lollipop', buildLollipop(8,P.lollipopHead));
     place('deco-mint-tl', buildPeppermint(4));
     place('deco-lemon-tr', buildGumdrop(3,P.gumBody,P.gumWrap,P.gumHi));
-    place('deco-choc-bl', buildChocolate(4,P.chocFill,P.chocSeam));
     place('chip-icon-1', buildPeppermint(2));
     place('chip-icon-2', buildCheckCandy(2,P.checkBg));
     place('chip-icon-3', buildChocolate(2,P.chocFill,P.chocSeam));
@@ -2379,6 +2404,10 @@ function renderCategoryIcons(family, mode){
     place('empty-icon', buildIceCream(8));
     place('holiday-hero-icon', buildPeppermint(9));
     place('offline-icon', buildMeltedCandy(8));
+    place('onboard-icon-1', buildBigBell(7,P.heart));
+    place('onboard-icon-2', buildChocolate(6,P.chocFill,P.chocSeam));
+    place('onboard-chip-3', buildCheckCandy(2,P.checkBg));
+    place('onboard-chip-4', buildChocolate(2,P.chocFill,P.chocSeam));
     place('snack-icon-1', buildGem(4,P.gem));
     place('snack-icon-2', buildHeart(4,P.heart));
     place('snack-icon-3', buildLeaf(4,P.leaf));
@@ -2396,6 +2425,8 @@ function renderThemedIcons(family, mode){
   place('warn-icon', buildWarnIcon(2,P.warnColor));
   place('set-icon-1', buildCalIcon(2,P.navColor));
   place('set-icon-2', buildCalIcon(2,P.navColor));
+  place('onboard-chip-1', buildClockIcon(2,P.navColor));
+  place('onboard-chip-2', buildCalIcon(2,P.navColor));
   const navTheme = family === 'space' ? 'space' : (mode === 'dark' ? 'dark' : 'light');
   buildBottomNav('bottomnav-home', 0, navTheme);
   buildBottomNav('bottomnav-week', 1, navTheme);
@@ -2431,6 +2462,33 @@ document.getElementById('mode-toggle').addEventListener('click', ()=>{
   applyThemeState();
 });
 applyThemeState();
+
+/* ---------- welcome screen onboarding carousel ---------- */
+let onboardIndex = 0;
+const onboardSlides = [
+  document.getElementById('onboard-slide-0'),
+  document.getElementById('onboard-slide-1'),
+  document.getElementById('onboard-slide-2'),
+];
+const onboardDots = document.querySelectorAll('#onboard-dots .dot');
+const onboardCta = document.getElementById('onboard-cta');
+function renderOnboard(){
+  onboardSlides.forEach((el,i)=>{ el.style.display = (i===onboardIndex) ? '' : 'none'; });
+  onboardDots.forEach((d,i)=>{ d.classList.toggle('on', i===onboardIndex); });
+  onboardCta.textContent = (onboardIndex === onboardSlides.length-1) ? 'START PLANNING' : 'NEXT';
+}
+onboardCta.addEventListener('click', ()=>{
+  onboardIndex = (onboardIndex === onboardSlides.length-1) ? 0 : onboardIndex+1;
+  renderOnboard();
+});
+onboardDots.forEach((d,i)=>{
+  d.style.cursor = 'pointer';
+  d.addEventListener('click', ()=>{ onboardIndex = i; renderOnboard(); });
+});
+document.getElementById('onboard-skip').addEventListener('click', ()=>{
+  onboardIndex = onboardSlides.length-1;
+  renderOnboard();
+});
 
 
 /* ---------- tab switching ---------- */

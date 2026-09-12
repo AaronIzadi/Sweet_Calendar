@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.calendartodo.ui.theme.BodyFont
@@ -43,8 +45,11 @@ fun EmptyStateContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        ThemeEmptyStateIcon(size = mockupDp(MockupDimens.EMPTY_ICON))
-        Spacer(Modifier.height(mockupDp(18)))
+        ThemeEmptyStateIcon(
+            size = mockupDp(MockupDimens.EMPTY_ICON),
+            modifier = Modifier.offset(y = 6.dp)
+        )
+        Spacer(Modifier.height(mockupDp(22)))
         Text(
             title,
             style = TextStyle(

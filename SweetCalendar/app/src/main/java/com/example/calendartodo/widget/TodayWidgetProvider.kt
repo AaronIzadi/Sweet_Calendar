@@ -18,7 +18,11 @@ class TodayWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         appWidgetIds.forEach { id ->
-            appWidgetManager.updateAppWidget(id, buildViews(context))
+            try {
+                appWidgetManager.updateAppWidget(id, buildViews(context))
+            } catch (_: Exception) {
+                appWidgetManager.updateAppWidget(id, safeFallbackViews(context))
+            }
         }
     }
 
@@ -28,8 +32,36 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val component = ComponentName(context, TodayWidgetProvider::class.java)
             val ids = manager.getAppWidgetIds(component)
             if (ids.isEmpty()) return
-            val views = buildViews(context)
+            val views = try {
+                buildViews(context)
+            } catch (_: Exception) {
+                safeFallbackViews(context)
+            }
             ids.forEach { manager.updateAppWidget(it, views) }
+        }
+
+        private fun safeFallbackViews(context: Context): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_today)
+            val theme = WidgetTheme.colors(context)
+            views.setInt(R.id.widget_root, "setBackgroundResource", theme.cardBackgroundRes)
+            views.setTextColor(R.id.widget_title, theme.ink)
+            views.setTextViewText(R.id.widget_title, context.getString(R.string.app_name))
+            views.setTextViewText(R.id.widget_date, "Today")
+            views.setTextColor(R.id.widget_date, theme.muted)
+            views.setProgressBar(R.id.widget_progress, 100, 0, false)
+            views.setInt(R.id.widget_progress, "setProgressDrawable", theme.progressDrawableRes)
+            views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
+            views.setTextColor(R.id.widget_add_button, theme.addButtonText)
+            views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
+            views.setTextViewText(R.id.widget_empty_state, "No tasks today")
+            views.setTextColor(R.id.widget_empty_state, theme.muted)
+            listOf(R.id.widget_task_row_1, R.id.widget_task_row_2, R.id.widget_task_row_3).forEach {
+                views.setViewVisibility(it, View.GONE)
+            }
+            val openApp = openAppIntent(context, 0)
+            views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            views.setOnClickPendingIntent(R.id.widget_add_button, openApp)
+            return views
         }
 
         private fun buildViews(context: Context): RemoteViews {
@@ -46,6 +78,13 @@ class TodayWidgetProvider : AppWidgetProvider() {
             views.setInt(R.id.widget_progress, "setProgressDrawable", theme.progressDrawableRes)
             views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
             views.setTextColor(R.id.widget_add_button, theme.addButtonText)
+
+            val hasTasks = data.displayTasks.isNotEmpty()
+            views.setViewVisibility(R.id.widget_empty_state, if (hasTasks) View.GONE else View.VISIBLE)
+            views.setTextColor(R.id.widget_empty_state, theme.muted)
+            if (!hasTasks) {
+                views.setTextViewText(R.id.widget_empty_state, "No tasks today")
+            }
 
             bindTaskRow(
                 views = views,

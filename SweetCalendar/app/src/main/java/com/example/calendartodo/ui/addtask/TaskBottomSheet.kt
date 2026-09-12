@@ -54,7 +54,7 @@ import com.example.calendartodo.ui.theme.themeAddTaskButtonText
 import com.example.calendartodo.ui.components.SweetBigSaveButton
 import com.example.calendartodo.ui.components.SweetSwitch
 import com.example.calendartodo.ui.components.TaskCategory
-import com.example.calendartodo.ui.components.ThemeCategorySwatchIcon
+import com.example.calendartodo.ui.components.ThemeCategoryTaskIcon
 import com.example.calendartodo.ui.components.TaskPriority
 import com.example.calendartodo.ui.components.formatDisplayShort
 import com.example.calendartodo.ui.components.formatTime12h
@@ -642,12 +642,13 @@ private fun CategorySwatch(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(mockupDp(6))
         ) {
-            FormIconSlot(iconSize) {
-                when (category) {
-                    TaskCategory.Personal,
-                    TaskCategory.Home,
-                    TaskCategory.Work -> ThemeCategorySwatchIcon(category = category, size = iconSize)
-                }
+            Box(
+                modifier = Modifier
+                    .size(iconSize)
+                    .align(Alignment.CenterHorizontally),
+                contentAlignment = Alignment.Center
+            ) {
+                ThemeCategoryTaskIcon(category = category, size = iconSize)
             }
             Text(
                 category.label,

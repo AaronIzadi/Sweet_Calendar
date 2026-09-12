@@ -102,7 +102,7 @@ fun TodayScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 18.dp)
         ) {
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top,
@@ -153,7 +153,8 @@ fun TodayScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 14.dp, end = 14.dp, top = 24.dp, bottom = 60.dp),
+                            .height(248.dp)
+                            .padding(start = 14.dp, end = 14.dp, top = 38.dp, bottom = 4.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         EmptyStateContent(onAddTask = onAddTask)

@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -889,30 +891,44 @@ fun SweetPixelButton(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val fontSize = mockupSp(MockupDimens.PIXEL_BTN)
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(mockupDp(12)))
-            .background(colors.purple)
-            .clickable(onClick = onClick)
-            .padding(
-                horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
-                vertical = mockupDp(MockupDimens.PIXEL_BTN_PAD_V)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = TextStyle(
-                fontFamily = PixelFont,
-                fontSize = fontSize,
-                letterSpacing = mockupSp(0.5f),
-                lineHeight = fontSize,
-                textAlign = TextAlign.Center
-            ),
-            color = Color.White,
-            modifier = Modifier.fillMaxWidth()
+    val fontSize = mockupSp(11)
+    val faceColor = colors.purple
+    val shadowColor = if (colors.isDark) Color(0xFF2E2342) else colors.purpleDeep
+    Box(modifier = modifier.widthIn(min = 172.dp)) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(3))
+                .clip(RoundedCornerShape(mockupDp(12)))
+                .background(shadowColor)
         )
+        Box(
+            modifier = Modifier
+                .widthIn(min = 172.dp)
+                .defaultMinSize(minHeight = 48.dp)
+                .clip(RoundedCornerShape(mockupDp(12)))
+                .background(faceColor)
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
+                    vertical = mockupDp(12)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = TextStyle(
+                    fontFamily = PixelFont,
+                    fontSize = fontSize,
+                    letterSpacing = mockupSp(0.5f),
+                    lineHeight = mockupSp(12f),
+                    textAlign = TextAlign.Center
+                ),
+                color = Color.White,
+                maxLines = 1,
+                softWrap = false
+            )
+        }
     }
 }
 

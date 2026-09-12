@@ -40,8 +40,8 @@ val LocalSweetColors = staticCompositionLocalOf {
         mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
         choc = Choc, chocDeep = ChocDeep, muted = Color(0xFF8A7867),
         navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
-        weekendBg = Color(0xFFFFF1DC), holidayBg = Color(0xFFE3F7EE),
-        streakBg = Color(0xFFFFF1DC), isDark = false,
+        weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
+        streakBg = Color(0xFFEAD3C4), isDark = false,
     )
 }
 
@@ -53,8 +53,8 @@ private val LightCandyColors = SweetColors(
     mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
     choc = Choc, chocDeep = ChocDeep, muted = Color(0xFF8A7867),
     navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
-    weekendBg = Color(0xFFFFF1DC), holidayBg = Color(0xFFE3F7EE),
-    streakBg = Color(0xFFFFF1DC), isDark = false,
+    weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
+    streakBg = Color(0xFFEAD3C4), isDark = false,
 )
 
 private val DarkCandyColors = SweetColors(
@@ -64,7 +64,7 @@ private val DarkCandyColors = SweetColors(
     lemon = Color(0xFFFFDB70), lemonDeep = Color(0xFFFFC93C),
     choc = Color(0xFFD8B08A), chocDeep = Color(0xFFEFD3AE),
     muted = DarkMuted, navInactive = DarkNavInactive, navActiveBg = DarkNavActiveBg,
-    weekendBg = Color(0xFF3A2A22), holidayBg = Color(0xFF1E3A32),
+    weekendBg = Color(0xFF4A312B), holidayBg = Color(0xFF1E4A40),
     streakBg = Color(0xFF3A2A46), isDark = true,
 )
 
@@ -74,8 +74,8 @@ private val LightSpaceColors = SweetColors(
     mint = SpaceMint, mintDeep = SpaceMintDeep, lemon = SpaceLemon, lemonDeep = SpaceLemonDeep,
     choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceMuted,
     navInactive = SpaceNavInactive, navActiveBg = SpaceNavActiveBg,
-    weekendBg = Color(0xFFFFF1D6), holidayBg = Color(0xFFDFF7F5),
-    streakBg = Color(0xFFFFF1D6), isDark = false,
+    weekendBg = Color(0xFFE7D5C5), holidayBg = Color(0xFFD6EEDC),
+    streakBg = Color(0xFFE7D5C5), isDark = false,
 )
 
 private val DarkSpaceColors = SweetColors(
@@ -85,7 +85,7 @@ private val DarkSpaceColors = SweetColors(
     lemon = SpaceDarkLemon, lemonDeep = SpaceDarkLemonDeep,
     choc = SpaceDarkChoc, chocDeep = SpaceDarkChocDeep, muted = SpaceDarkMuted,
     navInactive = SpaceDarkNavInactive, navActiveBg = SpaceDarkNavActiveBg,
-    weekendBg = Color(0xFF2A2F72), holidayBg = Color(0xFF173A3A),
+    weekendBg = Color(0xFF433B62), holidayBg = Color(0xFF163A3A),
     streakBg = Color(0xFF2A2F72), isDark = true,
 )
 
