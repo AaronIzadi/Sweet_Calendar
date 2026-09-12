@@ -129,7 +129,7 @@ No BlueStacks device found.
     }
 
     Invoke-BlueStacksAdb install -r $apk.FullName
-    Invoke-BlueStacksAdb shell am start -n "com.example.calendartodo/.MainActivity"
+    Invoke-BlueStacksAdb shell am start -n "com.sweetcalendar/.MainActivity"
     Write-Host ""
     Write-Host "Installed and launched Sweet Calendar on BlueStacks."
 }

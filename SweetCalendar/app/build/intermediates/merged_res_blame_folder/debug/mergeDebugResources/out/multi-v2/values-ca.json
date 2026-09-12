@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.calendartodo.app-mergeDebugResources-47:/values-ca/values-ca.xml",
+            "outputFile": "com.sweetcalendar.app-mergeDebugResources-47:/values-ca/values-ca.xml",
             "map": [
                 {
                     "source": "C:\\Users\\M2\\.gradle\\caches\\transforms-4\\243f528b9b2308be770cafd9f2a3310f\\transformed\\foundation-release\\res\\values-ca\\values-ca.xml",

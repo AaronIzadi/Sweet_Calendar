@@ -131,7 +131,7 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\M2\.gradle\caches\
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:18:9-50
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:12:9-40
-activity#com.example.calendartodo.MainActivity
+activity#com.sweetcalendar.MainActivity
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:20:9-29:20
 	android:screenOrientation
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:23:13-49
@@ -151,7 +151,7 @@ category#android.intent.category.LAUNCHER
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:27:17-77
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:27:27-74
-activity#com.example.calendartodo.ui.alarm.AlarmActivity
+activity#com.sweetcalendar.ui.alarm.AlarmActivity
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:31:9-37:57
 	android:screenOrientation
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:34:13-49
@@ -165,13 +165,13 @@ ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\An
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:37:13-54
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:32:13-51
-receiver#com.example.calendartodo.reminder.TaskReminderReceiver
+receiver#com.sweetcalendar.reminder.TaskReminderReceiver
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:39:9-41:40
 	android:exported
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:41:13-37
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:40:13-58
-receiver#com.example.calendartodo.reminder.BootReceiver
+receiver#com.sweetcalendar.reminder.BootReceiver
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:43:9-49:20
 	android:exported
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:45:13-36
@@ -183,7 +183,7 @@ action#android.intent.action.BOOT_COMPLETED
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:47:17-79
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:47:25-76
-receiver#com.example.calendartodo.widget.TodayWidgetProvider
+receiver#com.sweetcalendar.widget.TodayWidgetProvider
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:51:9-61:20
 	android:label
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:54:13-45
@@ -203,7 +203,7 @@ ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\An
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:60:17-58
 	android:name
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:59:17-58
-receiver#com.example.calendartodo.widget.JarWidgetProvider
+receiver#com.sweetcalendar.widget.JarWidgetProvider
 ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:63:9-73:20
 	android:label
 		ADDED from C:\Users\M2\IdeaProjects\Sweet_Calendar\SweetCalendar\app\src\main\AndroidManifest.xml:66:13-53
@@ -363,7 +363,7 @@ ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e
 		ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:23:9-81
-permission#com.example.calendartodo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+permission#com.sweetcalendar.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:22:5-24:47
 	android:protectionLevel
 		ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:24:9-44
@@ -373,7 +373,7 @@ uses-permission#${applicationId}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:26:22-94
-uses-permission#com.example.calendartodo.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+uses-permission#com.sweetcalendar.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
 ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:26:5-97
 	android:name
 		ADDED from [androidx.core:core:1.13.1] C:\Users\M2\.gradle\caches\transforms-4\e91d43edd169d12026c8450ba62b92db\transformed\core-1.13.1\AndroidManifest.xml:26:22-94

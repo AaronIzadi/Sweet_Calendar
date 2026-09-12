@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.calendartodo"
+    namespace = "com.sweetcalendar"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.calendartodo"
+        applicationId = "com.sweetcalendar"
         minSdk = 25
         targetSdk = 34
         versionCode = 1
