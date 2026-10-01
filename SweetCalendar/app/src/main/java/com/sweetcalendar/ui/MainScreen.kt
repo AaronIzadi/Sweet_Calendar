@@ -56,6 +56,7 @@ import com.sweetcalendar.ui.today.TodayScreen
 import com.sweetcalendar.ui.week.WeekScreen
 import com.sweetcalendar.ui.welcome.WelcomeScreen
 import androidx.compose.ui.platform.LocalContext
+import com.sweetcalendar.reminder.NotificationPermissionHelper
 import com.sweetcalendar.widget.SweetWidgets
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -154,9 +155,10 @@ fun MainScreen(
     }
 
     fun maybePromptForNotifications(form: TaskFormData) {
-        if (form.reminderTime != null && !preferences.hasSeenNotificationRationale) {
-            pendingNotificationPrompt = true
-        }
+        pendingNotificationPrompt = NotificationPermissionHelper.shouldPromptForReminder(
+            context = context,
+            hasReminder = form.reminderTime != null
+        )
     }
 
     fun onTaskSaved(form: TaskFormData) {
@@ -192,13 +194,11 @@ fun MainScreen(
         if (overlay == OverlayState.NotificationPermission) {
             NotificationPermissionScreen(
                 onAllow = {
-                    preferences.hasSeenNotificationRationale = true
                     pendingNotificationPrompt = false
                     onRequestNotificationPermission()
                     overlay = OverlayState.None
                 },
                 onDismiss = {
-                    preferences.hasSeenNotificationRationale = true
                     pendingNotificationPrompt = false
                     overlay = OverlayState.None
                 }

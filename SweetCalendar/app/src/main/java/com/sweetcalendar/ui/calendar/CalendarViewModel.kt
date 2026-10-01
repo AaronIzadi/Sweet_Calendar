@@ -182,7 +182,15 @@ class CalendarViewModel(
 
     fun rescheduleAllActive() {
         viewModelScope.launch {
-            taskRepository.getActiveReminders().forEach { reminderScheduler.schedule(it) }
+            taskRepository.getActiveReminders().forEach { scheduleReminderSafely(it) }
+        }
+    }
+
+    private fun scheduleReminderSafely(task: TaskEntity) {
+        try {
+            reminderScheduler.schedule(task)
+        } catch (_: Exception) {
+            // Keep the app usable even when the OS rejects alarm scheduling.
         }
     }
 
@@ -282,7 +290,7 @@ class CalendarViewModel(
                 priority = form.priority,
                 repeatWeekly = form.repeatWeekly
             )
-            reminderScheduler.schedule(task)
+            scheduleReminderSafely(task)
             refreshWidgets()
         }
     }
@@ -302,7 +310,7 @@ class CalendarViewModel(
             taskRepository.updateTask(updated)
             reminderScheduler.cancel(task.id)
             if (!updated.isDone) {
-                reminderScheduler.schedule(updated)
+                scheduleReminderSafely(updated)
             }
             refreshWidgets()
         }
@@ -325,7 +333,7 @@ class CalendarViewModel(
                         priority = task.priority,
                         repeatWeekly = true
                     )
-                    reminderScheduler.schedule(
+                    scheduleReminderSafely(
                         TaskEntity(
                             id = newId,
                             title = task.title,
@@ -339,7 +347,7 @@ class CalendarViewModel(
                     )
                 }
             } else {
-                reminderScheduler.schedule(task.copy(isDone = false))
+                scheduleReminderSafely(task.copy(isDone = false))
             }
             refreshWidgets()
         }
@@ -357,7 +365,7 @@ class CalendarViewModel(
         viewModelScope.launch {
             taskRepository.restoreTask(task)
             if (!task.isDone && task.reminderTime != null) {
-                reminderScheduler.schedule(task)
+                scheduleReminderSafely(task)
             }
             refreshWidgets()
         }

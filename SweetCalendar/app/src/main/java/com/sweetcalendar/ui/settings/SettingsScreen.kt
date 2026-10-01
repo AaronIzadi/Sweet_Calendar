@@ -807,7 +807,7 @@ private fun SettingsRow(
                 )
             }
             trailing?.invoke()
-            if (trailing == null && (value != null || onClick != null)) {
+            if (trailing == null && onClick != null) {
                 Text(
                     "›",
                     style = TextStyle(

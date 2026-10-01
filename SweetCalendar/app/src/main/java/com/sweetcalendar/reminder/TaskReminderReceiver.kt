@@ -3,7 +3,6 @@ package com.sweetcalendar.reminder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.sweetcalendar.ui.alarm.AlarmActivity
 
 class TaskReminderReceiver : BroadcastReceiver() {
 
@@ -14,15 +13,7 @@ class TaskReminderReceiver : BroadcastReceiver() {
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
         if (title.isBlank()) return
 
-        NotificationHelper.showReminder(context, notificationId, title, body)
-
-        val alarmIntent = Intent(context, AlarmActivity::class.java).apply {
-            putExtra(AlarmActivity.EXTRA_TITLE, title)
-            putExtra(AlarmActivity.EXTRA_DESCRIPTION, body)
-            putExtra(AlarmActivity.EXTRA_DATE_TIME, dateTime)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(alarmIntent)
+        NotificationHelper.showReminder(context, notificationId, title, body, dateTime)
     }
 
     companion object {

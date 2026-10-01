@@ -17,7 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -891,27 +892,30 @@ fun SweetPixelButton(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val fontSize = mockupSp(11)
+    val fontSize = mockupSp(MockupDimens.PIXEL_BTN)
     val faceColor = colors.purple
     val shadowColor = if (colors.isDark) Color(0xFF2E2342) else colors.purpleDeep
-    Box(modifier = modifier.widthIn(min = 172.dp)) {
+    val cornerRadius = mockupDp(12)
+    val shadowOffset = mockupDp(4)
+    val horizontalPadding = mockupDp(MockupDimens.PIXEL_BTN_PAD_H)
+    val verticalPadding = mockupDp(MockupDimens.PIXEL_BTN_PAD_V)
+    Box(modifier = modifier.wrapContentSize()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .offset(y = mockupDp(3))
-                .clip(RoundedCornerShape(mockupDp(12)))
+                .offset(y = shadowOffset)
+                .clip(RoundedCornerShape(cornerRadius))
                 .background(shadowColor)
         )
         Box(
             modifier = Modifier
-                .widthIn(min = 172.dp)
-                .defaultMinSize(minHeight = 48.dp)
-                .clip(RoundedCornerShape(mockupDp(12)))
+                .wrapContentWidth()
+                .clip(RoundedCornerShape(cornerRadius))
                 .background(faceColor)
                 .clickable(onClick = onClick)
                 .padding(
-                    horizontal = mockupDp(MockupDimens.PIXEL_BTN_PAD_H),
-                    vertical = mockupDp(12)
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding
                 ),
             contentAlignment = Alignment.Center
         ) {

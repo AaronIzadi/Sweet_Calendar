@@ -13,20 +13,35 @@ import com.sweetcalendar.MainActivity
 import com.sweetcalendar.R
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.TaskCategory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class TodayWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        appWidgetIds.forEach { id ->
+        val appContext = context.applicationContext
+        val pendingResult = goAsync()
+        widgetScope.launch {
             try {
-                appWidgetManager.updateAppWidget(id, buildViews(context))
-            } catch (_: Exception) {
-                appWidgetManager.updateAppWidget(id, safeFallbackViews(context))
+                appWidgetIds.forEach { id ->
+                    val views = try {
+                        buildViews(appContext)
+                    } catch (_: Exception) {
+                        safeFallbackViews(appContext)
+                    }
+                    appWidgetManager.updateAppWidget(id, views)
+                }
+            } finally {
+                pendingResult.finish()
             }
         }
     }
 
     companion object {
+        private val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
         fun updateInstances(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val component = ComponentName(context, TodayWidgetProvider::class.java)
@@ -49,7 +64,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_date, "Today")
             views.setTextColor(R.id.widget_date, theme.muted)
             views.setProgressBar(R.id.widget_progress, 100, 0, false)
-            views.setInt(R.id.widget_progress, "setProgressDrawable", theme.progressDrawableRes)
+            applyProgressDrawable(views, theme.progressDrawableRes)
             views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
             views.setTextColor(R.id.widget_add_button, theme.addButtonText)
             views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
@@ -75,7 +90,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             views.setTextViewText(R.id.widget_date, data.dateLabel)
             views.setTextColor(R.id.widget_date, theme.muted)
             views.setProgressBar(R.id.widget_progress, 100, data.progress, false)
-            views.setInt(R.id.widget_progress, "setProgressDrawable", theme.progressDrawableRes)
+            applyProgressDrawable(views, theme.progressDrawableRes)
             views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
             views.setTextColor(R.id.widget_add_button, theme.addButtonText)
 
@@ -153,15 +168,27 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 titleId,
                 if (task.isDone) theme.choc else theme.ink
             )
-            views.setInt(
-                titleId,
-                "setPaintFlags",
-                if (task.isDone) {
-                    Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
-                } else {
-                    Paint.ANTI_ALIAS_FLAG
-                }
-            )
+            try {
+                views.setInt(
+                    titleId,
+                    "setPaintFlags",
+                    if (task.isDone) {
+                        Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
+                    } else {
+                        Paint.ANTI_ALIAS_FLAG
+                    }
+                )
+            } catch (_: Exception) {
+                // Strike-through is cosmetic; skip if the launcher rejects setPaintFlags.
+            }
+        }
+
+        private fun applyProgressDrawable(views: RemoteViews, drawableRes: Int) {
+            try {
+                views.setInt(R.id.widget_progress, "setProgressDrawable", drawableRes)
+            } catch (_: Exception) {
+                // Keep widget_progress_simple from XML if the themed layer-list is rejected.
+            }
         }
 
         private fun openAppIntent(context: Context, requestCode: Int): PendingIntent =

@@ -17,7 +17,13 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 val tasks = AppDatabase.get(context).taskDao().getActiveReminders()
                 val scheduler = TaskReminderScheduler(context.applicationContext)
-                tasks.forEach { scheduler.schedule(it) }
+                tasks.forEach { task ->
+                    try {
+                        scheduler.schedule(task)
+                    } catch (_: Exception) {
+                        // Skip tasks the OS refuses to schedule after reboot.
+                    }
+                }
             } finally {
                 pendingResult.finish()
             }

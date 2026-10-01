@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.sweetcalendar.MainActivity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import java.util.Calendar
@@ -48,10 +49,50 @@ class TaskReminderScheduler(private val context: Context) {
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+        setAlarm(triggerAt, pendingIntent, requestCode)
+    }
+
+    private fun setAlarm(triggerAt: Long, pendingIntent: PendingIntent, requestCode: Int) {
+        val showIntent = PendingIntent.getActivity(
+            context,
+            requestCode + SHOW_INTENT_REQUEST_CODE_OFFSET,
+            Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                    !alarmManager.canScheduleExactAlarms() -> {
+                    alarmManager.setAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerAt,
+                        pendingIntent
+                    )
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> {
+                    alarmManager.setAlarmClock(
+                        AlarmManager.AlarmClockInfo(triggerAt, showIntent),
+                        pendingIntent
+                    )
+                }
+                else -> {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pendingIntent)
+                }
+            }
+        } catch (_: SecurityException) {
+            try {
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerAt,
+                    pendingIntent
+                )
+            } catch (_: Exception) {
+                // Task stays saved even if the OS blocks reminder scheduling.
+            }
+        } catch (_: Exception) {
+            // Ignore scheduling failures so saving a task never crashes the app.
         }
     }
 
@@ -83,6 +124,7 @@ class TaskReminderScheduler(private val context: Context) {
 
     companion object {
         private const val EARLY_OFFSET_MS = 10 * 60 * 1000L
+        private const val SHOW_INTENT_REQUEST_CODE_OFFSET = 2_000_000
 
         private fun requestCode(taskId: Long, isEarly: Boolean): Int {
             val base = (taskId % Int.MAX_VALUE).toInt()

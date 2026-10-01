@@ -4,7 +4,9 @@ import android.content.Context
 import com.sweetcalendar.data.local.AppDatabase
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 data class TodayWidgetData(
     val dateLabel: String,
@@ -17,6 +19,7 @@ data class TodayWidgetData(
 object WidgetDataLoader {
 
     fun loadToday(context: Context): TodayWidgetData = runBlocking {
+        withContext(Dispatchers.IO) {
         try {
             val today = JalaliDate.today()
             val tasks = AppDatabase.get(context).taskDao().getForDate(today.formatIso())
@@ -42,6 +45,7 @@ object WidgetDataLoader {
                 progress = 0,
                 displayTasks = emptyList()
             )
+        }
         }
     }
 }
