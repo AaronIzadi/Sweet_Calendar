@@ -61,13 +61,34 @@ val SpaceDarkNavInactive = Color(0xFF5C5A9A)
 val SpaceDarkNavActiveBg = Color(0xFF2A2F72)
 
 // Dark mode — "midnight candy shop"
+/** App canvas (deepest layer). */
 val DarkCream = Color(0xFF241A30)
+/** Default card / chip face. */
 val DarkPaper = Color(0xFF2F2340)
+/** Raised panels (settings groups, chips) — mockup `--paper2`. */
+val DarkPaperElevated = Color(0xFF3A2C4C)
 val DarkInk = Color(0xFFF2E9F5)
+/** Borders and dividers (not drop shadows). */
 val DarkLine = Color(0xFF40314F)
+/** Pixel drop shadow on dark surfaces — darker than [DarkCream]. */
+val DarkShadow = Color(0xFF1E1628)
+val DarkShadowDeep = Color(0xFF120C1A)
 val DarkMuted = Color(0xFFB3A0C9)
 val DarkNavInactive = Color(0xFF7A6A94)
 val DarkNavActiveBg = Color(0xFF472F52)
+
+/** Candy light pixel shadow (tan, mockup `--line` under cards). */
+val CandyShadow = Line
+val CandyShadowDeep = ChocDeep
+val CandyBannerBgLight = Color(0xFFFFF1DC)
+val CandySurfaceInsetLight = Color(0xFFFBEDE3)
+val CandyBannerBgDark = Color(0xFF3A2A22)
+
+val SpaceShadow = SpaceLine
+val SpaceShadowDeep = SpaceChocDeep
+val SpaceDarkShadow = Color(0xFF0B0E24)
+val SpaceDarkShadowDeep = Color(0xFF060812)
+val SpaceDarkPaperElevated = Color(0xFF2A2F72)
 
 // Legacy aliases (used by older components during migration)
 val BubblegumPink = Pink

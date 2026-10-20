@@ -274,6 +274,7 @@ fun MoonIcon(
     )
 }
 
+/** Static star field (widgets / previews). Prefer [SpaceTwinkleBackground] in UI. */
 @Composable
 fun SpaceStarsBackground(modifier: Modifier = Modifier) {
     val colors = SweetTheme.colors

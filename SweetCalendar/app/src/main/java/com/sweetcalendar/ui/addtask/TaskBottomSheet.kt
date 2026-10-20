@@ -21,13 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +46,11 @@ import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.ClockMiniIcon
 import com.sweetcalendar.ui.components.ThemeSparkleIcon
 import com.sweetcalendar.ui.theme.themeAddTaskButtonText
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
+import com.sweetcalendar.ui.components.ClosePixelIcon
+import com.sweetcalendar.ui.components.SheetFooterBar
+import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
+import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.components.SweetBigSaveButton
 import com.sweetcalendar.ui.components.SweetSwitch
 import com.sweetcalendar.ui.components.TaskCategory
@@ -60,36 +60,23 @@ import com.sweetcalendar.ui.components.formatDisplayShort
 import com.sweetcalendar.ui.components.formatTime12h
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
-import com.sweetcalendar.ui.theme.PixelFont
-import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
-import com.sweetcalendar.ui.theme.selectedOnAccentTextColor
-import androidx.compose.material3.TimePickerDefaults
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val FormFieldLabelLight = Color(0xFF9A8878)
-private val FormPlaceholderLight = Color(0xFFB7A493)
-private val FormMetaMutedLight = Color(0xFF9A8878)
 private val SelectedChipTextColor = Color.Black
 
 @Composable
-private fun formFieldLabelColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else FormFieldLabelLight
-}
+private fun formFieldLabelColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun formPlaceholderColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.navInactive else FormPlaceholderLight
+    return if (colors.isDark) colors.navInactive else colors.muted
 }
 
 @Composable
-private fun formMetaMutedColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else FormMetaMutedLight
-}
+private fun formMetaMutedColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun priorityChipFillColor(selected: Boolean): Color {
@@ -100,7 +87,7 @@ private fun priorityChipFillColor(selected: Boolean): Color {
 
 @Composable
 private fun priorityChipShadowColor(selected: Boolean): Color {
-    if (!selected) return SweetTheme.colors.line
+    if (!selected) return SweetTheme.colors.shadow
     val colors = SweetTheme.colors
     return if (colors.isDark) PriorityChipShadowDark else PriorityChipShadowLight
 }
@@ -180,40 +167,6 @@ fun TaskBottomSheet(
             .background(colors.cream)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(16),
-                        bottom = mockupDp(8)
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "✕ CLOSE",
-                    style = TextStyle(
-                        fontFamily = PixelFont,
-                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                        lineHeight = mockupSp(14f)
-                    ),
-                    color = colors.purpleDeep,
-                    modifier = Modifier.clickable(onClick = onDismiss)
-                )
-                Text(
-                    "SAVE ✓",
-                    style = TextStyle(
-                        fontFamily = PixelFont,
-                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                        lineHeight = mockupSp(14f)
-                    ),
-                    color = colors.pinkDeep,
-                    modifier = Modifier.clickable(onClick = { submit() })
-                )
-            }
-
             Text(
                 if (isEdit) "Edit task" else "New task",
                 style = TextStyle(
@@ -224,7 +177,9 @@ fun TaskBottomSheet(
                 ),
                 color = colors.ink,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(sheetDialogTitlePaddingModifier())
             )
 
             Column(
@@ -254,8 +209,8 @@ fun TaskBottomSheet(
                         "Please enter a title",
                         style = TextStyle(
                             fontFamily = BodyFont,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = mockupSp(11f)
+                            fontWeight = SecondaryTextWeight,
+                            fontSize = mockupSp(12f)
                         ),
                         color = colors.pinkDeep,
                         modifier = Modifier.padding(top = mockupDp(4))
@@ -303,13 +258,8 @@ fun TaskBottomSheet(
                         },
                         trailing = if (reminderEnabled) {
                             {
-                                Text(
-                                    "✕",
-                                    style = TextStyle(
-                                        fontFamily = BodyFont,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = mockupSp(11f)
-                                    ),
+                                ClosePixelIcon(
+                                    size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
                                     color = colors.muted,
                                     modifier = Modifier.clickable { reminderEnabled = false }
                                 )
@@ -397,6 +347,13 @@ fun TaskBottomSheet(
                     onClick = { submit() }
                 )
             }
+
+            SheetFooterBar(
+                onClose = onDismiss,
+                trailing = {
+                    SheetHeaderConfirmAction(label = "SAVE", onClick = { submit() })
+                }
+            )
         }
     }
 
@@ -422,7 +379,7 @@ fun TaskBottomSheet(
     }
 
     if (showTimePicker) {
-        TimePickerDialog(
+        SweetTimePickerDialog(
             reminderTime = reminderTime,
             onDismiss = { showTimePicker = false },
             onConfirm = { time ->
@@ -448,7 +405,7 @@ private fun PaperSurface(
                 .matchParentSize()
                 .offset(y = shadowDepth)
                 .clip(RoundedCornerShape(cornerRadius))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Box(
             modifier = Modifier
@@ -458,60 +415,6 @@ private fun PaperSurface(
             content()
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TimePickerDialog(
-    reminderTime: String,
-    onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
-) {
-    val colors = SweetTheme.colors
-    val initialParts = reminderTime.split(":")
-    val hour = initialParts.getOrNull(0)?.toIntOrNull() ?: 14
-    val minute = initialParts.getOrNull(1)?.toIntOrNull() ?: 30
-    val timeState = rememberTimePickerState(initialHour = hour, initialMinute = minute, is24Hour = false)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = colors.paper,
-        titleContentColor = colors.ink,
-        textContentColor = colors.ink,
-        confirmButton = {
-            TextButton(onClick = {
-                onConfirm("%02d:%02d".format(timeState.hour, timeState.minute))
-            }) { Text("OK", color = colors.pinkDeep) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = colors.muted)
-            }
-        },
-        title = { Text("Set time", color = colors.ink) },
-        text = {
-            ProvideMockupScale {
-                TimePicker(
-                    state = timeState,
-                    colors = TimePickerDefaults.colors(
-                        clockDialColor = colors.line,
-                        clockDialSelectedContentColor = selectedOnAccentTextColor(),
-                        clockDialUnselectedContentColor = colors.ink,
-                        selectorColor = colors.purple,
-                        containerColor = colors.paper,
-                        periodSelectorBorderColor = colors.line,
-                        periodSelectorSelectedContainerColor = colors.purple,
-                        periodSelectorUnselectedContainerColor = colors.paper,
-                        periodSelectorSelectedContentColor = selectedOnAccentTextColor(),
-                        periodSelectorUnselectedContentColor = colors.muted,
-                        timeSelectorSelectedContainerColor = colors.purple,
-                        timeSelectorUnselectedContainerColor = colors.line,
-                        timeSelectorSelectedContentColor = selectedOnAccentTextColor(),
-                        timeSelectorUnselectedContentColor = colors.ink,
-                    )
-                )
-            }
-        }
-    )
 }
 
 @Composable
@@ -560,7 +463,7 @@ private fun SweetField(
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
     val fieldTextStyle = TextStyle(
         fontFamily = BodyFont,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = SecondaryTextWeight,
         fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
         lineHeight = mockupSp(18f)
     )

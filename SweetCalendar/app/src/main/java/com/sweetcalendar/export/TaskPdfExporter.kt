@@ -302,7 +302,7 @@ class TaskPdfExporter(context: Context) {
         private const val COLOR_PAPER = 0xFFFFFDF9.toInt()
         private const val COLOR_INK = 0xFF3A2317.toInt()
         private const val COLOR_CHOC = 0xFF6B4226.toInt()
-        private const val COLOR_MUTED = 0xFF9A8878.toInt()
+        private const val COLOR_MUTED = 0xFF6B4226.toInt()
         private const val COLOR_LINE = 0xFFEAD9C4.toInt()
     }
 }

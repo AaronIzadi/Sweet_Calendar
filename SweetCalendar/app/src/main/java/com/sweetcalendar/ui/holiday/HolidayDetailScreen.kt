@@ -19,8 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,37 +29,25 @@ import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.ambientHolidayHeroBackground
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val HolidayDateLight = Color(0xFF8A7867)
-private val HolidayBodyLight = Color(0xFF6B5A4B)
-private val HolidaySourceLight = Color(0xFFB39D89)
 private val HolidayTagHolidayBgLight = Color(0xFFE3F7EE)
 private val HolidayTagOccasionBgLight = Color(0xFFFFF5D6)
-private val HeroGradientStartLight = Color(0xFFDFF7EC)
-private val HeroGradientEndLight = Color(0xFFF3E3FB)
-private val HeroGradientStartDark = Color(0xFF1E3A32)
-private val HeroGradientEndDark = Color(0xFF241C36)
+@Composable
+private fun holidayDateColor(): Color = SweetTheme.colors.muted
 
 @Composable
-private fun holidayDateColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else HolidayDateLight
-}
-
-@Composable
-private fun holidayBodyColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else HolidayBodyLight
-}
+private fun holidayBodyColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun holidaySourceColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else HolidaySourceLight
+    return if (colors.isDark) colors.muted else colors.chocDeep
 }
 
 @Composable
@@ -89,19 +75,6 @@ fun HolidayDetailScreen(
     BackHandler(onBack = onBack)
     val colors = SweetTheme.colors
     val (tagBg, tagText) = holidayTagStyle(isHoliday)
-    val heroGradient = if (colors.isDark) {
-        Brush.linearGradient(
-            colors = listOf(HeroGradientStartDark, HeroGradientEndDark),
-            start = Offset.Zero,
-            end = Offset(400f, 700f)
-        )
-    } else {
-        Brush.linearGradient(
-            colors = listOf(HeroGradientStartLight, HeroGradientEndLight),
-            start = Offset.Zero,
-            end = Offset(400f, 700f)
-        )
-    }
     val bodyText = when {
         description.isNotBlank() && !description.equals(title, ignoreCase = true) -> description
         isHoliday -> {
@@ -119,7 +92,7 @@ fun HolidayDetailScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(mockupDp(MockupDimens.HOLIDAY_HERO_H))
-                .background(heroGradient),
+                .background(ambientHolidayHeroBackground()),
             contentAlignment = Alignment.Center
         ) {
             SweetIconButton(
@@ -172,7 +145,7 @@ fun HolidayDetailScreen(
                 formatHolidayDateLine(date, calendarSystem),
                 style = TextStyle(
                     fontFamily = BodyFont,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = SecondaryTextWeight,
                     fontSize = mockupSp(MockupDimens.HOLIDAY_DATE_F),
                     lineHeight = mockupSp(16f)
                 ),
@@ -226,13 +199,13 @@ private fun HolidayNotesBox(text: String) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Text(
             text,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.HOLIDAY_BODY_F),
                 lineHeight = mockupSp(20f)
             ),

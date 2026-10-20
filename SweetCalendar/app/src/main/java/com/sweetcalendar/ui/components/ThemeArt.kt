@@ -337,8 +337,8 @@ fun ThemeAlarmHeroIcon(
 @Composable
 fun ThemeDecorBackground(modifier: Modifier = Modifier) {
     if (SweetTheme.isSpace) {
-        SpaceStarsBackground(modifier = modifier)
+        SpaceTwinkleBackground(modifier = modifier)
     } else {
-        CandySprinklesBackground(modifier = modifier)
+        CandyFloatingSprinklesBackground(modifier = modifier)
     }
 }

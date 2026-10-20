@@ -1,7 +1,6 @@
 package com.sweetcalendar.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,14 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,23 +41,14 @@ import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
-import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.themeCelebrationMessage
 import com.sweetcalendar.ui.theme.themeCelebrationTitle
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-import com.sweetcalendar.ui.theme.BubblegumPink
-import com.sweetcalendar.ui.theme.CaramelOrange
-import com.sweetcalendar.ui.theme.ChocolateBrown
-import com.sweetcalendar.ui.theme.CreamFrosting
-import com.sweetcalendar.ui.theme.GrapePurple
-import com.sweetcalendar.ui.theme.LemonYellow
-import com.sweetcalendar.ui.theme.MintGreen
-import com.sweetcalendar.ui.theme.PixelBorder
-import com.sweetcalendar.ui.components.pixelBorder
 
 @Composable
 fun TaskCard(
@@ -71,8 +59,10 @@ fun TaskCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = SweetTheme.colors
     val date = remember(task.jalaliDate) { JalaliDate.parseIso(task.jalaliDate) }
     var menuOpen by remember { mutableStateOf(false) }
+    val panelBg = if (task.isDone) colors.paper.copy(alpha = 0.75f) else colors.paper
 
     PixelPanel(
         modifier = modifier
@@ -80,7 +70,9 @@ fun TaskCard(
             .height(130.dp)
             .padding(vertical = 4.dp)
             .clickable(onClick = onClick),
-        backgroundColor = if (task.isDone) CreamFrosting.copy(alpha = 0.75f) else CreamFrosting
+        backgroundColor = panelBg,
+        borderColor = colors.choc,
+        shadowColor = colors.shadowDeep
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -97,19 +89,19 @@ fun TaskCard(
                 Text(
                     date.weekdayName(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = ChocolateBrown.copy(alpha = 0.6f),
+                    color = colors.muted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     date.day.toString(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = BubblegumPink
+                    color = colors.pink
                 )
                 Text(
                     JalaliDate.MONTH_NAMES_EN[date.month - 1],
                     style = MaterialTheme.typography.labelSmall,
-                    color = ChocolateBrown.copy(alpha = 0.6f),
+                    color = colors.muted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -119,7 +111,7 @@ fun TaskCard(
                 modifier = Modifier
                     .width(2.dp)
                     .height(90.dp)
-                    .background(PixelBorder.copy(alpha = 0.35f))
+                    .background(colors.line.copy(alpha = 0.35f))
             )
 
             Column(
@@ -134,7 +126,7 @@ fun TaskCard(
                     Text(
                         task.title,
                         style = MaterialTheme.typography.titleSmall,
-                        color = if (task.isDone) ChocolateBrown.copy(alpha = 0.5f) else ChocolateBrown,
+                        color = if (task.isDone) colors.muted else colors.ink,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
@@ -148,7 +140,7 @@ fun TaskCard(
                             Icon(
                                 Icons.Default.MoreVert,
                                 contentDescription = "Options",
-                                tint = ChocolateBrown,
+                                tint = colors.ink,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -180,7 +172,7 @@ fun TaskCard(
                     Text(
                         task.notes,
                         style = MaterialTheme.typography.bodySmall,
-                        color = ChocolateBrown.copy(alpha = 0.65f),
+                        color = colors.muted,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -194,7 +186,7 @@ fun TaskCard(
                     Text(
                         meta.joinToString(" · "),
                         style = MaterialTheme.typography.labelSmall,
-                        color = GrapePurple,
+                        color = colors.purpleDeep,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -205,14 +197,19 @@ fun TaskCard(
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     Box(
                         modifier = Modifier
-                            .pixelBorder(borderWidth = 2.dp, shadowOffset = 2.dp)
-                            .background(if (task.isDone) MintGreen else CaramelOrange)
+                            .themePixelBorder(
+                                borderWidth = 2.dp,
+                                shadowOffset = 2.dp,
+                                borderColor = colors.choc,
+                                shadowColor = colors.shadowDeep
+                            )
+                            .background(if (task.isDone) colors.mint else colors.lemon)
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
                             if (task.isDone) "COMPLETED" else "UPCOMING",
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (task.isDone) ChocolateBrown else CreamFrosting
+                            color = if (task.isDone) colors.ink else colors.paper
                         )
                     }
                 }
@@ -235,46 +232,13 @@ fun PixelConfirmDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
+            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
                     .background(colors.cream)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = mockupDp(18),
-                            end = mockupDp(18),
-                            top = mockupDp(16),
-                            bottom = mockupDp(8)
-                        ),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "✕ $dismissLabel".uppercase(),
-                        style = TextStyle(
-                            fontFamily = PixelFont,
-                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                            lineHeight = mockupSp(14f)
-                        ),
-                        color = colors.purpleDeep,
-                        modifier = Modifier.clickable(onClick = onDismiss)
-                    )
-                    Text(
-                        confirmLabel.uppercase(),
-                        style = TextStyle(
-                            fontFamily = PixelFont,
-                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                            lineHeight = mockupSp(14f)
-                        ),
-                        color = deleteColor,
-                        modifier = Modifier.clickable(onClick = onConfirm)
-                    )
-                }
-
                 Text(
                     title,
                     style = TextStyle(
@@ -286,7 +250,7 @@ fun PixelConfirmDialog(
                     color = colors.ink,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = mockupDp(8)),
+                        .then(sheetDialogTitlePaddingModifier()),
                     textAlign = TextAlign.Center
                 )
 
@@ -294,7 +258,7 @@ fun PixelConfirmDialog(
                     message,
                     style = TextStyle(
                         fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = SecondaryTextWeight,
                         fontSize = mockupSp(12f),
                         lineHeight = mockupSp(18f)
                     ),
@@ -305,9 +269,23 @@ fun PixelConfirmDialog(
                         .padding(
                             start = mockupDp(24),
                             end = mockupDp(24),
-                            bottom = mockupDp(24)
+                            bottom = mockupDp(16)
                         )
                 )
+
+                SheetFooterBar(
+                    onClose = onDismiss,
+                    closeLabel = dismissLabel,
+                    trailing = {
+                        SheetHeaderConfirmAction(
+                            label = confirmLabel,
+                            onClick = onConfirm,
+                            textColor = deleteColor,
+                            showCheckIcon = false
+                        )
+                    }
+                )
+            }
             }
         }
     }
@@ -319,20 +297,30 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
-            Column(
+            SweetDialogSurface {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
-                    .background(colors.cream)
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(24),
-                        bottom = mockupDp(24)
-                    ),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .background(colors.cream),
             ) {
-                ThemeCompletedCheckIcon(size = mockupDp(56))
+                CelebrationBurstBackdrop(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(mockupDp(16))),
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = mockupDp(18),
+                            end = mockupDp(18),
+                            top = mockupDp(24),
+                            bottom = mockupDp(24)
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                CelebrationJarHero()
                 Spacer(Modifier.height(mockupDp(12)))
                 Text(
                     themeCelebrationTitle(),
@@ -350,7 +338,7 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                     themeCelebrationMessage(),
                     style = TextStyle(
                         fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = SecondaryTextWeight,
                         fontSize = mockupSp(12f),
                         lineHeight = mockupSp(18f)
                     ),
@@ -362,6 +350,8 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                     text = "OK",
                     onClick = onDismiss
                 )
+                }
+            }
             }
         }
     }

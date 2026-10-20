@@ -36,7 +36,7 @@ class JarWidgetProvider : AppWidgetProvider() {
             val iconPx = (16f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
             val themeFamily = AppPreferences(context).themeFamily
 
-            views.setInt(R.id.widget_jar_root, "setBackgroundResource", theme.cardBackgroundRes)
+            WidgetUi.applyCardSurface(views, R.id.widget_jar_root, theme)
             views.setImageViewBitmap(
                 R.id.widget_jar_icon,
                 WidgetPixelIcons.jarIconBitmap(iconPx, theme.isDark, theme.isSpace)

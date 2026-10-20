@@ -30,6 +30,7 @@ import com.sweetcalendar.ui.archive.ArchiveFilterChip
 import com.sweetcalendar.ui.archive.ArchiveStatCard
 import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.stats.ArchiveFilter
 import com.sweetcalendar.ui.stats.countDeletedThisWeek
@@ -37,6 +38,7 @@ import com.sweetcalendar.ui.stats.countExpiringDeletedTasks
 import com.sweetcalendar.ui.stats.filterDeletedTasks
 import com.sweetcalendar.ui.stats.groupDeletedTasksByDay
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
@@ -131,7 +133,7 @@ fun RecoverSnackbarScreen(
                             "No deleted tasks in this period",
                             style = TextStyle(
                                 fontFamily = BodyFont,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = SecondaryTextWeight,
                                 fontSize = mockupSp(12f),
                                 lineHeight = mockupSp(16f)
                             ),
@@ -147,6 +149,7 @@ fun RecoverSnackbarScreen(
                         items(dayTasks, key = { it.id }) { task ->
                             SweetTaskCard(
                                 task = task,
+                                modifier = sweetTaskItemMotion(),
                                 style = TaskCardStyle.Mockup,
                                 showDate = true,
                                 onRecover = { onRestore(task) },

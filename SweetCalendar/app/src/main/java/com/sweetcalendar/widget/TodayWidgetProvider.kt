@@ -6,7 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Paint
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.StrikethroughSpan
 import android.view.View
 import android.widget.RemoteViews
 import com.sweetcalendar.MainActivity
@@ -58,15 +60,13 @@ class TodayWidgetProvider : AppWidgetProvider() {
         private fun safeFallbackViews(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_today)
             val theme = WidgetTheme.colors(context)
-            views.setInt(R.id.widget_root, "setBackgroundResource", theme.cardBackgroundRes)
+            WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
             views.setTextColor(R.id.widget_title, theme.ink)
             views.setTextViewText(R.id.widget_title, context.getString(R.string.app_name))
             views.setTextViewText(R.id.widget_date, "Today")
             views.setTextColor(R.id.widget_date, theme.muted)
-            views.setProgressBar(R.id.widget_progress, 100, 0, false)
-            applyProgressDrawable(views, theme.progressDrawableRes)
-            views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
-            views.setTextColor(R.id.widget_add_button, theme.addButtonText)
+            WidgetUi.applyProgress(views, 0, theme)
+            WidgetUi.applyAddButton(views, R.id.widget_add_button, theme)
             views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
             views.setTextViewText(R.id.widget_empty_state, "No tasks today")
             views.setTextColor(R.id.widget_empty_state, theme.muted)
@@ -85,14 +85,12 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val data = WidgetDataLoader.loadToday(context)
             val iconPx = (14f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
 
-            views.setInt(R.id.widget_root, "setBackgroundResource", theme.cardBackgroundRes)
+            WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
             views.setTextColor(R.id.widget_title, theme.ink)
             views.setTextViewText(R.id.widget_date, data.dateLabel)
             views.setTextColor(R.id.widget_date, theme.muted)
-            views.setProgressBar(R.id.widget_progress, 100, data.progress, false)
-            applyProgressDrawable(views, theme.progressDrawableRes)
-            views.setInt(R.id.widget_add_button, "setBackgroundResource", theme.addButtonRes)
-            views.setTextColor(R.id.widget_add_button, theme.addButtonText)
+            WidgetUi.applyProgress(views, data.progress, theme)
+            WidgetUi.applyAddButton(views, R.id.widget_add_button, theme)
 
             val hasTasks = data.displayTasks.isNotEmpty()
             views.setViewVisibility(R.id.widget_empty_state, if (hasTasks) View.GONE else View.VISIBLE)
@@ -163,31 +161,18 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 checkboxId,
                 if (task.isDone) theme.checkboxCheckedRes else theme.checkboxUncheckedRes
             )
-            views.setTextViewText(titleId, widgetTaskTitle(task))
+            val title = widgetTaskTitle(task)
+            views.setTextViewText(titleId, taskTitleForRemoteViews(title, task.isDone))
             views.setTextColor(
                 titleId,
-                if (task.isDone) theme.choc else theme.ink
+                if (task.isDone) theme.muted else theme.ink
             )
-            try {
-                views.setInt(
-                    titleId,
-                    "setPaintFlags",
-                    if (task.isDone) {
-                        Paint.STRIKE_THRU_TEXT_FLAG or Paint.ANTI_ALIAS_FLAG
-                    } else {
-                        Paint.ANTI_ALIAS_FLAG
-                    }
-                )
-            } catch (_: Exception) {
-                // Strike-through is cosmetic; skip if the launcher rejects setPaintFlags.
-            }
         }
 
-        private fun applyProgressDrawable(views: RemoteViews, drawableRes: Int) {
-            try {
-                views.setInt(R.id.widget_progress, "setProgressDrawable", drawableRes)
-            } catch (_: Exception) {
-                // Keep widget_progress_simple from XML if the themed layer-list is rejected.
+        private fun taskTitleForRemoteViews(title: String, isDone: Boolean): CharSequence {
+            if (!isDone) return title
+            return SpannableString(title).apply {
+                setSpan(StrikethroughSpan(), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
         }
 

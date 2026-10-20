@@ -17,8 +17,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.sweetcalendar.ui.components.CountUpPercentText
+import com.sweetcalendar.ui.theme.SweetMotion
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.ThemeStatsJarIcon
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.themeStatsSubtitle
@@ -36,29 +45,20 @@ import com.sweetcalendar.ui.theme.themeStatsTitle
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val StatsSubLight = Color(0xFF8A7867)
-private val StatsFieldLabelLight = Color(0xFF9A8878)
-private val StatsBarDayLight = Color(0xFFB39D89)
 private val HeatLevel1Light = Color(0xFFD9F0E4)
 private val HeatLevel2Light = Color(0xFFA9E6C9)
 private val HeatLevel3Dark = Color(0xFF2F8A6A)
 
 @Composable
-private fun statsSubColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else StatsSubLight
-}
+private fun statsSubColor(): Color = SweetTheme.colors.muted
 
 @Composable
-private fun statsFieldLabelColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else StatsFieldLabelLight
-}
+private fun statsFieldLabelColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun statsBarDayColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else StatsBarDayLight
+    return if (colors.isDark) colors.muted else colors.chocDeep
 }
 
 @Composable
@@ -106,7 +106,7 @@ fun StatsScreen(
             themeStatsSubtitle(),
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.STATS_SUB)
             ),
             color = statsSubColor(),
@@ -119,6 +119,8 @@ fun StatsScreen(
         StatsJarCard {
             val chartHeight = MockupDimens.STATS_BAR_HEIGHT
             val labelReserve = 14f
+            var barsVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { barsVisible = true }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -126,8 +128,16 @@ fun StatsScreen(
                 horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
                 verticalAlignment = Alignment.Bottom
             ) {
-                weekBars.forEach { bar ->
-                    val heightRatio = if (bar.ratio <= 0f) 0.08f else bar.ratio.coerceIn(0.08f, 1f)
+                weekBars.forEachIndexed { index, bar ->
+                    val targetRatio = if (bar.ratio <= 0f) 0.08f else bar.ratio.coerceIn(0.08f, 1f)
+                    val heightRatio by animateFloatAsState(
+                        targetValue = if (barsVisible) targetRatio else 0.08f,
+                        animationSpec = tween(
+                            durationMillis = SweetMotion.MediumMillis + 40,
+                            delayMillis = index * 45,
+                        ),
+                        label = "statsBar-${bar.label}",
+                    )
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -220,7 +230,7 @@ private fun StatsBigJarCard(monthPct: Int) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.STATS_BIG_CARD_SHADOW))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Column(
             modifier = Modifier
@@ -232,15 +242,15 @@ private fun StatsBigJarCard(monthPct: Int) {
         ) {
             ThemeStatsJarIcon(size = mockupDp(MockupDimens.STATS_JAR_ICON))
             Spacer(Modifier.height(mockupDp(6)))
-            Text(
-                "$monthPct%",
+            CountUpPercentText(
+                target = monthPct,
                 style = TextStyle(
                     fontFamily = BodyFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.STATS_BIG_NUM),
                     lineHeight = mockupSp(MockupDimens.STATS_BIG_NUM)
                 ),
-                color = colors.purpleDeep
+                color = colors.purpleDeep,
             )
             Text(
                 "TASKS COMPLETED THIS MONTH",
@@ -271,7 +281,7 @@ private fun StatsJarCard(content: @Composable () -> Unit) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.STATS_JAR_CARD_SHADOW))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Box(
             modifier = Modifier

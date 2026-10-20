@@ -32,8 +32,12 @@ import com.sweetcalendar.export.ExportFormat
 import com.sweetcalendar.export.PdfExportRequest
 import com.sweetcalendar.export.PdfExportScope
 import com.sweetcalendar.export.TaskExportRunner
+import com.sweetcalendar.ui.components.SheetFooterCloseOnly
+import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.SweetPixelButton
+import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.ProvideMockupScale
@@ -86,35 +90,13 @@ fun BackupExportDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
+            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
                     .background(colors.cream)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = mockupDp(18),
-                            end = mockupDp(18),
-                            top = mockupDp(16),
-                            bottom = mockupDp(8)
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "✕ CLOSE",
-                        style = TextStyle(
-                            fontFamily = PixelFont,
-                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                            lineHeight = mockupSp(14f)
-                        ),
-                        color = colors.purpleDeep,
-                        modifier = Modifier.clickable(enabled = !isWorking, onClick = onDismiss)
-                    )
-                }
-
                 Text(
                     "Backup & export",
                     style = TextStyle(
@@ -126,7 +108,7 @@ fun BackupExportDialog(
                     color = colors.ink,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = mockupDp(8)),
+                        .then(sheetDialogTitlePaddingModifier()),
                     textAlign = TextAlign.Center
                 )
 
@@ -134,7 +116,7 @@ fun BackupExportDialog(
                     modifier = Modifier.padding(
                         start = mockupDp(18),
                         end = mockupDp(18),
-                        bottom = mockupDp(24)
+                        bottom = mockupDp(8)
                     )
                 ) {
                     ExportFormat.entries.forEach { format ->
@@ -190,6 +172,12 @@ fun BackupExportDialog(
                         }
                     }
                 }
+
+                SheetFooterCloseOnly(
+                    onClose = onDismiss,
+                    closeEnabled = !isWorking
+                )
+            }
             }
         }
     }
@@ -217,7 +205,7 @@ private fun BackupFormatOption(
             label,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
                 lineHeight = mockupSp(18f)
             ),

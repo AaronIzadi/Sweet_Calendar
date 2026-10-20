@@ -1,10 +1,15 @@
 package com.sweetcalendar.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -27,7 +32,6 @@ import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val SnackbarBackground = Color(0xFF3A2A22)
 private val SnackbarTextColor = Color(0xFFFFF6EA)
 
 @Composable
@@ -40,11 +44,23 @@ fun SweetRecoverSnackbar(
 ) {
     val colors = SweetTheme.colors
     val shape = RoundedCornerShape(mockupDp(MockupDimens.SNACKBAR_RADIUS))
+    val enterSpring = spring<IntOffset>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMediumLow,
+    )
+    val overshootSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMediumLow,
+    )
 
     AnimatedVisibility(
         visible = visible,
-        enter = slideInVertically { it } + fadeIn(),
-        exit = slideOutVertically { it } + fadeOut(),
+        enter = slideInVertically(enterSpring) { it } +
+            scaleIn(overshootSpring, initialScale = 0.92f) +
+            fadeIn(overshootSpring),
+        exit = slideOutVertically(enterSpring) { it } +
+            scaleOut(overshootSpring, targetScale = 0.94f) +
+            fadeOut(overshootSpring),
         modifier = modifier
     ) {
         Row(
@@ -58,7 +74,7 @@ fun SweetRecoverSnackbar(
                     spotColor = Color.Black.copy(alpha = 0.3f)
                 )
                 .clip(shape)
-                .background(SnackbarBackground)
+                .background(if (colors.isDark) colors.bannerBg else colors.chocDeep)
                 .padding(
                     horizontal = mockupDp(MockupDimens.SNACKBAR_PAD_H),
                     vertical = mockupDp(MockupDimens.SNACKBAR_PAD_V)

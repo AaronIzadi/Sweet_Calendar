@@ -26,21 +26,16 @@ import com.sweetcalendar.ui.components.ThemeOfflineHeroIcon
 import com.sweetcalendar.ui.components.SweetPixelButton
 import com.sweetcalendar.ui.components.WarnIcon
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val OfflineBannerBackgroundLight = Color(0xFFFFF1DC)
-private val OfflineBannerBackgroundDark = Color(0xFF3A2A22)
-private val OfflineSubLight = Color(0xFF8A7867)
 private val OfflineWarnColorDark = Color(0xFFEFD3AE)
 
 @Composable
-private fun offlineSubColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else OfflineSubLight
-}
+private fun offlineSubColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun offlineBannerTextColor(): Color {
@@ -61,7 +56,7 @@ fun OfflineScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val bannerBackground = if (colors.isDark) OfflineBannerBackgroundDark else OfflineBannerBackgroundLight
+    val bannerBackground = colors.bannerBg
 
     BackHandler(onBack = onBack)
 
@@ -144,7 +139,7 @@ fun OfflineScreen(
                 "time.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.",
                 style = TextStyle(
                     fontFamily = BodyFont,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = SecondaryTextWeight,
                     fontSize = mockupSp(MockupDimens.OFFLINE_SUB),
                     lineHeight = mockupSp(MockupDimens.OFFLINE_SUB * 1.6f)
                 ),

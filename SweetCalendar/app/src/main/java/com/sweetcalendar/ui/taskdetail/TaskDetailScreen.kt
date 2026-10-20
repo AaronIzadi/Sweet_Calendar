@@ -41,28 +41,25 @@ import com.sweetcalendar.ui.components.TaskPriority
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.formatTime12h
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val DetailMetaTextLight = Color(0xFF6B5A4B)
-private val DetailFieldLabelLight = Color(0xFF9A8878)
 private val DeleteLinkColor = Color(0xFFD9455E)
-private val CompleteBtnShadow = Color(0xFF3C9679)
-
 @Composable
-private fun detailMetaTextColor(): Color {
+private fun completeButtonShadowColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else DetailMetaTextLight
+    return if (colors.isDark) colors.shadowDeep else Color(0xFF3C9679)
 }
 
 @Composable
-private fun detailFieldLabelColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else DetailFieldLabelLight
-}
+private fun detailMetaTextColor(): Color = SweetTheme.colors.muted
+
+@Composable
+private fun detailFieldLabelColor(): Color = SweetTheme.colors.muted
 
 @Composable
 fun TaskDetailScreen(
@@ -257,13 +254,13 @@ private fun NotesBox(text: String) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Text(
             text,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.DETAIL_NOTES_F),
                 lineHeight = mockupSp(20f)
             ),
@@ -287,7 +284,7 @@ private fun CompleteButton(text: String, onClick: () -> Unit) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.COMPLETE_BTN_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(CompleteBtnShadow)
+                .background(completeButtonShadowColor())
         )
         Box(
             modifier = Modifier
@@ -321,7 +318,7 @@ private fun DetailSecondaryButton(text: String, onClick: () -> Unit) {
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Box(
             modifier = Modifier
@@ -356,7 +353,7 @@ private fun MetaRow(icon: @Composable () -> Unit, text: String) {
             text,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.DETAIL_META_F),
                 lineHeight = mockupSp(17f)
             ),

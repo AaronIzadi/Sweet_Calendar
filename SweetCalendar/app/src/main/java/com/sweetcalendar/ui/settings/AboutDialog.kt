@@ -4,11 +4,12 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,10 +28,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.BuildConfig
+import com.sweetcalendar.ui.components.SheetFooterCloseOnly
+import com.sweetcalendar.ui.components.SweetDialogSurface
+import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
-import com.sweetcalendar.ui.theme.PixelFont
-import com.sweetcalendar.ui.theme.ProvideMockupScale
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
@@ -43,86 +46,80 @@ fun AboutDialog(onDismiss: () -> Unit) {
     val colors = SweetTheme.colors
     val context = LocalContext.current
 
+    val titleStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+        lineHeight = mockupSp(22f)
+    )
+    val versionStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = mockupSp(MockupDimens.SETTINGS_ROW_VALUE_F),
+        lineHeight = mockupSp(16f)
+    )
+    val bodyStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+        lineHeight = mockupSp(20f)
+    )
+    val leadStyle = bodyStyle.copy(fontWeight = FontWeight.Bold)
+    val linkStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+        lineHeight = mockupSp(20f),
+        textDecoration = TextDecoration.Underline
+    )
+    val boldStyle = SpanStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        color = colors.ink
+    )
+
     Dialog(onDismissRequest = onDismiss) {
-        ProvideMockupScale {
-            Column(
+        SweetDialogSurface {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(mockupDp(16)))
+                .background(colors.cream)
+        ) {
+            Text(
+                "About Sweet Calendar",
+                style = titleStyle,
+                color = colors.ink,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(mockupDp(16)))
-                    .background(colors.cream)
+                    .then(sheetDialogTitlePaddingModifier())
+                    .padding(bottom = mockupDp(4)),
+                textAlign = TextAlign.Center
+            )
+
+            Text(
+                "v${BuildConfig.VERSION_NAME}",
+                style = versionStyle,
+                color = colors.muted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = mockupDp(12)),
+                textAlign = TextAlign.Center
+            )
+
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        bottom = mockupDp(8)
+                    )
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = mockupDp(18),
-                            end = mockupDp(18),
-                            top = mockupDp(16),
-                            bottom = mockupDp(8)
-                        )
-                ) {
-                    Text(
-                        "✕ CLOSE",
-                        style = TextStyle(
-                            fontFamily = PixelFont,
-                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                            lineHeight = mockupSp(14f)
-                        ),
-                        color = colors.purpleDeep,
-                        modifier = Modifier.clickable(onClick = onDismiss)
-                    )
-                }
-
-                Text(
-                    "About Sweet Calendar",
-                    style = TextStyle(
-                        fontFamily = BodyFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
-                        lineHeight = mockupSp(22f)
-                    ),
-                    color = colors.ink,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = mockupDp(4)),
-                    textAlign = TextAlign.Center
-                )
-
-                Text(
-                    "v${BuildConfig.VERSION_NAME}",
-                    style = TextStyle(
-                        fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = mockupSp(11f),
-                        lineHeight = mockupSp(15f)
-                    ),
-                    color = colors.muted,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = mockupDp(12)),
-                    textAlign = TextAlign.Center
-                )
-
-                Column(
-                    modifier = Modifier
-                        .verticalScroll(rememberScrollState())
-                        .padding(
-                            start = mockupDp(24),
-                            end = mockupDp(24),
-                            bottom = mockupDp(24)
-                        )
-                ) {
-                    val bodyStyle = TextStyle(
-                        fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = mockupSp(12f),
-                        lineHeight = mockupSp(18f)
-                    )
-                    val boldStyle = SpanStyle(fontWeight = FontWeight.Bold, color = colors.ink)
-
+                AboutBodyPanel {
                     Text(
                         "Hey there! 👋🍬",
-                        style = bodyStyle.copy(fontWeight = FontWeight.Bold, fontSize = mockupSp(13f)),
+                        style = leadStyle,
                         color = colors.ink
                     )
                     Spacer(Modifier.height(mockupDp(12)))
@@ -174,13 +171,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     Spacer(Modifier.height(mockupDp(16)))
                     Text(
                         GITHUB_LABEL,
-                        style = TextStyle(
-                            fontFamily = BodyFont,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = mockupSp(12f),
-                            lineHeight = mockupSp(18f),
-                            textDecoration = TextDecoration.Underline
-                        ),
+                        style = linkStyle,
                         color = colors.purpleDeep,
                         modifier = Modifier.clickable {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(GITHUB_URL)))
@@ -188,6 +179,32 @@ fun AboutDialog(onDismiss: () -> Unit) {
                     )
                 }
             }
+
+            SheetFooterCloseOnly(onClose = onDismiss)
         }
+        }
+    }
+}
+
+@Composable
+private fun AboutBodyPanel(content: @Composable () -> Unit) {
+    val colors = SweetTheme.colors
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
+                .clip(RoundedCornerShape(radius))
+                .background(colors.shadow)
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(radius))
+                .background(colors.paper)
+                .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
+            content = { content() }
+        )
     }
 }

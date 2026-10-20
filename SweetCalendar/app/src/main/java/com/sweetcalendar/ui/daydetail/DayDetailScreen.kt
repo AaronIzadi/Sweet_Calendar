@@ -37,28 +37,21 @@ import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatAlternateCalendarLine
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val DayDetailSubLight = Color(0xFF8A7867)
-private val DayEventMetaLight = Color(0xFF9A8878)
+@Composable
+private fun dayDetailSubColor(): Color = SweetTheme.colors.muted
 
 @Composable
-private fun dayDetailSubColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else DayDetailSubLight
-}
-
-@Composable
-private fun dayEventMetaColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else DayEventMetaLight
-}
+private fun dayEventMetaColor(): Color = SweetTheme.colors.muted
 
 @Composable
 fun DayDetailScreen(
@@ -117,7 +110,7 @@ fun DayDetailScreen(
                         secondaryLine,
                         style = TextStyle(
                             fontFamily = BodyFont,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.DAY_DETAIL_SUB_F),
                             lineHeight = mockupSp(15f)
                         ),
@@ -144,6 +137,7 @@ fun DayDetailScreen(
                     items(tasks, key = { it.id }) { task ->
                         SweetTaskCard(
                             task = task,
+                            modifier = sweetTaskItemMotion(),
                             onClick = { onTaskClick(task) },
                             style = TaskCardStyle.Mockup
                         )
@@ -181,7 +175,7 @@ fun DayDetailScreen(
                             "Nothing scheduled for this day",
                             style = TextStyle(
                                 fontFamily = BodyFont,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = SecondaryTextWeight,
                                 fontSize = mockupSp(MockupDimens.DAY_DETAIL_SUB_F),
                                 lineHeight = mockupSp(15f)
                             ),
@@ -222,7 +216,7 @@ private fun DayEventCard(
                 .matchParentSize()
                 .offset(y = mockupDp(2))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Row(
             modifier = Modifier
@@ -265,7 +259,7 @@ private fun DayEventCard(
                         meta,
                         style = TextStyle(
                             fontFamily = BodyFont,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.TASK_META_F),
                             lineHeight = mockupSp(13f)
                         ),

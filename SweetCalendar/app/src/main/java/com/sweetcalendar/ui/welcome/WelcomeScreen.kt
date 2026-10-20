@@ -1,8 +1,18 @@
 package com.sweetcalendar.ui.welcome
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,26 +21,32 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -45,43 +61,29 @@ import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
 import com.sweetcalendar.ui.components.ThemeHeroIcon
 import com.sweetcalendar.ui.components.ThemeWelcomeDecoBottomStart
 import com.sweetcalendar.ui.components.ThemeWelcomeDecoTopEnd
+import com.sweetcalendar.ui.components.ThemeDecorBackground
 import com.sweetcalendar.ui.components.ThemeWelcomeDecoTopStart
+import com.sweetcalendar.ui.components.wobbleOnTap
 import com.sweetcalendar.ui.components.NavPeppermintIcon
+import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.PixelFont
+import com.sweetcalendar.ui.theme.SweetMotion
 import com.sweetcalendar.ui.theme.SweetTheme
-import com.sweetcalendar.ui.theme.themeWelcomeTagline
+import com.sweetcalendar.ui.theme.ambientWelcomeColor
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-
-private val WelcomeTagLight = Color(0xFF6B5A4B)
-private val CandyWelcomeGradientLight = listOf(
-    Color(0xFFFFE1EE),
-    Color(0xFFF3E3FB),
-    Color(0xFFE3F7EE)
-)
-private val CandyWelcomeGradientDark = listOf(
-    Color(0xFF2E1E3B),
-    Color(0xFF241C36),
-    Color(0xFF16281F)
-)
-private val SpaceWelcomeGradientLight = listOf(
-    Color(0xFFF3E8FF),
-    Color(0xFFEAF0FF),
-    Color(0xFFE8FBF8)
-)
-private val SpaceWelcomeGradientDark = listOf(
-    Color(0xFF1A1440),
-    Color(0xFF141833),
-    Color(0xFF0B0E24)
-)
+import com.sweetcalendar.ui.navigation.sweetScreenTransition
+import com.sweetcalendar.ui.theme.rememberReducedMotion
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private data class WelcomeSlide(
     val topTitle: String,
     val bottomTitle: String,
     val subtitle: String,
     val chips: List<String>,
-    val gradient: List<Color>
 )
 
 private val welcomeSlides = listOf(
@@ -90,86 +92,91 @@ private val welcomeSlides = listOf(
         bottomTitle = "CALENDAR",
         subtitle = "A softer way to keep your day in rhythm.",
         chips = listOf("Persian calendar", "Daily tasks", "Local holidays"),
-        gradient = CandyWelcomeGradientLight
     ),
     WelcomeSlide(
         topTitle = "PLAN",
         bottomTitle = "YOUR DAY",
         subtitle = "Turn your little wins into a jar full of momentum.",
         chips = listOf("Focus blocks", "Checklists", "Quick wins"),
-        gradient = listOf(
-            Color(0xFFFFF0D7),
-            Color(0xFFEAF7FF),
-            Color(0xFFE9F9E9)
-        )
     ),
     WelcomeSlide(
         topTitle = "KEEP",
         bottomTitle = "IT SWEET",
         subtitle = "Celebrate the dates, routines, and moments that matter.",
         chips = listOf("Holiday cues", "Streaks", "Joyful planning"),
-        gradient = listOf(
-            Color(0xFFE9E9FF),
-            Color(0xFFFEEAF8),
-            Color(0xFFEAFBF7)
-        )
     )
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WelcomeScreen(
     onStart: () -> Unit,
     onSkip: () -> Unit
 ) {
     val colors = SweetTheme.colors
-    var currentPage by remember { mutableStateOf(0) }
-    val dragOffset = remember { mutableStateOf(0f) }
-    val slide = welcomeSlides[currentPage]
-    val welcomeGradient = when {
-        SweetTheme.isSpace && colors.isDark -> SpaceWelcomeGradientDark
-        SweetTheme.isSpace -> SpaceWelcomeGradientLight
-        colors.isDark -> CandyWelcomeGradientDark
-        else -> slide.gradient
-    }
-    val tagColor = if (colors.isDark || SweetTheme.isSpace) colors.muted else WelcomeTagLight
+    val pagerState = rememberPagerState(pageCount = { welcomeSlides.size })
+    val currentPage = pagerState.currentPage
+    val scope = rememberCoroutineScope()
+    val reducedMotion = rememberReducedMotion()
+    val tagColor = colors.muted
     val isLastPage = currentPage == welcomeSlides.lastIndex
+    var entranceReady by remember { mutableStateOf(reducedMotion) }
+    var footerVisible by remember { mutableStateOf(reducedMotion) }
+    LaunchedEffect(Unit) {
+        if (!reducedMotion) {
+            entranceReady = true
+        }
+    }
+    LaunchedEffect(entranceReady, currentPage) {
+        if (reducedMotion) {
+            footerVisible = true
+            return@LaunchedEffect
+        }
+        if (currentPage == 0 && entranceReady) {
+            footerVisible = false
+            delay(720)
+            footerVisible = true
+        } else {
+            footerVisible = true
+        }
+    }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.verticalGradient(welcomeGradient))
-            .pointerInput(currentPage, welcomeSlides.size) {
-                detectDragGestures(
-                    onDrag = { _, dragAmount ->
-                        dragOffset.value += dragAmount.x
-                    },
-                    onDragEnd = {
-                        if (dragOffset.value > 60f && currentPage > 0) {
-                            currentPage--
-                        } else if (dragOffset.value < -60f && currentPage < welcomeSlides.lastIndex) {
-                            currentPage++
-                        }
-                        dragOffset.value = 0f
-                    },
-                    onDragCancel = {
-                        dragOffset.value = 0f
-                    }
-                )
+    fun goToPage(page: Int) {
+        scope.launch {
+            pagerState.animateScrollToPage(
+                page.coerceIn(0, welcomeSlides.lastIndex),
+                animationSpec = if (reducedMotion) SweetMotion.shortTween() else SweetMotion.mediumTween()
+            )
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        WelcomeAnimatedBackground(pageIndex = currentPage, reducedMotion = reducedMotion)
+
+        if (currentPage > 0) {
+            WelcomePixelBackButton(
+                onClick = { goToPage(currentPage - 1) },
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = mockupDp(20), top = mockupDp(24))
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = mockupDp(20), top = mockupDp(24))
+                    .alpha(0.85f)
+                    .wobbleOnTap(),
+            ) {
+                ThemeWelcomeDecoTopStart(size = mockupDp(MockupDimens.DECO_ICON))
             }
-    ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(start = mockupDp(20), top = mockupDp(24))
-                .alpha(0.85f)
-        ) {
-            ThemeWelcomeDecoTopStart(size = mockupDp(MockupDimens.DECO_ICON))
         }
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(end = mockupDp(22), top = mockupDp(36))
                 .alpha(0.85f)
+                .wobbleOnTap(),
         ) {
             ThemeWelcomeDecoTopEnd(size = mockupDp(MockupDimens.DECO_ICON_SMALL))
         }
@@ -178,6 +185,7 @@ fun WelcomeScreen(
                 .align(Alignment.BottomStart)
                 .padding(start = mockupDp(18), bottom = mockupDp(170))
                 .alpha(0.85f)
+                .wobbleOnTap(),
         ) {
             ThemeWelcomeDecoBottomStart(size = mockupDp(MockupDimens.DECO_ICON))
         }
@@ -186,79 +194,266 @@ fun WelcomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = mockupDp(26), vertical = mockupDp(28)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ThemeHeroIcon(size = mockupDp(MockupDimens.HERO_LOLLIPOP_W))
-            Spacer(Modifier.height(mockupDp(18)))
-            Text(
-                slide.topTitle,
-                style = TextStyle(
-                    fontFamily = PixelFont,
-                    fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
-                    lineHeight = mockupSp(29f)
-                ),
-                color = colors.pinkDeep,
-                textAlign = TextAlign.Center,
-                minLines = 1,
-                maxLines = 1,
-                modifier = Modifier.widthIn(max = 220.dp)
-            )
-            Text(
-                slide.bottomTitle,
-                style = TextStyle(
-                    fontFamily = PixelFont,
-                    fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
-                    lineHeight = mockupSp(29f)
-                ),
-                color = colors.purpleDeep,
-                textAlign = TextAlign.Center,
-                minLines = 1,
-                maxLines = 1,
-                modifier = Modifier.widthIn(max = 220.dp)
-            )
-            Spacer(Modifier.height(mockupDp(8)))
-            Text(
-                slide.subtitle,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.WELCOME_TAG),
-                    lineHeight = mockupSp(19.5f)
-                ),
-                color = tagColor,
-                textAlign = TextAlign.Center,
-                minLines = 2,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
-                    .widthIn(max = 260.dp)
-                    .padding(horizontal = mockupDp(10))
-            )
-            Spacer(Modifier.height(mockupDp(22)))
-            WelcomeFeatureChips(slide.chips)
-            Spacer(Modifier.height(mockupDp(26)))
-            SweetPixelButton(
-                text = if (isLastPage) "START PLANNING" else "NEXT",
-                onClick = {
-                    if (isLastPage) onStart() else currentPage++
+                    .weight(1f)
+                    .fillMaxWidth(),
+                userScrollEnabled = !reducedMotion
+            ) { page ->
+                val slide = welcomeSlides[page]
+                val showEntrance = page == 0 && entranceReady && !reducedMotion
+                AnimatedVisibility(
+                    visible = reducedMotion || page != 0 || entranceReady,
+                    enter = if (reducedMotion) {
+                        fadeIn(SweetMotion.shortTween())
+                    } else {
+                        fadeIn(SweetMotion.mediumTween()) +
+                            slideInVertically(SweetMotion.mediumTween()) { fullHeight -> fullHeight / 10 }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    WelcomeSlideContent(
+                        slide = slide,
+                        tagColor = tagColor,
+                        heroEntrance = showEntrance,
+                        reducedMotion = reducedMotion
+                    )
                 }
-            )
-            Spacer(Modifier.height(mockupDp(14)))
-            Text(
-                "Skip intro",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.SKIP_LINK)
-                ),
-                color = colors.purpleDeep,
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable(onClick = onSkip)
-            )
+            }
+            Spacer(Modifier.height(mockupDp(26)))
+            AnimatedVisibility(
+                visible = footerVisible,
+                enter = if (reducedMotion) {
+                    fadeIn(SweetMotion.shortTween())
+                } else {
+                    fadeIn(SweetMotion.mediumTween()) +
+                        slideInVertically(SweetMotion.mediumTween()) { it / 5 }
+                },
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    SweetPixelButton(
+                        text = if (isLastPage) "START PLANNING" else "NEXT",
+                        onClick = {
+                            if (isLastPage) onStart() else goToPage(currentPage + 1)
+                        }
+                    )
+                    Spacer(Modifier.height(mockupDp(14)))
+                    Text(
+                        "Skip intro",
+                        style = TextStyle(
+                            fontFamily = BodyFont,
+                            fontWeight = SecondaryTextWeight,
+                            fontSize = mockupSp(MockupDimens.SKIP_LINK),
+                            lineHeight = mockupSp(16f)
+                        ),
+                        color = colors.purpleDeep,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable(onClick = onSkip)
+                    )
+                }
+            }
             Spacer(Modifier.height(mockupDp(20)))
             WelcomePageDots(
                 currentPage = currentPage,
                 totalPages = welcomeSlides.size,
-                onPageSelected = { currentPage = it }
+                onPageSelected = { goToPage(it) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun WelcomeAnimatedBackground(pageIndex: Int, reducedMotion: Boolean) {
+    if (reducedMotion) {
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(ambientWelcomeColor(pageIndex))
+            )
+            ThemeDecorBackground(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.35f),
+            )
+        }
+    } else {
+        AnimatedContent(
+            targetState = pageIndex,
+            transitionSpec = {
+                if (reducedMotion) {
+                    fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
+                } else {
+                    sweetScreenTransition(fromDepth = 0, toDepth = 0, tabDirection = 1)
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "welcome-bg"
+        ) { index ->
+            Box(Modifier.fillMaxSize()) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(ambientWelcomeColor(index))
+                )
+                ThemeDecorBackground(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(0.42f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WelcomeSlideContent(
+    slide: WelcomeSlide,
+    tagColor: Color,
+    heroEntrance: Boolean,
+    reducedMotion: Boolean
+) {
+    val colors = SweetTheme.colors
+    var entranceStage by remember(heroEntrance) {
+        mutableIntStateOf(if (!heroEntrance || reducedMotion) 3 else 0)
+    }
+    LaunchedEffect(heroEntrance, reducedMotion) {
+        if (!heroEntrance || reducedMotion) {
+            entranceStage = 3
+            return@LaunchedEffect
+        }
+        entranceStage = 1
+        delay(160)
+        entranceStage = 2
+        delay(220)
+        entranceStage = 3
+    }
+    val slideEnter = fadeIn(SweetMotion.mediumTween()) +
+        slideInVertically(SweetMotion.mediumTween()) { fullHeight -> fullHeight / 12 }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = mockupDp(4)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        AnimatedVisibility(
+            visible = entranceStage >= 1,
+            enter = if (reducedMotion) fadeIn(SweetMotion.shortTween()) else slideEnter,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    slide.topTitle,
+                    style = TextStyle(
+                        fontFamily = PixelFont,
+                        fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
+                        lineHeight = mockupSp(29f)
+                    ),
+                    color = colors.pinkDeep,
+                    textAlign = TextAlign.Center,
+                    minLines = 1,
+                    maxLines = 1,
+                    modifier = Modifier.widthIn(max = 220.dp)
+                )
+                Text(
+                    slide.bottomTitle,
+                    style = TextStyle(
+                        fontFamily = PixelFont,
+                        fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
+                        lineHeight = mockupSp(29f)
+                    ),
+                    color = colors.purpleDeep,
+                    textAlign = TextAlign.Center,
+                    minLines = 1,
+                    maxLines = 1,
+                    modifier = Modifier.widthIn(max = 220.dp)
+                )
+                Spacer(Modifier.height(mockupDp(8)))
+                Text(
+                    slide.subtitle,
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = SecondaryTextWeight,
+                        fontSize = mockupSp(MockupDimens.WELCOME_TAG),
+                        lineHeight = mockupSp(19.5f)
+                    ),
+                    color = tagColor,
+                    textAlign = TextAlign.Center,
+                    minLines = 2,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .widthIn(max = 260.dp)
+                        .padding(horizontal = mockupDp(10))
+                )
+            }
+        }
+        Spacer(Modifier.height(mockupDp(18)))
+        AnimatedVisibility(
+            visible = entranceStage >= 2,
+            enter = if (reducedMotion) fadeIn(SweetMotion.shortTween()) else slideEnter,
+        ) {
+            ThemeHeroIcon(
+                modifier = Modifier.wobbleOnTap(),
+                size = mockupDp(MockupDimens.HERO_LOLLIPOP_W)
+            )
+        }
+        Spacer(Modifier.height(mockupDp(22)))
+        AnimatedVisibility(
+            visible = entranceStage >= 3,
+            enter = if (reducedMotion) fadeIn(SweetMotion.shortTween()) else slideEnter,
+        ) {
+            WelcomeFeatureChips(slide.chips)
+        }
+    }
+}
+
+@Composable
+private fun WelcomePixelBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = SweetTheme.colors
+    val cornerRadius = mockupDp(12)
+    val shadowOffset = mockupDp(4)
+    val horizontalPadding = mockupDp(14)
+    val verticalPadding = mockupDp(10)
+    Box(modifier = modifier.wrapContentSize()) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(y = shadowOffset)
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(colors.shadow)
+        )
+        Box(
+            modifier = Modifier
+                .wrapContentWidth()
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(colors.paper)
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = horizontalPadding,
+                    vertical = verticalPadding
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "BACK",
+                style = TextStyle(
+                    fontFamily = PixelFont,
+                    fontSize = mockupSp(MockupDimens.PIXEL_BTN),
+                    letterSpacing = mockupSp(0.5f),
+                    lineHeight = mockupSp(12f),
+                    textAlign = TextAlign.Center
+                ),
+                color = colors.purpleDeep,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
@@ -271,7 +466,8 @@ private fun WelcomeFeatureChips(chips: List<String>) {
         horizontalArrangement = Arrangement.spacedBy(mockupDp(8), Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(mockupDp(8)),
         modifier = Modifier
-            .heightIn(min = 48.dp)
+            .fillMaxWidth()
+            .heightIn(min = 72.dp)
             .padding(horizontal = mockupDp(4))
     ) {
         chips.forEach { label ->
@@ -315,7 +511,7 @@ private fun WelcomeFeatureChip(
                 .matchParentSize()
                 .offset(y = mockupDp(2))
                 .clip(RoundedCornerShape(mockupDp(10)))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Row(
             modifier = Modifier
@@ -345,13 +541,27 @@ private fun WelcomePageDots(
     onPageSelected: (Int) -> Unit
 ) {
     val colors = SweetTheme.colors
+    val dotHeight = mockupDp(MockupDimens.PAGE_DOT)
+    val dotWidthActive = mockupDp(16)
+    val dotWidthIdle = dotHeight
     Row(horizontalArrangement = Arrangement.spacedBy(mockupDp(6))) {
         repeat(totalPages) { index ->
+            val selected = index == currentPage
+            val dotColor by animateColorAsState(
+                targetValue = if (selected) colors.pinkDeep else colors.line,
+                animationSpec = SweetMotion.shortTween(),
+                label = "welcome-dot-$index"
+            )
+            val dotWidth by animateDpAsState(
+                targetValue = if (selected) dotWidthActive else dotWidthIdle,
+                animationSpec = SweetMotion.shortTween(),
+                label = "welcome-dot-width-$index"
+            )
             Box(
                 Modifier
-                    .size(mockupDp(MockupDimens.PAGE_DOT))
+                    .size(width = dotWidth, height = dotHeight)
                     .clip(RoundedCornerShape(mockupDp(2)))
-                    .background(if (index == currentPage) colors.pinkDeep else colors.line)
+                    .background(dotColor)
                     .clickable { onPageSelected(index) }
             )
         }

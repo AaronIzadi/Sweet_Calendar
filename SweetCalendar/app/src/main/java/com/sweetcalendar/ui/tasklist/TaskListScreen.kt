@@ -38,13 +38,10 @@ import com.sweetcalendar.ui.components.ThemeDecorBackground
 import com.sweetcalendar.ui.components.EmptyTasksState
 import com.sweetcalendar.ui.components.PixelButton
 import com.sweetcalendar.ui.components.TaskCard
-import com.sweetcalendar.ui.components.pixelBorder
-import com.sweetcalendar.ui.theme.BubblegumPink
-import com.sweetcalendar.ui.theme.ChocolateBrown
-import com.sweetcalendar.ui.theme.CreamFrosting
-import com.sweetcalendar.ui.theme.GrapePurple
-import com.sweetcalendar.ui.theme.LemonYellow
-import com.sweetcalendar.ui.theme.MintGreen
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.components.themePixelBorder
+import com.sweetcalendar.ui.theme.SweetColors
+import com.sweetcalendar.ui.theme.SweetTheme
 import java.util.Calendar
 
 enum class TaskFilter(val label: String) {
@@ -107,11 +104,12 @@ fun TaskListScreen(
     }
     val today = remember { JalaliDate.today() }
     val pendingCount = remember(tasks) { tasks.count { !it.isDone } }
+    val colors = SweetTheme.colors
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(CreamFrosting)
+            .background(colors.cream)
     ) {
         ThemeDecorBackground(modifier = Modifier.fillMaxSize())
 
@@ -130,25 +128,25 @@ fun TaskListScreen(
                     Text(
                         timeOfDayGreeting(),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = BubblegumPink
+                        color = colors.pink
                     )
                     Text(
                         "Your tasks",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = BubblegumPink
+                        color = colors.pink
                     )
                     Text(
                         today.formatIso() +
                             if (pendingCount > 0) " · $pendingCount pending" else "",
                         style = MaterialTheme.typography.bodySmall,
-                        color = ChocolateBrown.copy(alpha = 0.7f)
+                        color = colors.muted
                     )
                 }
-                PixelButton(onClick = onOpenCalendar, backgroundColor = CreamFrosting, contentDescription = "Open calendar") {
+                PixelButton(onClick = onOpenCalendar, backgroundColor = colors.paper, contentDescription = "Open calendar") {
                     Icon(
                         Icons.Default.CalendarMonth,
                         contentDescription = "Open calendar",
-                        tint = ChocolateBrown,
+                        tint = colors.ink,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -158,14 +156,16 @@ fun TaskListScreen(
 
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { searchQuery = it }
+                onQueryChange = { searchQuery = it },
+                colors = colors
             )
 
             Spacer(Modifier.height(10.dp))
 
             FilterChips(
                 selected = filter,
-                onSelect = { filter = it }
+                onSelect = { filter = it },
+                colors = colors
             )
 
             Spacer(Modifier.height(12.dp))
@@ -179,13 +179,15 @@ fun TaskListScreen(
                     tasks.isEmpty() -> EmptyTasksState(modifier = Modifier.align(Alignment.Center))
                     visibleTasks.isEmpty() -> NoResultsState(
                         modifier = Modifier.align(Alignment.Center),
-                        hasSearch = searchQuery.isNotBlank()
+                        hasSearch = searchQuery.isNotBlank(),
+                        colors = colors
                     )
                     else -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(visibleTasks, key = { it.id }) { task ->
                                 TaskCard(
                                     task = task,
+                                    modifier = sweetTaskItemMotion(),
                                     onClick = { onEditTask(task) },
                                     onEdit = { onEditTask(task) },
                                     onComplete = { onCompleteTask(task) },
@@ -203,21 +205,21 @@ fun TaskListScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 24.dp),
-                backgroundColor = BubblegumPink,
+                backgroundColor = colors.pink,
                 contentDescription = "Add task"
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add task",
-                        tint = CreamFrosting,
+                        tint = colors.paper,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.size(8.dp))
                     Text(
                         "Add Task",
                         style = MaterialTheme.typography.titleSmall,
-                        color = CreamFrosting
+                        color = colors.paper
                     )
                 }
             }
@@ -226,19 +228,23 @@ fun TaskListScreen(
 }
 
 @Composable
-private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
+private fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    colors: SweetColors,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .pixelBorder(borderWidth = 2.dp, shadowOffset = 2.dp)
-            .background(CreamFrosting)
+            .themePixelBorder(borderWidth = 2.dp, shadowOffset = 2.dp)
+            .background(colors.paper)
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             Icons.Default.Search,
             contentDescription = "Search",
-            tint = ChocolateBrown.copy(alpha = 0.5f),
+            tint = colors.muted.copy(alpha = 0.75f),
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.size(8.dp))
@@ -246,15 +252,15 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
             value = query,
             onValueChange = onQueryChange,
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodySmall.copy(color = ChocolateBrown),
-            cursorBrush = SolidColor(BubblegumPink),
+            textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.ink),
+            cursorBrush = SolidColor(colors.pink),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
                     Text(
                         "Search tasks…",
                         style = MaterialTheme.typography.bodySmall,
-                        color = ChocolateBrown.copy(alpha = 0.4f)
+                        color = colors.muted.copy(alpha = 0.65f)
                     )
                 }
                 inner()
@@ -264,24 +270,28 @@ private fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
 }
 
 @Composable
-private fun FilterChips(selected: TaskFilter, onSelect: (TaskFilter) -> Unit) {
+private fun FilterChips(
+    selected: TaskFilter,
+    onSelect: (TaskFilter) -> Unit,
+    colors: SweetColors,
+) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(TaskFilter.entries) { filter ->
             val isSelected = filter == selected
             PixelButton(
                 onClick = { onSelect(filter) },
                 backgroundColor = when {
-                    isSelected -> BubblegumPink
-                    filter == TaskFilter.Done -> MintGreen.copy(alpha = 0.6f)
-                    filter == TaskFilter.Pending -> LemonYellow
-                    else -> CreamFrosting
+                    isSelected -> colors.pink
+                    filter == TaskFilter.Done -> colors.mint.copy(alpha = 0.6f)
+                    filter == TaskFilter.Pending -> colors.lemon
+                    else -> colors.paper
                 },
                 contentDescription = filter.label
             ) {
                 Text(
                     filter.label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isSelected) CreamFrosting else ChocolateBrown
+                    color = if (isSelected) colors.paper else colors.ink
                 )
             }
         }
@@ -289,7 +299,11 @@ private fun FilterChips(selected: TaskFilter, onSelect: (TaskFilter) -> Unit) {
 }
 
 @Composable
-private fun NoResultsState(modifier: Modifier = Modifier, hasSearch: Boolean) {
+private fun NoResultsState(
+    modifier: Modifier = Modifier,
+    hasSearch: Boolean,
+    colors: SweetColors,
+) {
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -297,13 +311,13 @@ private fun NoResultsState(modifier: Modifier = Modifier, hasSearch: Boolean) {
         Text(
             if (hasSearch) "No matching tasks" else "Nothing here yet",
             style = MaterialTheme.typography.titleSmall,
-            color = ChocolateBrown
+            color = colors.ink
         )
         Spacer(Modifier.height(4.dp))
         Text(
             if (hasSearch) "Try a different search or filter" else "Try another filter tab",
             style = MaterialTheme.typography.bodySmall,
-            color = ChocolateBrown.copy(alpha = 0.7f),
+            color = colors.muted,
             textDecoration = TextDecoration.None
         )
     }

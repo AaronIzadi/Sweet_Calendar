@@ -28,12 +28,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.BuildConfig
 import com.sweetcalendar.calendar.CalendarSystem
@@ -42,8 +42,14 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.ClockMiniIcon
+import com.sweetcalendar.ui.components.PenMiniIcon
 import com.sweetcalendar.ui.components.SettingsBoxUncheckedIcon
+import com.sweetcalendar.ui.components.SheetFooterBar
+import com.sweetcalendar.ui.components.SweetDialogSurface
+import com.sweetcalendar.ui.components.SheetFooterCloseOnly
+import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
 import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
+import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.components.ThemeProfileAvatarIcon
 import com.sweetcalendar.ui.components.ThemeSettingsDarkModeIcon
 import com.sweetcalendar.ui.components.ThemeSettingsHolidayIcon
@@ -55,51 +61,42 @@ import com.sweetcalendar.ui.components.SweetSwitch
 import com.sweetcalendar.ui.components.TrashIcon
 import com.sweetcalendar.ui.today.computeStreak
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.MintGreen
 import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.ambientProfileCardColor
 import com.sweetcalendar.ui.theme.ThemeFamily
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import com.sweetcalendar.ui.theme.themeProfileStats
 
-private val SettingsValueLight = Color(0xFF9A8878)
-private val SettingsGroupLabelLight = Color(0xFFB39D89)
-private val SettingsChevronLight = Color(0xFFC9B8A6)
 private val ProfileAvatarBackgroundLight = Color(0xFFFFF8FA)
-private val SettingsFieldLabelLight = Color(0xFF9A8878)
-private val SettingsFieldPlaceholderLight = Color(0xFFB7A493)
 
 @Composable
-private fun settingsValueColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else SettingsValueLight
-}
+private fun settingsValueColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun settingsGroupLabelColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.purpleDeep else SettingsGroupLabelLight
+    return if (colors.isDark) colors.purpleDeep else colors.chocDeep
 }
 
 @Composable
 private fun settingsChevronColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else SettingsChevronLight
+    return if (colors.isDark) colors.muted else colors.chocDeep
 }
 
 @Composable
-private fun settingsFieldLabelColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else SettingsFieldLabelLight
-}
+private fun settingsFieldLabelColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun settingsFieldPlaceholderColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.navInactive else SettingsFieldPlaceholderLight
+    return if (colors.isDark) colors.navInactive else colors.muted
 }
 
 @Composable
@@ -175,7 +172,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
-                    .background(Brush.linearGradient(listOf(colors.pink, colors.purple)))
+                    .background(ambientProfileCardColor())
                     .clickable { showNameDialog = true }
                     .padding(mockupDp(16)),
                 verticalAlignment = Alignment.CenterVertically
@@ -189,22 +186,38 @@ fun SettingsScreen(
             ) {
                 ThemeProfileAvatarIcon(size = mockupDp(MockupDimens.SETTINGS_PROFILE_ICON))
             }
-            Column(modifier = Modifier.padding(start = mockupDp(12))) {
-                Text(
-                    userName,
-                    style = TextStyle(
-                        fontFamily = BodyFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = mockupSp(MockupDimens.SETTINGS_PROFILE_NAME_F),
-                        lineHeight = mockupSp(18f)
-                    ),
-                    color = Color.White
-                )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = mockupDp(12))
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
+                ) {
+                    Text(
+                        userName,
+                        style = TextStyle(
+                            fontFamily = BodyFont,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = mockupSp(MockupDimens.SETTINGS_PROFILE_NAME_F),
+                            lineHeight = mockupSp(18f)
+                        ),
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    PenMiniIcon(
+                        size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
+                        color = Color.White
+                    )
+                }
                 Text(
                     themeProfileStats(streak, candiesEarned),
                     style = TextStyle(
                         fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = SecondaryTextWeight,
                         fontSize = mockupSp(MockupDimens.SETTINGS_PROFILE_SUB_F),
                         lineHeight = mockupSp(14f)
                     ),
@@ -492,48 +505,13 @@ private fun NameEditDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
+            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
                     .background(colors.cream)
             ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(16),
-                        bottom = mockupDp(8)
-                    ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "✕ CLOSE",
-                    style = TextStyle(
-                        fontFamily = PixelFont,
-                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                        lineHeight = mockupSp(14f)
-                    ),
-                    color = colors.purpleDeep,
-                    modifier = Modifier.clickable(onClick = onDismiss)
-                )
-                Text(
-                    "SAVE ✓",
-                    style = TextStyle(
-                        fontFamily = PixelFont,
-                        fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                        lineHeight = mockupSp(14f)
-                    ),
-                    color = colors.pinkDeep,
-                    modifier = Modifier.clickable {
-                        onConfirm(name.trim().ifBlank { "Friend" })
-                    }
-                )
-            }
-
             Text(
                 "Edit info",
                 style = TextStyle(
@@ -545,7 +523,7 @@ private fun NameEditDialog(
                 color = colors.ink,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = mockupDp(8)),
+                    .then(sheetDialogTitlePaddingModifier()),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
@@ -554,7 +532,7 @@ private fun NameEditDialog(
                     start = mockupDp(18),
                     end = mockupDp(18),
                     top = mockupDp(8),
-                    bottom = mockupDp(24)
+                    bottom = mockupDp(8)
                 )
             ) {
                 Text(
@@ -575,7 +553,7 @@ private fun NameEditDialog(
                             .matchParentSize()
                             .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
                             .clip(fieldShape)
-                            .background(colors.line)
+                            .background(colors.shadow)
                     )
                     BasicTextField(
                         value = name,
@@ -583,7 +561,7 @@ private fun NameEditDialog(
                         singleLine = true,
                         textStyle = TextStyle(
                             fontFamily = BodyFont,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
                             lineHeight = mockupSp(18f),
                             color = colors.ink
@@ -600,7 +578,7 @@ private fun NameEditDialog(
                                     "e.g. Aaron",
                                     style = TextStyle(
                                         fontFamily = BodyFont,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontWeight = SecondaryTextWeight,
                                         fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
                                         lineHeight = mockupSp(18f)
                                     ),
@@ -612,7 +590,18 @@ private fun NameEditDialog(
                     )
                 }
             }
-        }
+
+            SheetFooterBar(
+                onClose = onDismiss,
+                trailing = {
+                    SheetHeaderConfirmAction(
+                        label = "SAVE",
+                        onClick = { onConfirm(name.trim().ifBlank { "Friend" }) }
+                    )
+                }
+            )
+            }
+            }
         }
     }
 }
@@ -647,35 +636,13 @@ private fun SettingsPickerDialog(
 
     Dialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
+            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
                     .background(colors.cream)
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = mockupDp(18),
-                            end = mockupDp(18),
-                            top = mockupDp(16),
-                            bottom = mockupDp(8)
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "✕ CLOSE",
-                        style = TextStyle(
-                            fontFamily = PixelFont,
-                            fontSize = mockupSp(MockupDimens.SHEET_HEADER_BTN),
-                            lineHeight = mockupSp(14f)
-                        ),
-                        color = colors.purpleDeep,
-                        modifier = Modifier.clickable(onClick = onDismiss)
-                    )
-                }
-
                 Text(
                     title,
                     style = TextStyle(
@@ -687,7 +654,7 @@ private fun SettingsPickerDialog(
                     color = colors.ink,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = mockupDp(8)),
+                        .then(sheetDialogTitlePaddingModifier()),
                     textAlign = TextAlign.Center
                 )
 
@@ -695,10 +662,13 @@ private fun SettingsPickerDialog(
                     modifier = Modifier.padding(
                         start = mockupDp(18),
                         end = mockupDp(18),
-                        bottom = mockupDp(24)
+                        bottom = mockupDp(8)
                     ),
                     content = content
                 )
+
+                SheetFooterCloseOnly(onClose = onDismiss)
+            }
             }
         }
     }
@@ -725,7 +695,7 @@ private fun SettingsPickerOption(
             label,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
                 lineHeight = mockupSp(18f)
             ),
@@ -766,7 +736,7 @@ private fun SettingsRow(
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.SETTINGS_ROW_SHADOW))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Row(
             modifier = Modifier
@@ -799,7 +769,7 @@ private fun SettingsRow(
                     value,
                     style = TextStyle(
                         fontFamily = BodyFont,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = SecondaryTextWeight,
                         fontSize = mockupSp(MockupDimens.SETTINGS_ROW_VALUE_F),
                         lineHeight = mockupSp(15f)
                     ),

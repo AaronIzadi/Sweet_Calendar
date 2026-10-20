@@ -12,8 +12,18 @@ import androidx.compose.ui.graphics.Color
 data class SweetColors(
     val cream: Color,
     val paper: Color,
+    /** Slightly raised surface (dark mode chips, grouped rows). */
+    val surfaceElevated: Color,
     val ink: Color,
+    /** Borders and dividers. */
     val line: Color,
+    /** Pixel-art offset shadow (face uses [paper]). */
+    val shadow: Color,
+    val shadowDeep: Color,
+    /** Streak header, offline banner (warm panel). */
+    val bannerBg: Color,
+    /** Completed-task tray / soft inset panels. */
+    val surfaceInset: Color,
     val pink: Color,
     val pinkDeep: Color,
     val purple: Color,
@@ -35,10 +45,12 @@ data class SweetColors(
 
 val LocalSweetColors = staticCompositionLocalOf {
     SweetColors(
-        cream = Cream, paper = Paper, ink = Ink, line = Line,
+        cream = Cream, paper = Paper, surfaceElevated = Paper, ink = Ink, line = Line,
+        shadow = CandyShadow, shadowDeep = CandyShadowDeep,
+        bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
         pink = Pink, pinkDeep = PinkDeep, purple = Purple, purpleDeep = PurpleDeep,
         mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
-        choc = Choc, chocDeep = ChocDeep, muted = Color(0xFF8A7867),
+        choc = Choc, chocDeep = ChocDeep, muted = Choc,
         navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
         weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
         streakBg = Color(0xFFEAD3C4), isDark = false,
@@ -48,38 +60,50 @@ val LocalSweetColors = staticCompositionLocalOf {
 val LocalThemeFamily = staticCompositionLocalOf { ThemeFamily.Candy }
 
 private val LightCandyColors = SweetColors(
-    cream = Cream, paper = Paper, ink = Ink, line = Line,
+    cream = Cream, paper = Paper, surfaceElevated = Paper, ink = Ink, line = Line,
+    shadow = CandyShadow, shadowDeep = CandyShadowDeep,
+    bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
     pink = Pink, pinkDeep = PinkDeep, purple = Purple, purpleDeep = PurpleDeep,
     mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
-    choc = Choc, chocDeep = ChocDeep, muted = Color(0xFF8A7867),
+    choc = Choc, chocDeep = ChocDeep, muted = Choc,
     navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
     weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
     streakBg = Color(0xFFEAD3C4), isDark = false,
 )
 
 private val DarkCandyColors = SweetColors(
-    cream = DarkCream, paper = DarkPaper, ink = DarkInk, line = DarkLine,
+    cream = DarkCream, paper = DarkPaper, surfaceElevated = DarkPaperElevated,
+    ink = DarkInk, line = DarkLine,
+    shadow = DarkShadow, shadowDeep = DarkShadowDeep,
+    bannerBg = CandyBannerBgDark, surfaceInset = CandyBannerBgDark,
+    // Accents stay candy-bright; neutrals carry depth (mockup `body.dark`).
     pink = Color(0xFFFF8CBE), pinkDeep = Pink, purple = Color(0xFFB79BEB),
     purpleDeep = Color(0xFFD4C2FA), mint = Color(0xFF6FE0B4), mintDeep = Color(0xFF4FD9A0),
     lemon = Color(0xFFFFDB70), lemonDeep = Color(0xFFFFC93C),
     choc = Color(0xFFD8B08A), chocDeep = Color(0xFFEFD3AE),
     muted = DarkMuted, navInactive = DarkNavInactive, navActiveBg = DarkNavActiveBg,
-    weekendBg = Color(0xFF4A312B), holidayBg = Color(0xFF1E4A40),
+    weekendBg = Color(0xFF4A312B), holidayBg = Color(0xFF1E3A32),
     streakBg = Color(0xFF3A2A46), isDark = true,
 )
 
 private val LightSpaceColors = SweetColors(
-    cream = SpaceCream, paper = SpacePaper, ink = SpaceInk, line = SpaceLine,
+    cream = SpaceCream, paper = SpacePaper, surfaceElevated = SpacePaper,
+    ink = SpaceInk, line = SpaceLine,
+    shadow = SpaceShadow, shadowDeep = SpaceShadowDeep,
+    bannerBg = Color(0xFFE7D5C5), surfaceInset = Color(0xFFF1E9FB),
     pink = SpacePink, pinkDeep = SpacePinkDeep, purple = SpacePurple, purpleDeep = SpacePurpleDeep,
     mint = SpaceMint, mintDeep = SpaceMintDeep, lemon = SpaceLemon, lemonDeep = SpaceLemonDeep,
-    choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceMuted,
+    choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceChocDeep,
     navInactive = SpaceNavInactive, navActiveBg = SpaceNavActiveBg,
     weekendBg = Color(0xFFE7D5C5), holidayBg = Color(0xFFD6EEDC),
     streakBg = Color(0xFFE7D5C5), isDark = false,
 )
 
 private val DarkSpaceColors = SweetColors(
-    cream = SpaceDarkCream, paper = SpaceDarkPaper, ink = SpaceDarkInk, line = SpaceDarkLine,
+    cream = SpaceDarkCream, paper = SpaceDarkPaper, surfaceElevated = SpaceDarkPaperElevated,
+    ink = SpaceDarkInk, line = SpaceDarkLine,
+    shadow = SpaceDarkShadow, shadowDeep = SpaceDarkShadowDeep,
+    bannerBg = Color(0xFF433B62), surfaceInset = Color(0xFF3A2C4C),
     pink = SpaceDarkPink, pinkDeep = SpaceDarkPinkDeep, purple = SpaceDarkPurple,
     purpleDeep = SpaceDarkPurpleDeep, mint = SpaceDarkMint, mintDeep = SpaceDarkMintDeep,
     lemon = SpaceDarkLemon, lemonDeep = SpaceDarkLemonDeep,
@@ -116,7 +140,7 @@ private val DarkCandyScheme = darkColorScheme(
     onBackground = DarkInk,
     surface = DarkPaper,
     onSurface = DarkInk,
-    surfaceVariant = DarkLine,
+    surfaceVariant = DarkPaperElevated,
     onSurfaceVariant = DarkMuted,
     outline = DarkLine,
 )
@@ -148,7 +172,7 @@ private val DarkSpaceScheme = darkColorScheme(
     onBackground = SpaceDarkInk,
     surface = SpaceDarkPaper,
     onSurface = SpaceDarkInk,
-    surfaceVariant = SpaceDarkLine,
+    surfaceVariant = SpaceDarkPaperElevated,
     onSurfaceVariant = SpaceDarkMuted,
     outline = SpaceDarkLine,
 )
@@ -190,3 +214,9 @@ object SweetTheme {
     val isSpace: Boolean
         @Composable get() = family == ThemeFamily.Space
 }
+
+fun resolveSweetColors(themeFamily: ThemeFamily, darkTheme: Boolean): SweetColors =
+    when (themeFamily) {
+        ThemeFamily.Candy -> if (darkTheme) DarkCandyColors else LightCandyColors
+        ThemeFamily.Space -> if (darkTheme) DarkSpaceColors else LightSpaceColors
+    }

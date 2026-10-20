@@ -23,8 +23,20 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,6 +59,7 @@ import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.navigation.AppDestination
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.MintGreen
 import com.sweetcalendar.ui.theme.mockupDp
@@ -179,6 +192,16 @@ fun JarProgressCard(
 ) {
     val colors = SweetTheme.colors
     val progress = if (total > 0) completed.toFloat() / total else 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        animationSpec = com.sweetcalendar.ui.theme.SweetMotion.mediumTween(),
+        label = "jarProgressFill",
+    )
+    val animatedCompleted by animateIntAsState(
+        targetValue = completed.coerceAtLeast(0),
+        animationSpec = com.sweetcalendar.ui.theme.SweetMotion.mediumTween(),
+        label = "jarCompletedCount",
+    )
     val shape = RoundedCornerShape(16.dp)
     Box(modifier = modifier) {
         Box(
@@ -186,7 +209,7 @@ fun JarProgressCard(
                 .matchParentSize()
                 .offset(y = 3.dp)
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Column(
             modifier = Modifier
@@ -205,7 +228,7 @@ fun JarProgressCard(
                     color = colors.ink
                 )
                 Text(
-                    "$completed / $total",
+                    "$animatedCompleted / $total",
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = mockupSp(MockupDimens.JAR_LABEL)
@@ -219,19 +242,21 @@ fun JarProgressCard(
                     .fillMaxWidth()
                     .height(mockupDp(MockupDimens.JAR_TRACK_H))
                     .clip(RoundedCornerShape(8.dp))
-                    .background(if (colors.isDark) Color(0xFF1E1628) else Color(0xFFF1E6D8))
+                    .background(if (colors.isDark) colors.shadow else Color(0xFFF1E6D8))
                     .border(2.dp, colors.line, RoundedCornerShape(8.dp))
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .fillMaxWidth(animatedProgress)
                         .height(mockupDp(MockupDimens.JAR_TRACK_H))
                         .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            androidx.compose.ui.graphics.Brush.horizontalGradient(
-                                listOf(colors.pink, colors.mint)
-                            )
-                        )
+                        .background(com.sweetcalendar.ui.theme.ambientJarFillColor())
+                )
+                JarCandyDropOverlay(
+                    completed = completed,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(mockupDp(MockupDimens.JAR_TRACK_H)),
                 )
             }
         }
@@ -252,17 +277,39 @@ fun SweetTaskCard(
     style: TaskCardStyle = TaskCardStyle.Interactive
 ) {
     when (style) {
-        TaskCardStyle.Mockup -> MockupTaskCard(
-            task = task,
-            onClick = onClick,
-            onToggleComplete = onToggleComplete,
-            onRecover = onRecover,
-            onDelete = onDelete,
-            modifier = modifier,
-            showDate = showDate,
-            highlightQuery = highlightQuery,
-            metaStyle = metaStyle
-        )
+        TaskCardStyle.Mockup -> {
+            val swipeToDelete = onDelete != null && onRecover == null
+            if (swipeToDelete) {
+                SwipeToDeleteTaskCard(
+                    onDelete = { onDelete!!() },
+                    modifier = modifier,
+                ) {
+                    MockupTaskCard(
+                        task = task,
+                        onClick = onClick,
+                        onToggleComplete = onToggleComplete,
+                        onRecover = null,
+                        onDelete = null,
+                        modifier = Modifier.fillMaxWidth(),
+                        showDate = showDate,
+                        highlightQuery = highlightQuery,
+                        metaStyle = metaStyle,
+                    )
+                }
+            } else {
+                MockupTaskCard(
+                    task = task,
+                    onClick = onClick,
+                    onToggleComplete = onToggleComplete,
+                    onRecover = onRecover,
+                    onDelete = onDelete,
+                    modifier = modifier,
+                    showDate = showDate,
+                    highlightQuery = highlightQuery,
+                    metaStyle = metaStyle,
+                )
+            }
+        }
         TaskCardStyle.Interactive -> InteractiveTaskCard(
             task, onClick, onToggleComplete, onDelete, modifier, showDate
         )
@@ -289,19 +336,29 @@ private fun MockupTaskCard(
 
     val taskIcon = mockupDp(MockupDimens.TASK_ICON)
     val taskAccentH = mockupDp(56)
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (task.isDone) 0.58f else 1f,
+        animationSpec = com.sweetcalendar.ui.theme.SweetMotion.mediumTween(),
+        label = "taskCardAlpha",
+    )
+    var wasDone by remember(task.id) { mutableStateOf(task.isDone) }
+    val popCheck = task.isDone && (!wasDone || TaskCompletionPop.consumePop(task.id))
+    androidx.compose.runtime.LaunchedEffect(task.isDone) {
+        wasDone = task.isDone
+    }
 
-    Box(modifier = modifier.padding(bottom = mockupDp(10))) {
+    Box(modifier = modifier.padding(bottom = mockupDp(10)).sweetPressScale()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(y = mockupDp(2))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .alpha(if (task.isDone) 0.55f else 1f)
+                .alpha(cardAlpha)
                 .clip(shape)
                 .background(colors.paper),
             verticalAlignment = Alignment.CenterVertically
@@ -323,20 +380,20 @@ private fun MockupTaskCard(
             ) {
                 when {
                     task.isDone -> {
-                        ThemeCompletedCheckIcon(
+                        PoppingTaskCompleteIcon(
                             size = taskIcon,
                             bgColor = if (colors.isDark) colors.mint else MintGreen,
-                            modifier = Modifier.clickable(
-                                onClick = onToggleComplete ?: onClick,
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            )
+                            pop = popCheck,
+                            onClick = onToggleComplete ?: onClick,
                         )
                     }
                     onToggleComplete != null -> {
                         TaskCheckbox(
                             checked = false,
-                            onClick = onToggleComplete,
+                            onClick = {
+                                TaskCompletionPop.schedulePop(task.id)
+                                onToggleComplete()
+                            },
                             modifier = Modifier.size(taskIcon)
                         )
                     }
@@ -358,17 +415,17 @@ private fun MockupTaskCard(
                         .weight(1f)
                         .clickable(onClick = onClick)
                 ) {
-                    Text(
+                    AnimatedTaskTitle(
                         text = buildMockupTaskTitle(task.title, highlightQuery, colors),
+                        isDone = task.isDone,
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = mockupSp(MockupDimens.TASK_TITLE_F),
                             lineHeight = mockupSp(17f)
                         ),
-                        color = colors.ink,
+                        inkColor = colors.ink,
+                        mutedColor = colors.muted,
                         maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        textDecoration = if (task.isDone) TextDecoration.LineThrough else null
                     )
                     val meta = when (metaStyle) {
                         TaskMetaStyle.SearchResult -> buildList {
@@ -390,7 +447,7 @@ private fun MockupTaskCard(
                         Text(
                             meta.joinToString(" · "),
                             style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = SecondaryTextWeight,
                                 fontSize = mockupSp(MockupDimens.TASK_META_F),
                                 lineHeight = mockupSp(13f)
                             ),
@@ -438,7 +495,7 @@ private fun TaskRecoverButton(onClick: () -> Unit) {
         color = colors.purpleDeep,
         modifier = Modifier
             .clip(RoundedCornerShape(mockupDp(MockupDimens.TRASH_BTN_RADIUS)))
-            .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFBEDE3))
+            .background(colors.surfaceInset)
             .clickable(onClick = onClick)
             .padding(horizontal = mockupDp(8), vertical = mockupDp(7))
     )
@@ -451,7 +508,7 @@ private fun TaskTrashButton(onClick: () -> Unit) {
         modifier = Modifier
             .size(mockupDp(MockupDimens.TRASH_BTN))
             .clip(RoundedCornerShape(mockupDp(MockupDimens.TRASH_BTN_RADIUS)))
-            .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFBEDE3))
+            .background(colors.surfaceInset)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -564,7 +621,7 @@ private fun InteractiveTaskCard(
                     modifier = Modifier
                         .size(26.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(if (colors.isDark) Color(0xFF3A2A22) else Color(0xFFFBEDE3))
+                        .background(colors.surfaceInset)
                         .clickable(onClick = onDelete),
                     contentAlignment = Alignment.Center
                 ) {
@@ -582,8 +639,14 @@ private fun TaskCheckbox(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val scale = remember { Animatable(1f) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     Box(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            }
             .size(22.dp)
             .clip(RoundedCornerShape(6.dp))
             .then(
@@ -593,7 +656,20 @@ private fun TaskCheckbox(
                     Modifier.border(2.dp, colors.line, RoundedCornerShape(6.dp))
                 }
             )
-            .clickable(onClick = onClick),
+            .clickable {
+                scope.launch {
+                    scale.snapTo(0.82f)
+                    scale.animateTo(
+                        1.08f,
+                        spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium,
+                        ),
+                    )
+                    scale.animateTo(1f, spring(stiffness = Spring.StiffnessMedium))
+                }
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
         if (checked) {
@@ -670,7 +746,7 @@ fun SweetIconButton(
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Box(
             modifier = Modifier
@@ -706,12 +782,24 @@ fun SweetIconButton(
 }
 
 @Composable
-fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun SweetFab(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    addSheetOpen: Boolean = false,
+) {
     val colors = SweetTheme.colors
     val shape = RoundedCornerShape(16.dp)
     val faceColor = if (colors.isDark) Color(0xFF8A6BC0) else colors.purple
-    val shadowColor = if (colors.isDark) Color(0xFF472F52) else colors.purpleDeep
-    Box(modifier = modifier.size(mockupDp(MockupDimens.FAB_SIZE))) {
+    val shadowColor = if (colors.isDark) colors.shadowDeep else colors.purpleDeep
+    val iconRotation by animateFloatAsState(
+        targetValue = if (addSheetOpen) 45f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "fabIconRotation",
+    )
+    Box(modifier = modifier.size(mockupDp(MockupDimens.FAB_SIZE)).sweetPressScale()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -727,7 +815,10 @@ fun SweetFab(onClick: () -> Unit, modifier: Modifier = Modifier) {
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center
         ) {
-            ThemeFabIcon(size = mockupDp(MockupDimens.FAB_ICON))
+            ThemeFabIcon(
+                size = mockupDp(MockupDimens.FAB_ICON),
+                modifier = Modifier.graphicsLayer { rotationZ = iconRotation },
+            )
         }
     }
 }
@@ -818,10 +909,25 @@ private fun NavItem(
     val iconColors = navIconColors(selected)
     val iconSlotW = mockupDp(MockupDimens.NAV_ICON_SLOT)
     val iconSlotH = mockupDp(MockupDimens.NAV_ICON_SLOT_H)
+    val bounceSpring = spring<Float>(
+        dampingRatio = Spring.DampingRatioMediumBouncy,
+        stiffness = Spring.StiffnessMedium,
+    )
+    val iconScale = remember { Animatable(1f) }
+    androidx.compose.runtime.LaunchedEffect(selected) {
+        if (selected) {
+            iconScale.snapTo(0.86f)
+            iconScale.animateTo(1.14f, bounceSpring)
+            iconScale.animateTo(1f, spring(stiffness = Spring.StiffnessMedium))
+        } else {
+            iconScale.snapTo(1f)
+        }
+    }
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(mockupDp(12)))
             .background(if (selected) colors.navActiveBg else Color.Transparent)
+            .sweetPressScale()
             .clickable(onClick = onClick)
             .padding(horizontal = mockupDp(10), vertical = mockupDp(6)),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -830,23 +936,36 @@ private fun NavItem(
         Box(
             modifier = Modifier
                 .width(iconSlotW)
-                .height(iconSlotH),
+                .height(iconSlotH)
+                .graphicsLayer {
+                    scaleX = iconScale.value
+                    scaleY = iconScale.value
+                },
             contentAlignment = Alignment.Center
         ) {
             icon(iconColors)
         }
+        val labelAlpha by animateFloatAsState(
+            targetValue = if (selected) 1f else 0.62f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+            label = "navLabelAlpha",
+        )
         Text(
             label,
             style = TextStyle(
                 fontFamily = PixelFont,
                 fontSize = mockupSp(MockupDimens.NAV_LABEL_F),
-                lineHeight = mockupSp(10f)
+                lineHeight = mockupSp(14f)
             ),
             color = if (selected) {
                 if (colors.isDark) colors.pink else colors.pinkDeep
             } else {
                 colors.navInactive
-            }
+            },
+            modifier = Modifier.graphicsLayer { alpha = labelAlpha },
         )
     }
 }
@@ -861,7 +980,7 @@ fun StreakPill(streak: Int, modifier: Modifier = Modifier) {
                 .matchParentSize()
                 .offset(y = 2.dp)
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Row(
             modifier = Modifier
@@ -894,7 +1013,7 @@ fun SweetPixelButton(
     val colors = SweetTheme.colors
     val fontSize = mockupSp(MockupDimens.PIXEL_BTN)
     val faceColor = colors.purple
-    val shadowColor = if (colors.isDark) Color(0xFF2E2342) else colors.purpleDeep
+    val shadowColor = if (colors.isDark) colors.shadowDeep else colors.purpleDeep
     val cornerRadius = mockupDp(12)
     val shadowOffset = mockupDp(4)
     val horizontalPadding = mockupDp(MockupDimens.PIXEL_BTN_PAD_H)

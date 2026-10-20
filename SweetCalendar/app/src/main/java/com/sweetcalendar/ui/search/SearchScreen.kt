@@ -36,24 +36,24 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.SearchGroupLabel
 import com.sweetcalendar.ui.components.SearchIcon
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.TaskMetaStyle
 import com.sweetcalendar.ui.stats.searchTasks
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val SearchPlaceholderLight = Color(0xFFB7A493)
 private val SearchPlaceholderDark = Color(0xFFC9B8DE)
 private val RecentChipBackgroundLight = Color(0xFFF1E9FB)
-private val RecentChipBackgroundDark = Color(0xFF3A2C4C)
 
 @Composable
 private fun searchPlaceholderColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) SearchPlaceholderDark else SearchPlaceholderLight
+    return if (colors.isDark) SearchPlaceholderDark else colors.muted
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -69,7 +69,7 @@ fun SearchScreen(
     val colors = SweetTheme.colors
     var query by remember { mutableStateOf("") }
     val results = remember(tasks, query) { searchTasks(tasks, query) }
-    val chipBackground = if (colors.isDark) RecentChipBackgroundDark else RecentChipBackgroundLight
+    val chipBackground = if (colors.isDark) colors.surfaceElevated else RecentChipBackgroundLight
     val placeholderColor = searchPlaceholderColor()
 
     BackHandler(onBack = onBack)
@@ -96,7 +96,7 @@ fun SearchScreen(
                         .matchParentSize()
                         .offset(y = mockupDp(MockupDimens.SEARCH_BAR_SHADOW))
                         .clip(barShape)
-                        .background(colors.line)
+                        .background(colors.shadow)
                 )
                 Row(
                     modifier = Modifier
@@ -120,7 +120,7 @@ fun SearchScreen(
                         singleLine = true,
                         textStyle = TextStyle(
                             fontFamily = BodyFont,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.SEARCH_TEXT),
                             color = colors.ink
                         ),
@@ -132,7 +132,7 @@ fun SearchScreen(
                                     "Search tasks…",
                                     style = TextStyle(
                                         fontFamily = BodyFont,
-                                        fontWeight = FontWeight.SemiBold,
+                                        fontWeight = SecondaryTextWeight,
                                         fontSize = mockupSp(MockupDimens.SEARCH_TEXT)
                                     ),
                                     color = placeholderColor
@@ -160,7 +160,7 @@ fun SearchScreen(
                             "No matching tasks",
                             style = TextStyle(
                                 fontFamily = BodyFont,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = SecondaryTextWeight,
                                 fontSize = mockupSp(12f),
                                 lineHeight = mockupSp(16f)
                             ),
@@ -172,6 +172,7 @@ fun SearchScreen(
                     items(results, key = { it.id }) { task ->
                         SweetTaskCard(
                             task = task,
+                            modifier = sweetTaskItemMotion(),
                             onClick = {
                                 onSearchSubmitted(query)
                                 onTaskClick(task)

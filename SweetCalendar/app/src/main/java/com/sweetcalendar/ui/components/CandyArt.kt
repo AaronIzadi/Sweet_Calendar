@@ -451,6 +451,24 @@ fun CalMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = 
     )
 }
 
+/** Small pixel pen — edit / rename affordance. */
+@Composable
+fun PenMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {
+    PixelIcon(
+        rows = listOf(
+            ".....1",
+            "....11",
+            "...11.",
+            "..11..",
+            ".11...",
+            "11....",
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
 /** Mini clock from mockup `buildClockIcon` (cell × 2). */
 @Composable
 fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {

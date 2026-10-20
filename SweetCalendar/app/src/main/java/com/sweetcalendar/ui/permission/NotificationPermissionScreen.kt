@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -21,22 +20,15 @@ import androidx.compose.ui.text.style.TextAlign
 import com.sweetcalendar.ui.components.ThemeAlarmHeroIcon
 import com.sweetcalendar.ui.components.SweetPixelButton
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.ambientPermissionBackground
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 
-private val PermissionSecondaryLight = Color(0xFF9A8878)
-private val PermissionGradientTopLight = Color(0xFFFFF6EA)
-private val PermissionGradientBottomLight = Color(0xFFF3E3FB)
-private val PermissionGradientTopDark = Color(0xFF241A30)
-private val PermissionGradientBottomDark = Color(0xFF1B1526)
-
 @Composable
-private fun permissionSecondaryColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else PermissionSecondaryLight
-}
+private fun permissionSecondaryColor(): Color = SweetTheme.colors.muted
 
 @Composable
 fun NotificationPermissionScreen(
@@ -45,20 +37,11 @@ fun NotificationPermissionScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val gradient = if (colors.isDark) {
-        Brush.verticalGradient(
-            listOf(PermissionGradientTopDark, PermissionGradientBottomDark)
-        )
-    } else {
-        Brush.verticalGradient(
-            listOf(PermissionGradientTopLight, PermissionGradientBottomLight)
-        )
-    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(gradient)
+            .background(ambientPermissionBackground())
             .padding(
                 start = mockupDp(MockupDimens.PERMISSION_PAD_H),
                 end = mockupDp(MockupDimens.PERMISSION_PAD_H),
@@ -88,7 +71,7 @@ fun NotificationPermissionScreen(
             "Sweet Calendar can notify you a little before each task is due — you can turn this off anytime in Settings.",
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.PERMISSION_SUB),
                 lineHeight = mockupSp(MockupDimens.PERMISSION_SUB * 1.65f)
             ),

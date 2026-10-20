@@ -40,15 +40,15 @@ import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.theme.MockupDimens
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.selectedOnAccentTextColor
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-
-private val WeekChipDowLight = Color(0xFF9A8878)
 
 @Composable
 private fun weekChipDowColor(selected: Boolean): Color {
@@ -56,8 +56,7 @@ private fun weekChipDowColor(selected: Boolean): Color {
     return when {
         selected && colors.isDark -> selectedOnAccentTextColor()
         selected -> Color(0xFFEFE6FA)
-        colors.isDark -> colors.muted
-        else -> WeekChipDowLight
+        else -> colors.muted
     }
 }
 
@@ -131,7 +130,7 @@ fun WeekScreen(
                     }
                 },
                 style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = SecondaryTextWeight,
                     fontSize = mockupSp(MockupDimens.WEEK_RANGE),
                     lineHeight = mockupSp(15f)
                 ),
@@ -197,7 +196,10 @@ fun WeekScreen(
                 items(selectedDayTasks, key = { it.id }) { task ->
                     SweetTaskCard(
                         task = task,
+                        modifier = sweetTaskItemMotion(),
                         onClick = { onEditTask(task) },
+                        onToggleComplete = { onCompleteTask(task) },
+                        onDelete = { onDeleteTask(task) },
                         style = TaskCardStyle.Mockup
                     )
                 }
@@ -263,7 +265,7 @@ private fun DayChip(
                 .height(mockupDp(72))
                 .offset(y = shadowOffset)
                 .clip(shape)
-                .background(if (selected) colors.purpleDeep else colors.line)
+                .background(if (selected) colors.purpleDeep else colors.shadow)
         )
         Column(
             modifier = Modifier
@@ -281,7 +283,7 @@ private fun DayChip(
                 style = TextStyle(
                     fontFamily = PixelFont,
                     fontSize = mockupSp(MockupDimens.DAY_CHIP_DOW),
-                    lineHeight = mockupSp(11f)
+                    lineHeight = mockupSp(14f)
                 ),
                 color = weekChipDowColor(selected),
                 maxLines = 1,

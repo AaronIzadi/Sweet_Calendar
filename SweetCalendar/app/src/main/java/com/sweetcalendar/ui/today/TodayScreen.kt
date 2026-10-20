@@ -31,9 +31,11 @@ import com.sweetcalendar.ui.components.JarProgressCard
 import com.sweetcalendar.ui.components.StreakPill
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatDisplayWithWeekday
 import com.sweetcalendar.ui.theme.MockupDimens
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import com.sweetcalendar.ui.theme.MintGreen
@@ -122,7 +124,7 @@ fun TodayScreen(
                     Text(
                         today.formatDisplayWithWeekday(calendarSystem),
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.GREET_DATE_F),
                             lineHeight = mockupSp(16f)
                         ),
@@ -167,8 +169,10 @@ fun TodayScreen(
                     items(pending, key = { it.id }) { task ->
                         SweetTaskCard(
                             task = task,
+                            modifier = sweetTaskItemMotion(),
                             onClick = { onEditTask(task) },
                             onToggleComplete = { onCompleteTask(task) },
+                            onDelete = { onDeleteTask(task) },
                             style = TaskCardStyle.Mockup
                         )
                     }
@@ -199,8 +203,10 @@ fun TodayScreen(
                     items(done, key = { it.id }) { task ->
                         SweetTaskCard(
                             task = task,
+                            modifier = sweetTaskItemMotion(),
                             onClick = { onEditTask(task) },
                             onToggleComplete = { onCompleteTask(task) },
+                            onDelete = { onDeleteTask(task) },
                             style = TaskCardStyle.Mockup
                         )
                     }

@@ -18,9 +18,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.sweetcalendar.data.prefs.AppPreferences
+import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.ThemeAlarmHeroIcon
 import com.sweetcalendar.ui.components.SweetPixelButton
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.CalendarTodoTheme
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.ProvideMockupScale
@@ -50,6 +52,9 @@ class AlarmActivity : ComponentActivity() {
             ) {
                 ProvideMockupScale {
                     val colors = SweetTheme.colors
+                    SweetDialogSurface(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -80,7 +85,7 @@ class AlarmActivity : ComponentActivity() {
                                 description,
                                 style = TextStyle(
                                     fontFamily = BodyFont,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = SecondaryTextWeight,
                                     fontSize = mockupSp(12f),
                                     lineHeight = mockupSp(18f)
                                 ),
@@ -94,7 +99,7 @@ class AlarmActivity : ComponentActivity() {
                                 dateTime,
                                 style = TextStyle(
                                     fontFamily = BodyFont,
-                                    fontWeight = FontWeight.SemiBold,
+                                    fontWeight = SecondaryTextWeight,
                                     fontSize = mockupSp(13f),
                                     lineHeight = mockupSp(18f)
                                 ),
@@ -108,6 +113,7 @@ class AlarmActivity : ComponentActivity() {
                             onClick = { finish() },
                             modifier = Modifier.fillMaxWidth()
                         )
+                    }
                     }
                 }
             }

@@ -31,12 +31,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.stats.ArchiveFilter
 import com.sweetcalendar.ui.stats.computeMonthCompletionPercent
 import com.sweetcalendar.ui.stats.filterCompletedTasks
 import com.sweetcalendar.ui.stats.groupTasksByDay
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.SweetTheme
@@ -44,20 +46,15 @@ import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import com.sweetcalendar.ui.today.computeStreak
 
-private val ArchiveStatLabelLight = Color(0xFF9A8878)
-private val ArchiveDayLabelLight = Color(0xFFB39D89)
 private val ArchiveFilterSelectedTextDark = Color(0xFF1B1424)
 
 @Composable
-private fun archiveStatLabelColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else ArchiveStatLabelLight
-}
+private fun archiveStatLabelColor(): Color = SweetTheme.colors.muted
 
 @Composable
 private fun archiveDayLabelColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.purpleDeep else ArchiveDayLabelLight
+    return if (colors.isDark) colors.purpleDeep else colors.chocDeep
 }
 
 @Composable
@@ -156,7 +153,7 @@ fun ArchiveScreen(
                     Text(
                         "No completed tasks in this period",
                         style = MaterialTheme.typography.bodySmall.copy(
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(12f)
                         ),
                         color = colors.muted,
@@ -174,6 +171,7 @@ fun ArchiveScreen(
                     ) { task ->
                         SweetTaskCard(
                             task = task,
+                            modifier = sweetTaskItemMotion(),
                             onClick = { onTaskClick(task) },
                             style = TaskCardStyle.Mockup
                         )
@@ -196,7 +194,7 @@ fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier)
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.ARCHIVE_STAT_SHADOW))
                 .clip(shape)
-                .background(colors.line)
+                .background(colors.shadow)
         )
         Column(
             modifier = Modifier
@@ -221,7 +219,7 @@ fun ArchiveStatCard(value: String, label: String, modifier: Modifier = Modifier)
                     fontFamily = BodyFont,
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.ARCHIVE_STAT_LBL),
-                    lineHeight = mockupSp(11f),
+                    lineHeight = mockupSp(14f),
                     letterSpacing = mockupSp(0.2f)
                 ),
                 color = archiveStatLabelColor(),
@@ -246,7 +244,7 @@ fun ArchiveFilterChip(
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.ARCHIVE_FILTER_SHADOW))
                 .clip(shape)
-                .background(if (selected) colors.purpleDeep else colors.line)
+                .background(if (selected) colors.purpleDeep else colors.shadow)
         )
         Text(
             label,

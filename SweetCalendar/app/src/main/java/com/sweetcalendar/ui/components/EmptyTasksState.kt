@@ -16,19 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import com.sweetcalendar.ui.theme.themeEmptySubtitle
 
-private val EmptySubLight = Color(0xFF8A7867)
-
 @Composable
-private fun emptySubColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.muted else EmptySubLight
-}
+private fun emptySubColor(): Color = SweetTheme.colors.muted
 
 /** Centered empty-state block matching mockup `.empty-wrap`. */
 @Composable
@@ -66,7 +62,7 @@ fun EmptyStateContent(
             resolvedSubtitle,
             style = TextStyle(
                 fontFamily = BodyFont,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = SecondaryTextWeight,
                 fontSize = mockupSp(MockupDimens.EMPTY_SUB),
                 lineHeight = mockupSp(MockupDimens.EMPTY_SUB * 1.6f)
             ),

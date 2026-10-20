@@ -1,5 +1,13 @@
 package com.sweetcalendar.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +47,10 @@ import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.daydetail.DayDetailScreen
 import com.sweetcalendar.ui.holiday.HolidayDetailScreen
 import com.sweetcalendar.ui.navigation.AppDestination
+import com.sweetcalendar.ui.navigation.sweetFullScreenSheetEnter
+import com.sweetcalendar.ui.navigation.sweetFullScreenSheetExit
+import com.sweetcalendar.ui.navigation.sweetScreenTransition
+import com.sweetcalendar.ui.navigation.sweetScreenTransitionByDepth
 import com.sweetcalendar.ui.offline.OfflineScreen
 import com.sweetcalendar.ui.snackbar.RecoverSnackbarScreen
 import com.sweetcalendar.ui.permission.NotificationPermissionScreen
@@ -51,7 +63,9 @@ import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.ThemeFamily
 import com.sweetcalendar.ui.theme.mockupDp
+import com.sweetcalendar.ui.theme.SweetMotion
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.rememberReducedMotion
 import com.sweetcalendar.ui.today.TodayScreen
 import com.sweetcalendar.ui.week.WeekScreen
 import com.sweetcalendar.ui.welcome.WelcomeScreen
@@ -78,6 +92,26 @@ private sealed class OverlayState {
     data object NotificationPermission : OverlayState()
     data object Offline : OverlayState()
     data object RecoverSnackbar : OverlayState()
+}
+
+private data class ScreenKey(val overlay: OverlayState, val destination: AppDestination)
+
+private sealed class AppRoot {
+    data object Welcome : AppRoot()
+    data object Main : AppRoot()
+    data object NotificationPermission : AppRoot()
+}
+
+private fun OverlayState.depth(): Int = when (this) {
+    OverlayState.None -> 0
+    is OverlayState.TaskDetail, is OverlayState.HolidayDetail -> 2
+    else -> 1
+}
+
+private fun AppRoot.depth(): Int = when (this) {
+    AppRoot.Welcome -> 0
+    AppRoot.Main -> 1
+    AppRoot.NotificationPermission -> 2
 }
 
 @Composable
@@ -183,16 +217,38 @@ fun MainScreen(
     CalendarTodoTheme(darkTheme = darkMode, themeFamily = themeFamily) {
         ProvideMockupScale {
         val colors = SweetTheme.colors
-        if (showWelcome) {
-            WelcomeScreen(
+        val reducedMotion = rememberReducedMotion()
+        var displayedSheet by remember { mutableStateOf<SheetState>(SheetState.Hidden) }
+        if (sheetState != SheetState.Hidden) {
+            displayedSheet = sheetState
+        }
+        val appRoot = when {
+            showWelcome -> AppRoot.Welcome
+            overlay == OverlayState.NotificationPermission -> AppRoot.NotificationPermission
+            else -> AppRoot.Main
+        }
+
+        AnimatedContent(
+            targetState = appRoot,
+            transitionSpec = {
+                if (reducedMotion) {
+                    fadeIn(tween(SweetMotion.ShortMillis)) togetherWith fadeOut(tween(SweetMotion.ShortMillis))
+                } else {
+                    sweetScreenTransition(
+                        fromDepth = initialState.depth(),
+                        toDepth = targetState.depth(),
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "app-root"
+        ) { root ->
+        when (root) {
+            AppRoot.Welcome -> WelcomeScreen(
                 onStart = { finishWelcome() },
                 onSkip = { finishWelcome() }
             )
-            return@ProvideMockupScale
-        }
-
-        if (overlay == OverlayState.NotificationPermission) {
-            NotificationPermissionScreen(
+            AppRoot.NotificationPermission -> NotificationPermissionScreen(
                 onAllow = {
                     pendingNotificationPrompt = false
                     onRequestNotificationPermission()
@@ -203,9 +259,7 @@ fun MainScreen(
                     overlay = OverlayState.None
                 }
             )
-            return@ProvideMockupScale
-        }
-
+            AppRoot.Main -> {
         val showMainChrome = overlay == OverlayState.None ||
             overlay == OverlayState.Archive ||
             overlay == OverlayState.Stats ||
@@ -217,7 +271,7 @@ fun MainScreen(
                 SnackbarHost(snackbarHostState) { data ->
                     Snackbar(
                         snackbarData = data,
-                        containerColor = colors.chocDeep,
+                        containerColor = if (colors.isDark) colors.bannerBg else colors.chocDeep,
                         contentColor = colors.cream,
                         actionColor = colors.lemon
                     )
@@ -253,9 +307,26 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                when (val current = overlay) {
+                AnimatedContent(
+                    targetState = ScreenKey(overlay, destination),
+                    transitionSpec = {
+                        if (reducedMotion) {
+                            fadeIn(tween(SweetMotion.ShortMillis)) togetherWith fadeOut(tween(SweetMotion.ShortMillis))
+                        } else {
+                            sweetScreenTransitionByDepth(
+                                depthOf = { it.overlay.depth() },
+                                tabOrdinalOf = { it.destination.ordinal },
+                            )
+                        }
+                    },
+                    contentKey = { if (it.overlay == OverlayState.None) it.destination else it.overlay::class },
+                    modifier = Modifier.fillMaxSize(),
+                    label = "screen"
+                ) { key ->
+                Box(Modifier.fillMaxSize().background(colors.cream)) {
+                when (val current = key.overlay) {
                     OverlayState.None -> {
-                        when (destination) {
+                        when (key.destination) {
                             AppDestination.Today -> TodayScreen(
                                 tasks = allTasks,
                                 userName = userName,
@@ -327,22 +398,6 @@ fun MainScreen(
                                 onOpenArchive = { overlay = OverlayState.Archive },
                                 onOpenSearch = { overlay = OverlayState.Search },
                                 onOpenRecoverSnackbar = { overlay = OverlayState.RecoverSnackbar }
-                            )
-                        }
-
-                        if (destination != AppDestination.Settings) {
-                            SweetFab(
-                                onClick = {
-                                    val date = when (destination) {
-                                        AppDestination.Week -> calendarState.selectedDate
-                                        AppDestination.Month -> calendarState.selectedDate
-                                        else -> JalaliDate.today()
-                                    }
-                                    sheetState = SheetState.Add(date)
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(end = 18.dp, bottom = 18.dp)
                             )
                         }
                     }
@@ -421,6 +476,29 @@ fun MainScreen(
                     )
                     OverlayState.NotificationPermission -> Unit
                 }
+                }
+                }
+
+                AnimatedVisibility(
+                    visible = overlay == OverlayState.None && destination != AppDestination.Settings,
+                    enter = scaleIn(SweetMotion.shortTween()) + fadeIn(SweetMotion.shortTween()),
+                    exit = scaleOut(SweetMotion.shortTween()) + fadeOut(SweetMotion.shortTween()),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 18.dp, bottom = 18.dp)
+                ) {
+                    SweetFab(
+                        addSheetOpen = sheetState != SheetState.Hidden,
+                        onClick = {
+                            val date = when (destination) {
+                                AppDestination.Week -> calendarState.selectedDate
+                                AppDestination.Month -> calendarState.selectedDate
+                                else -> JalaliDate.today()
+                            }
+                            sheetState = SheetState.Add(date)
+                        }
+                    )
+                }
 
                 recoverTask?.let { task ->
                     SweetRecoverSnackbar(
@@ -438,72 +516,82 @@ fun MainScreen(
             }
         }
 
-        when (val sheet = sheetState) {
-            SheetState.Hidden -> Unit
-            is SheetState.Add -> {
-                TaskBottomSheet(
-                    date = sheet.date,
-                    existingTask = null,
-                    calendarSystem = calendarState.calendarSystem,
-                    onDismiss = { sheetState = SheetState.Hidden },
-                    onConfirm = { form ->
-                        viewModel.addTask(form)
-                        sheetState = SheetState.Hidden
-                        onTaskSaved(form)
-                        showSnackbar(themeFamily.taskAddedSnackbar)
-                    }
-                )
+        AnimatedVisibility(
+            visible = sheetState != SheetState.Hidden,
+            enter = if (reducedMotion) fadeIn(tween(SweetMotion.ShortMillis)) else sweetFullScreenSheetEnter(),
+            exit = if (reducedMotion) fadeOut(tween(SweetMotion.ShortMillis)) else sweetFullScreenSheetExit(),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (val sheet = displayedSheet) {
+                SheetState.Hidden -> Unit
+                is SheetState.Add -> {
+                    TaskBottomSheet(
+                        date = sheet.date,
+                        existingTask = null,
+                        calendarSystem = calendarState.calendarSystem,
+                        onDismiss = { sheetState = SheetState.Hidden },
+                        onConfirm = { form ->
+                            viewModel.addTask(form)
+                            sheetState = SheetState.Hidden
+                            onTaskSaved(form)
+                            showSnackbar(themeFamily.taskAddedSnackbar)
+                        }
+                    )
+                }
+                is SheetState.Edit -> {
+                    val task = sheet.task
+                    val d = JalaliDate.parseIso(task.jalaliDate)
+                    TaskBottomSheet(
+                        date = d,
+                        existingTask = task,
+                        calendarSystem = calendarState.calendarSystem,
+                        onDismiss = { sheetState = SheetState.Hidden },
+                        onConfirm = { form ->
+                            viewModel.updateTask(task, form)
+                            sheetState = SheetState.Hidden
+                            overlay = OverlayState.TaskDetail(
+                                task.copy(
+                                    title = form.title,
+                                    notes = form.notes,
+                                    jalaliDate = form.jalaliDate.formatIso(),
+                                    reminderTime = form.reminderTime,
+                                    category = form.category,
+                                    priority = form.priority,
+                                    repeatWeekly = form.repeatWeekly
+                                ),
+                                returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
+                            )
+                            onTaskSaved(form)
+                            showSnackbar("Task updated!")
+                        }
+                    )
+                }
             }
-            is SheetState.Edit -> {
-                val task = sheet.task
-                val d = JalaliDate.parseIso(task.jalaliDate)
-                TaskBottomSheet(
-                    date = d,
-                    existingTask = task,
-                    calendarSystem = calendarState.calendarSystem,
-                    onDismiss = { sheetState = SheetState.Hidden },
-                    onConfirm = { form ->
-                        viewModel.updateTask(task, form)
-                        sheetState = SheetState.Hidden
-                        overlay = OverlayState.TaskDetail(
-                            task.copy(
-                                title = form.title,
-                                notes = form.notes,
-                                jalaliDate = form.jalaliDate.formatIso(),
-                                reminderTime = form.reminderTime,
-                                category = form.category,
-                                priority = form.priority,
-                                repeatWeekly = form.repeatWeekly
-                            ),
-                            returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                        )
-                        onTaskSaved(form)
-                        showSnackbar("Task updated!")
-                    }
-                )
-            }
-        }
         }
 
-    taskToDelete?.let { task ->
-        PixelConfirmDialog(
-            title = "Delete task?",
-            message = "Are you sure you want to delete \"${task.title}\"?",
-            confirmLabel = "Delete",
-            dismissLabel = "Keep",
-            onConfirm = {
-                viewModel.deleteTask(task)
-                taskToDelete = null
-                overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                recoverTask = task
-            },
-            onDismiss = { taskToDelete = null }
-        )
-    }
-
-    if (showCelebration) {
-        CompleteCelebrationDialog(onDismiss = { showCelebration = false })
-    }
+        taskToDelete?.let { task ->
+            PixelConfirmDialog(
+                title = "Delete task?",
+                message = "Are you sure you want to delete \"${task.title}\"?",
+                confirmLabel = "Delete",
+                dismissLabel = "Keep",
+                onConfirm = {
+                    viewModel.deleteTask(task)
+                    taskToDelete = null
+                    overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
+                    recoverTask = task
+                },
+                onDismiss = { taskToDelete = null }
+            )
         }
+
+        if (showCelebration) {
+            CompleteCelebrationDialog(onDismiss = { showCelebration = false })
+        }
+        }
+            }
+        }
+        }
+    }
     }
 }
