@@ -212,7 +212,7 @@ fun TaskBottomSheet(
                             fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(12f)
                         ),
-                        color = colors.pinkDeep,
+                        color = colors.pinkText,
                         modifier = Modifier.padding(top = mockupDp(4))
                     )
                 }
@@ -410,6 +410,7 @@ private fun PaperSurface(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(cornerRadius))
+                .border(mockupDp(1), colors.fieldOutline, RoundedCornerShape(cornerRadius))
                 .background(colors.paper)
         ) {
             content()
@@ -471,7 +472,7 @@ private fun SweetField(
         shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
         cornerRadius = radius,
         modifier = modifier.then(
-            if (isError) Modifier.border(mockupDp(1), colors.pinkDeep, RoundedCornerShape(radius)) else Modifier
+            if (isError) Modifier.border(mockupDp(1), colors.pinkText, RoundedCornerShape(radius)) else Modifier
         )
     ) {
         Row(
@@ -498,7 +499,7 @@ private fun SweetField(
                     singleLine = singleLine,
                     minLines = minLines,
                     textStyle = fieldTextStyle.copy(color = colors.ink),
-                    cursorBrush = SolidColor(colors.pink),
+                    cursorBrush = SolidColor(colors.pinkText),
                     modifier = Modifier.fillMaxWidth().weight(1f),
                     decorationBox = { inner ->
                         if (value.isEmpty() && placeholder.isNotEmpty()) {

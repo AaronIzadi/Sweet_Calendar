@@ -1,6 +1,7 @@
 package com.sweetcalendar.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -173,7 +174,7 @@ fun SettingsScreen(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(MockupDimens.SETTINGS_PROFILE_RADIUS)))
                     .background(ambientProfileCardColor())
-                    .clickable { showNameDialog = true }
+                    .clickable(onClick = onOpenStats)
                     .padding(mockupDp(16)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -192,6 +193,9 @@ fun SettingsScreen(
                     .padding(start = mockupDp(12))
             ) {
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showNameDialog = true },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
                 ) {
@@ -208,12 +212,17 @@ fun SettingsScreen(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    PenMiniIcon(
-                        size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
-                        color = colors.lemon,
-                        eraserColor = Color.White,
-                        tipColor = colors.cream,
-                    )
+                    Box(
+                        modifier = Modifier.size(mockupDp(28)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        PenMiniIcon(
+                            size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
+                            color = colors.lemon,
+                            eraserColor = Color.White,
+                            tipColor = colors.cream,
+                        )
+                    }
                 }
                 Text(
                     themeProfileStats(streak, candiesEarned),
@@ -224,7 +233,6 @@ fun SettingsScreen(
                         lineHeight = mockupSp(14f)
                     ),
                     color = Color.White.copy(alpha = 0.85f),
-                    modifier = Modifier.clickable(onClick = onOpenStats)
                 )
             }
             }
@@ -572,10 +580,11 @@ private fun NameEditDialog(
                             lineHeight = mockupSp(MockupDimens.PROFILE_NAME_INPUT_LINE),
                             color = colors.ink
                         ),
-                        cursorBrush = SolidColor(colors.pink),
+                        cursorBrush = SolidColor(colors.pinkText),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(fieldShape)
+                            .border(mockupDp(1), colors.fieldOutline, fieldShape)
                             .background(colors.paper)
                             .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
                         decorationBox = { inner ->

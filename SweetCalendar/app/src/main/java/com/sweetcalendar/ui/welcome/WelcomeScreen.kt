@@ -546,7 +546,7 @@ private fun WelcomePageDots(
         repeat(totalPages) { index ->
             val selected = index == currentPage
             val dotColor by animateColorAsState(
-                targetValue = if (selected) colors.pinkDeep else colors.line,
+                targetValue = if (selected) colors.pinkText else colors.line,
                 animationSpec = SweetMotion.shortTween(),
                 label = "welcome-dot-$index"
             )

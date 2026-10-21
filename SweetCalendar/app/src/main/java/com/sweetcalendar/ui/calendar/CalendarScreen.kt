@@ -408,7 +408,7 @@ private fun MonthDayCell(
         else -> colors.paper
     }
     val textColor = when {
-        isToday -> Color.White
+        isToday -> colors.onPink
         isSelected -> colors.purpleDeep
         else -> colors.ink
     }

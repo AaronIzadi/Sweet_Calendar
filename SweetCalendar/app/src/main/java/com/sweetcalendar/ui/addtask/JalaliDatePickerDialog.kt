@@ -47,7 +47,7 @@ fun JalaliDatePickerDialog(
         textContentColor = colors.ink,
         confirmButton = {
             TextButton(onClick = { onConfirm(selected) }) {
-                Text("OK", color = colors.pinkDeep)
+                Text("OK", color = colors.pinkText)
             }
         },
         dismissButton = {

@@ -131,12 +131,12 @@ fun TaskListScreen(
                     Text(
                         timeOfDayGreeting(),
                         style = MaterialTheme.typography.bodyLarge,
-                        color = colors.pink
+                        color = colors.pinkText
                     )
                     Text(
                         "Your tasks",
                         style = MaterialTheme.typography.headlineMedium,
-                        color = colors.pink
+                        color = colors.pinkText
                     )
                     Text(
                         today.formatIso() +
@@ -216,14 +216,14 @@ fun TaskListScreen(
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add task",
-                        tint = colors.paper,
+                        tint = colors.onPink,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(Modifier.size(8.dp))
                     Text(
                         "Add Task",
                         style = MaterialTheme.typography.titleSmall,
-                        color = colors.paper
+                        color = colors.onPink
                     )
                 }
             }
@@ -257,7 +257,7 @@ private fun SearchBar(
             onValueChange = onQueryChange,
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.ink),
-            cursorBrush = SolidColor(colors.pink),
+            cursorBrush = SolidColor(colors.pinkText),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
@@ -295,7 +295,11 @@ private fun FilterChips(
                 Text(
                     filter.label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isSelected) colors.paper else colors.ink
+                    color = when {
+                        isSelected -> colors.onPink
+                        filter == TaskFilter.Pending -> colors.chocDeep
+                        else -> colors.ink
+                    }
                 )
             }
         }

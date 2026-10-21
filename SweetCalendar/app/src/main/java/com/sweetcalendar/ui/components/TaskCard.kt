@@ -97,7 +97,7 @@ fun TaskCard(
                 Text(
                     date.day.toString(),
                     style = MaterialTheme.typography.titleLarge,
-                    color = colors.pink
+                    color = colors.pinkText
                 )
                 Text(
                     JalaliDate.MONTH_NAMES_EN[date.month - 1],

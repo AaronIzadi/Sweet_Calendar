@@ -49,7 +49,7 @@ fun GregorianDatePickerDialog(
         textContentColor = colors.ink,
         confirmButton = {
             TextButton(onClick = { onConfirm(selectedGregorian.toJalali()) }) {
-                Text("OK", color = colors.pinkDeep)
+                Text("OK", color = colors.pinkText)
             }
         },
         dismissButton = {

@@ -65,7 +65,7 @@ class AlarmActivity : ComponentActivity() {
                         Spacer(Modifier.height(mockupDp(80)))
                         ThemeAlarmHeroIcon(
                             size = mockupDp(72),
-                            color = colors.pink
+                            color = colors.pinkText
                         )
                         Spacer(Modifier.height(mockupDp(24)))
                         Text(

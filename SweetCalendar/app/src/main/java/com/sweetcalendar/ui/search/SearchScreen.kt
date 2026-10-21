@@ -127,7 +127,7 @@ fun SearchScreen(
                             fontSize = mockupSp(MockupDimens.SEARCH_TEXT),
                             color = colors.ink
                         ),
-                        cursorBrush = SolidColor(colors.pink),
+                        cursorBrush = SolidColor(colors.pinkText),
                         modifier = Modifier.fillMaxWidth(),
                         decorationBox = { inner ->
                             if (query.isEmpty()) {

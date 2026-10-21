@@ -57,7 +57,7 @@ private fun holidayTagStyle(isHoliday: Boolean): Pair<Color, Color> {
         if (isHoliday) colors.holidayBg to colors.mint
         else colors.streakBg to colors.purpleDeep
     } else {
-        if (isHoliday) HolidayTagHolidayBgLight to colors.mintDeep
+        if (isHoliday) HolidayTagHolidayBgLight to colors.mint
         else HolidayTagOccasionBgLight to colors.purpleDeep
     }
 }

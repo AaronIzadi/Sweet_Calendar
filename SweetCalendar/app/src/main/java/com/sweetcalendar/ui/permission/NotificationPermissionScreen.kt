@@ -52,7 +52,7 @@ fun NotificationPermissionScreen(
     ) {
         ThemeAlarmHeroIcon(
             size = mockupDp(MockupDimens.PERMISSION_BELL),
-            color = colors.pink
+            color = colors.pinkText
         )
         Spacer(Modifier.height(mockupDp(20)))
         Text(

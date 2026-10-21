@@ -146,7 +146,7 @@ fun SheetHeaderConfirmAction(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    textColor: Color = SweetTheme.colors.pinkDeep,
+    textColor: Color = SweetTheme.colors.pinkText,
     showCheckIcon: Boolean = true,
     enabled: Boolean = true,
 ) {

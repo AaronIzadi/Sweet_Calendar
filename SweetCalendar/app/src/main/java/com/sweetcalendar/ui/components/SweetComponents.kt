@@ -151,8 +151,8 @@ enum class TaskMetaStyle {
 
 @Composable
 fun TaskCategory.accentColor(): Color = when (this) {
-    TaskCategory.Personal -> SweetTheme.colors.pinkDeep
-    TaskCategory.Home -> SweetTheme.colors.mintDeep
+    TaskCategory.Personal -> SweetTheme.colors.pinkText
+    TaskCategory.Home -> SweetTheme.colors.mint
     TaskCategory.Work -> SweetTheme.colors.purpleDeep
 }
 
@@ -976,7 +976,7 @@ private fun NavItem(
                 lineHeight = mockupSp(14f)
             ),
             color = if (selected) {
-                if (colors.isDark) colors.pink else colors.pinkDeep
+                if (colors.isDark) colors.pink else colors.pinkText
             } else {
                 colors.navInactive
             },
@@ -1104,7 +1104,7 @@ fun SweetBigSaveButton(
                     lineHeight = mockupSp(15f),
                     textAlign = TextAlign.Center
                 ),
-                color = Color.White,
+                color = colors.onPink,
                 modifier = Modifier.fillMaxWidth()
             )
         }

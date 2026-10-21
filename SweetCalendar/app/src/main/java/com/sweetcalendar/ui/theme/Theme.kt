@@ -26,6 +26,12 @@ data class SweetColors(
     val surfaceInset: Color,
     val pink: Color,
     val pinkDeep: Color,
+    /** Pink for small text/thin icons; defaults to [pinkDeep] where that already has enough contrast. */
+    val pinkText: Color,
+    /** Text and icons on [pink] / [pinkDeep] button fills. */
+    val onPink: Color,
+    /** Form fields and other outlines that must read clearly on [cream]. */
+    val fieldOutline: Color,
     val purple: Color,
     val purpleDeep: Color,
     val mint: Color,
@@ -48,10 +54,12 @@ val LocalSweetColors = staticCompositionLocalOf {
         cream = Cream, paper = Paper, surfaceElevated = Paper, ink = Ink, line = Line,
         shadow = CandyShadow, shadowDeep = CandyShadowDeep,
         bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
-        pink = Pink, pinkDeep = PinkDeep, purple = Purple, purpleDeep = PurpleDeep,
+        pink = Pink, pinkDeep = PinkDeep,
+        pinkText = PinkText, onPink = Ink, fieldOutline = CandyFieldOutline,
+        purple = Purple, purpleDeep = PurpleDeep,
         mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
         choc = Choc, chocDeep = ChocDeep, muted = Choc,
-        navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
+        navInactive = Color(0xFF86705E), navActiveBg = Color(0xFFFFE6EF),
         weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
         streakBg = Color(0xFFEAD3C4), isDark = false,
     )
@@ -63,10 +71,12 @@ private val LightCandyColors = SweetColors(
     cream = Cream, paper = Paper, surfaceElevated = Paper, ink = Ink, line = Line,
     shadow = CandyShadow, shadowDeep = CandyShadowDeep,
     bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
-    pink = Pink, pinkDeep = PinkDeep, purple = Purple, purpleDeep = PurpleDeep,
+    pink = Pink, pinkDeep = PinkDeep,
+    pinkText = PinkText, onPink = Ink, fieldOutline = CandyFieldOutline,
+    purple = Purple, purpleDeep = PurpleDeep,
     mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
     choc = Choc, chocDeep = ChocDeep, muted = Choc,
-    navInactive = Color(0xFFB7A493), navActiveBg = Color(0xFFFFE6EF),
+    navInactive = Color(0xFF86705E), navActiveBg = Color(0xFFFFE6EF),
     weekendBg = Color(0xFFEAD3C4), holidayBg = Color(0xFFD7EEDF),
     streakBg = Color(0xFFEAD3C4), isDark = false,
 )
@@ -77,7 +87,9 @@ private val DarkCandyColors = SweetColors(
     shadow = DarkShadow, shadowDeep = DarkShadowDeep,
     bannerBg = CandyBannerBgDark, surfaceInset = CandyBannerBgDark,
     // Accents stay candy-bright; neutrals carry depth (mockup `body.dark`).
-    pink = Color(0xFFFF8CBE), pinkDeep = Pink, purple = Color(0xFFB79BEB),
+    pink = Color(0xFFFF8CBE), pinkDeep = Pink,
+    pinkText = Pink, onPink = DarkInk, fieldOutline = DarkLine,
+    purple = Color(0xFFB79BEB),
     purpleDeep = Color(0xFFD4C2FA), mint = Color(0xFF6FE0B4), mintDeep = Color(0xFF4FD9A0),
     lemon = Color(0xFFFFDB70), lemonDeep = Color(0xFFFFC93C),
     choc = Color(0xFFD8B08A), chocDeep = Color(0xFFEFD3AE),
@@ -91,7 +103,9 @@ private val LightSpaceColors = SweetColors(
     ink = SpaceInk, line = SpaceLine,
     shadow = SpaceShadow, shadowDeep = SpaceShadowDeep,
     bannerBg = Color(0xFFE7D5C5), surfaceInset = Color(0xFFF1E9FB),
-    pink = SpacePink, pinkDeep = SpacePinkDeep, purple = SpacePurple, purpleDeep = SpacePurpleDeep,
+    pink = SpacePink, pinkDeep = SpacePinkDeep,
+    pinkText = SpacePinkText, onPink = SpaceInk, fieldOutline = SpaceFieldOutline,
+    purple = SpacePurple, purpleDeep = SpacePurpleDeep,
     mint = SpaceMint, mintDeep = SpaceMintDeep, lemon = SpaceLemon, lemonDeep = SpaceLemonDeep,
     choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceChocDeep,
     navInactive = SpaceNavInactive, navActiveBg = SpaceNavActiveBg,
@@ -104,7 +118,9 @@ private val DarkSpaceColors = SweetColors(
     ink = SpaceDarkInk, line = SpaceDarkLine,
     shadow = SpaceDarkShadow, shadowDeep = SpaceDarkShadowDeep,
     bannerBg = Color(0xFF433B62), surfaceInset = Color(0xFF3A2C4C),
-    pink = SpaceDarkPink, pinkDeep = SpaceDarkPinkDeep, purple = SpaceDarkPurple,
+    pink = SpaceDarkPink, pinkDeep = SpaceDarkPinkDeep,
+    pinkText = Color(0xFFFF9FD4), onPink = SpaceDarkInk, fieldOutline = SpaceDarkLine,
+    purple = SpaceDarkPurple,
     purpleDeep = SpaceDarkPurpleDeep, mint = SpaceDarkMint, mintDeep = SpaceDarkMintDeep,
     lemon = SpaceDarkLemon, lemonDeep = SpaceDarkLemonDeep,
     choc = SpaceDarkChoc, chocDeep = SpaceDarkChocDeep, muted = SpaceDarkMuted,
@@ -115,7 +131,7 @@ private val DarkSpaceColors = SweetColors(
 
 private val LightCandyScheme = lightColorScheme(
     primary = Pink,
-    onPrimary = Color.White,
+    onPrimary = Ink,
     primaryContainer = PinkDeep,
     secondary = Purple,
     onSecondary = Color.White,
@@ -147,7 +163,7 @@ private val DarkCandyScheme = darkColorScheme(
 
 private val LightSpaceScheme = lightColorScheme(
     primary = SpacePink,
-    onPrimary = Color.White,
+    onPrimary = SpaceInk,
     primaryContainer = SpacePinkDeep,
     secondary = SpacePurple,
     onSecondary = Color.White,

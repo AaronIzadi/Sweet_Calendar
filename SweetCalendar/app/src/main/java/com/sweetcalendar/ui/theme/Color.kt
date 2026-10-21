@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.Color
 val Cream = Color(0xFFFFF6EA)
 val Pink = Color(0xFFFF6FA5)
 val PinkDeep = Color(0xFFE0487F)
+/** Pink for small text and thin icons on light surfaces (>= 4.5:1 on Cream/Paper). Use [Pink]/[PinkDeep] for fills. */
+val PinkText = Color(0xFFC42F63)
 val Purple = Color(0xFF7B5EA7)
 val PurpleDeep = Color(0xFF5B3F82)
 val Mint = Color(0xFF7FDCB8)
@@ -30,6 +32,8 @@ val SpaceInk = Color(0xFF2B2450)
 val SpaceLine = Color(0xFFDAD9F5)
 val SpacePink = Color(0xFFFF7FD1)
 val SpacePinkDeep = Color(0xFFD63F9E)
+/** Small-text pink for the light Space theme (>= 4.5:1 on SpaceCream/SpacePaper). */
+val SpacePinkText = Color(0xFFB02C82)
 val SpacePurple = Color(0xFF8B6FEF)
 val SpacePurpleDeep = Color(0xFF6B4FD6)
 val SpaceMint = Color(0xFF4FD8D2)
@@ -38,8 +42,8 @@ val SpaceLemon = Color(0xFFFFCB4D)
 val SpaceLemonDeep = Color(0xFFDE9F14)
 val SpaceChoc = Color(0xFF9089B0)
 val SpaceChocDeep = Color(0xFF5C5678)
-val SpaceMuted = Color(0xFF7A72B0)
-val SpaceNavInactive = Color(0xFFA7A0D9)
+val SpaceMuted = Color(0xFF6A62A3)
+val SpaceNavInactive = Color(0xFF7D75C4)
 val SpaceNavActiveBg = Color(0xFFF3E4FA)
 
 val SpaceDarkCream = Color(0xFF141833)
@@ -57,7 +61,7 @@ val SpaceDarkLemonDeep = Color(0xFFF0B429)
 val SpaceDarkChoc = Color(0xFF9A93B8)
 val SpaceDarkChocDeep = Color(0xFFC9C4E0)
 val SpaceDarkMuted = Color(0xFF9C97D9)
-val SpaceDarkNavInactive = Color(0xFF5C5A9A)
+val SpaceDarkNavInactive = Color(0xFF7F7DBF)
 val SpaceDarkNavActiveBg = Color(0xFF2A2F72)
 
 // Dark mode — "midnight candy shop"
@@ -74,7 +78,7 @@ val DarkLine = Color(0xFF40314F)
 val DarkShadow = Color(0xFF1E1628)
 val DarkShadowDeep = Color(0xFF120C1A)
 val DarkMuted = Color(0xFFB3A0C9)
-val DarkNavInactive = Color(0xFF7A6A94)
+val DarkNavInactive = Color(0xFF8D7DA8)
 val DarkNavActiveBg = Color(0xFF472F52)
 
 /** Candy light pixel shadow (tan, mockup `--line` under cards). */
@@ -82,6 +86,9 @@ val CandyShadow = Line
 val CandyShadowDeep = ChocDeep
 val CandyBannerBgLight = Color(0xFFFFF1DC)
 val CandySurfaceInsetLight = Color(0xFFFBEDE3)
+/** Visible form field outline on [Cream] (stronger than [Line]). */
+val CandyFieldOutline = Color(0xFFC9A882)
+val SpaceFieldOutline = Color(0xFFB0A8D0)
 val CandyBannerBgDark = Color(0xFF3A2A22)
 
 val SpaceShadow = SpaceLine
