@@ -1070,7 +1070,7 @@ fun SweetPixelButton(
     }
 }
 
-/** Full-width pink CTA matching mockup `.big-save-btn` on the add-task screen. */
+/** Full-width primary CTA on the add-task screen (purple stack, same family as [SweetPixelButton]). */
 @Composable
 fun SweetBigSaveButton(
     text: String,
@@ -1079,19 +1079,20 @@ fun SweetBigSaveButton(
 ) {
     val colors = SweetTheme.colors
     val radius = mockupDp(MockupDimens.BIG_SAVE_RADIUS)
+    val shadowColor = if (colors.isDark) colors.shadowDeep else colors.purpleDeep
     Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(y = mockupDp(MockupDimens.BIG_SAVE_SHADOW))
                 .clip(RoundedCornerShape(radius))
-                .background(colors.pinkDeep)
+                .background(shadowColor)
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
-                .background(colors.pink)
+                .background(colors.purple)
                 .clickable(onClick = onClick)
                 .padding(mockupDp(16)),
             contentAlignment = Alignment.Center
@@ -1104,7 +1105,7 @@ fun SweetBigSaveButton(
                     lineHeight = mockupSp(15f),
                     textAlign = TextAlign.Center
                 ),
-                color = colors.onPink,
+                color = Color.White,
                 modifier = Modifier.fillMaxWidth()
             )
         }

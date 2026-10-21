@@ -25,6 +25,14 @@ Full-screen or hero areas that used gradients now use **fixed** mid-tone solids 
 
 Same roles with `Space*` / `SpaceDark*` values. Dark shadows: `#0B0E24` / `#060812`.
 
+## Semantic accents
+
+| Token | Role |
+|-------|------|
+| `purple` / `purpleDeep` | Primary CTAs (`SweetPixelButton`, `SweetBigSaveButton`), dismiss actions in sheets (`CLOSE`) |
+| `confirmAccent` | Affirmative text actions (`SAVE`, `OK`, check icon) — mint tone, not pink-red |
+| `pinkText` | Focus rings, cursors, category personal, decorative pink labels |
+
 ## In UI code
 
 - Pixel stack: `Box` with `offset(y)` + `colors.shadow`, then face with `colors.paper`.

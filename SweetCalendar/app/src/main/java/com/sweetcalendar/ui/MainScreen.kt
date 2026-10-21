@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -160,7 +161,7 @@ fun MainScreen(
 
     LaunchedEffect(recoverTask?.id) {
         val task = recoverTask ?: return@LaunchedEffect
-        delay(4000)
+        delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
         if (recoverTask?.id == task.id) {
             recoverTask = null
         }
@@ -268,13 +269,34 @@ fun MainScreen(
         Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             snackbarHost = {
-                SnackbarHost(snackbarHostState) { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        containerColor = if (colors.isDark) colors.bannerBg else colors.chocDeep,
-                        contentColor = colors.cream,
-                        actionColor = colors.lemon
-                    )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    val snackbarBottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM)
+                    SnackbarHost(
+                        hostState = snackbarHostState,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = snackbarBottom),
+                    ) { data ->
+                        Snackbar(
+                            snackbarData = data,
+                            containerColor = if (colors.isDark) colors.bannerBg else colors.chocDeep,
+                            contentColor = colors.cream,
+                            actionColor = colors.lemon
+                        )
+                    }
+                    recoverTask?.let { task ->
+                        SweetRecoverSnackbar(
+                            message = "\"${task.title}\" deleted",
+                            visible = true,
+                            onRecover = {
+                                viewModel.restoreTask(task)
+                                recoverTask = null
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .padding(bottom = snackbarBottom),
+                        )
+                    }
                 }
             },
             containerColor = colors.cream,
@@ -500,19 +522,6 @@ fun MainScreen(
                     )
                 }
 
-                recoverTask?.let { task ->
-                    SweetRecoverSnackbar(
-                        message = "\"${task.title}\" deleted",
-                        visible = true,
-                        onRecover = {
-                            viewModel.restoreTask(task)
-                            recoverTask = null
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = if (showMainChrome) mockupDp(88) else mockupDp(MockupDimens.SNACKBAR_BOTTOM))
-                    )
-                }
             }
         }
 

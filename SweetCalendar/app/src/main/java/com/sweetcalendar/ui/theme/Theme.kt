@@ -32,6 +32,8 @@ data class SweetColors(
     val onPink: Color,
     /** Form fields and other outlines that must read clearly on [cream]. */
     val fieldOutline: Color,
+    /** Affirmative actions (SAVE, OK) — mint success; kept away from error-like pink-red. */
+    val confirmAccent: Color,
     val purple: Color,
     val purpleDeep: Color,
     val mint: Color,
@@ -56,6 +58,7 @@ val LocalSweetColors = staticCompositionLocalOf {
         bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
         pink = Pink, pinkDeep = PinkDeep,
         pinkText = PinkText, onPink = Ink, fieldOutline = CandyFieldOutline,
+        confirmAccent = MintDeep,
         purple = Purple, purpleDeep = PurpleDeep,
         mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
         choc = Choc, chocDeep = ChocDeep, muted = Choc,
@@ -73,6 +76,7 @@ private val LightCandyColors = SweetColors(
     bannerBg = CandyBannerBgLight, surfaceInset = CandySurfaceInsetLight,
     pink = Pink, pinkDeep = PinkDeep,
     pinkText = PinkText, onPink = Ink, fieldOutline = CandyFieldOutline,
+    confirmAccent = MintDeep,
     purple = Purple, purpleDeep = PurpleDeep,
     mint = Mint, mintDeep = MintDeep, lemon = Lemon, lemonDeep = LemonDeep,
     choc = Choc, chocDeep = ChocDeep, muted = Choc,
@@ -89,6 +93,7 @@ private val DarkCandyColors = SweetColors(
     // Accents stay candy-bright; neutrals carry depth (mockup `body.dark`).
     pink = Color(0xFFFF8CBE), pinkDeep = Pink,
     pinkText = Pink, onPink = DarkInk, fieldOutline = DarkLine,
+    confirmAccent = Color(0xFF6FE8B8),
     purple = Color(0xFFB79BEB),
     purpleDeep = Color(0xFFD4C2FA), mint = Color(0xFF6FE0B4), mintDeep = Color(0xFF4FD9A0),
     lemon = Color(0xFFFFDB70), lemonDeep = Color(0xFFFFC93C),
@@ -105,6 +110,7 @@ private val LightSpaceColors = SweetColors(
     bannerBg = Color(0xFFE7D5C5), surfaceInset = Color(0xFFF1E9FB),
     pink = SpacePink, pinkDeep = SpacePinkDeep,
     pinkText = SpacePinkText, onPink = SpaceInk, fieldOutline = SpaceFieldOutline,
+    confirmAccent = SpaceMintDeep,
     purple = SpacePurple, purpleDeep = SpacePurpleDeep,
     mint = SpaceMint, mintDeep = SpaceMintDeep, lemon = SpaceLemon, lemonDeep = SpaceLemonDeep,
     choc = SpaceChoc, chocDeep = SpaceChocDeep, muted = SpaceChocDeep,
@@ -120,6 +126,7 @@ private val DarkSpaceColors = SweetColors(
     bannerBg = Color(0xFF433B62), surfaceInset = Color(0xFF3A2C4C),
     pink = SpaceDarkPink, pinkDeep = SpaceDarkPinkDeep,
     pinkText = Color(0xFFFF9FD4), onPink = SpaceDarkInk, fieldOutline = SpaceDarkLine,
+    confirmAccent = SpaceDarkMintDeep,
     purple = SpaceDarkPurple,
     purpleDeep = SpaceDarkPurpleDeep, mint = SpaceDarkMint, mintDeep = SpaceDarkMintDeep,
     lemon = SpaceDarkLemon, lemonDeep = SpaceDarkLemonDeep,

@@ -176,7 +176,7 @@ fun RecoverSnackbarScreen(
                     .padding(bottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM))
             )
             LaunchedEffect(pending) {
-                delay(4000)
+                delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
                 if (pendingRecover == pending) {
                     when (pending) {
                         is PendingRecover.PermanentDelete -> onPermanentDelete(pending.task)

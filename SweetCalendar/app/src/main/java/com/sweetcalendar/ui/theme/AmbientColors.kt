@@ -7,15 +7,16 @@ import androidx.compose.ui.graphics.Color
  * Fixed washes between light and dark theme backgrounds — do not flip with dark mode.
  */
 object AmbientColors {
-    val CandyWelcome = Color(0xFF8A7D96)
-    val CandyWelcomeAltA = Color(0xFF8B858F)
-    val CandyWelcomeAltB = Color(0xFF8A8090)
+    // Pastel washes — mockup welcome gradient (#FFE1EE → #F3E3FB → #E3F7EE), not mid-tone gray
+    val CandyWelcome = Color(0xFFFFE8F2)
+    val CandyWelcomeAltA = Color(0xFFF3E8FB)
+    val CandyWelcomeAltB = Color(0xFFE5F7EE)
     val CandyPermission = Color(0xFF8A7D96)
     val CandyHolidayHero = Color(0xFF7A8F8A)
     val CandyJarFill = Color(0xFFBC8FB0)
     val CandyProfileCard = Color(0xFFAD6FA6)
 
-    val SpaceWelcome = Color(0xFF7278A0)
+    val SpaceWelcome = Color(0xFFEAF0FF)
     val SpacePermission = Color(0xFF7278A0)
     val SpaceHolidayHero = Color(0xFF6B7A8F)
     val SpaceJarFill = Color(0xFFA88FBC)

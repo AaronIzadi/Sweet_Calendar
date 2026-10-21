@@ -193,11 +193,9 @@ fun SettingsScreen(
                     .padding(start = mockupDp(12))
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showNameDialog = true },
+                    modifier = Modifier.clickable { showNameDialog = true },
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(4))
                 ) {
                     Text(
                         userName,
@@ -210,19 +208,13 @@ fun SettingsScreen(
                         color = Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    Box(
-                        modifier = Modifier.size(mockupDp(28)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        PenMiniIcon(
-                            size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
-                            color = colors.lemon,
-                            eraserColor = Color.White,
-                            tipColor = colors.cream,
-                        )
-                    }
+                    PenMiniIcon(
+                        size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
+                        color = colors.lemon,
+                        eraserColor = Color.White,
+                        tipColor = colors.cream,
+                    )
                 }
                 Text(
                     themeProfileStats(streak, candiesEarned),
