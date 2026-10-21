@@ -2,12 +2,11 @@ package com.sweetcalendar.ui.welcome
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.sweetcalendar.ui.components.RingPlanetIcon
 import com.sweetcalendar.ui.components.StarIcon
 import com.sweetcalendar.ui.components.SweetPixelButton
@@ -64,6 +64,7 @@ import com.sweetcalendar.ui.components.ThemeWelcomeDecoTopEnd
 import com.sweetcalendar.ui.components.ThemeDecorBackground
 import com.sweetcalendar.ui.components.ThemeWelcomeDecoTopStart
 import com.sweetcalendar.ui.components.wobbleOnTap
+import com.sweetcalendar.ui.motion.floating
 import com.sweetcalendar.ui.components.NavPeppermintIcon
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
@@ -74,7 +75,6 @@ import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.ambientWelcomeColor
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-import com.sweetcalendar.ui.navigation.sweetScreenTransition
 import com.sweetcalendar.ui.theme.rememberReducedMotion
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -122,6 +122,8 @@ fun WelcomeScreen(
     val isLastPage = currentPage == welcomeSlides.lastIndex
     var entranceReady by remember { mutableStateOf(reducedMotion) }
     var footerVisible by remember { mutableStateOf(reducedMotion) }
+    var hasCompletedFirstSlideEntrance by remember { mutableStateOf(reducedMotion) }
+    var hasPlayedFirstSlideFooterDelay by remember { mutableStateOf(reducedMotion) }
     LaunchedEffect(Unit) {
         if (!reducedMotion) {
             entranceReady = true
@@ -132,9 +134,10 @@ fun WelcomeScreen(
             footerVisible = true
             return@LaunchedEffect
         }
-        if (currentPage == 0 && entranceReady) {
+        if (currentPage == 0 && entranceReady && !hasPlayedFirstSlideFooterDelay) {
             footerVisible = false
             delay(720)
+            hasPlayedFirstSlideFooterDelay = true
             footerVisible = true
         } else {
             footerVisible = true
@@ -150,45 +153,16 @@ fun WelcomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        WelcomeAnimatedBackground(pageIndex = currentPage, reducedMotion = reducedMotion)
+    BackHandler(enabled = currentPage > 0) {
+        goToPage(currentPage - 1)
+    }
 
-        if (currentPage > 0) {
-            WelcomePixelBackButton(
-                onClick = { goToPage(currentPage - 1) },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = mockupDp(20), top = mockupDp(24))
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = mockupDp(20), top = mockupDp(24))
-                    .alpha(0.85f)
-                    .wobbleOnTap(),
-            ) {
-                ThemeWelcomeDecoTopStart(size = mockupDp(MockupDimens.DECO_ICON))
-            }
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = mockupDp(22), top = mockupDp(36))
-                .alpha(0.85f)
-                .wobbleOnTap(),
-        ) {
-            ThemeWelcomeDecoTopEnd(size = mockupDp(MockupDimens.DECO_ICON_SMALL))
-        }
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = mockupDp(18), bottom = mockupDp(170))
-                .alpha(0.85f)
-                .wobbleOnTap(),
-        ) {
-            ThemeWelcomeDecoBottomStart(size = mockupDp(MockupDimens.DECO_ICON))
-        }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(colors.cream),
+    ) {
+        WelcomeAnimatedBackground(pageIndex = currentPage, reducedMotion = reducedMotion)
 
         Column(
             modifier = Modifier
@@ -204,22 +178,19 @@ fun WelcomeScreen(
                 userScrollEnabled = !reducedMotion
             ) { page ->
                 val slide = welcomeSlides[page]
-                val showEntrance = page == 0 && entranceReady && !reducedMotion
-                AnimatedVisibility(
-                    visible = reducedMotion || page != 0 || entranceReady,
-                    enter = if (reducedMotion) {
-                        fadeIn(SweetMotion.shortTween())
-                    } else {
-                        fadeIn(SweetMotion.mediumTween()) +
-                            slideInVertically(SweetMotion.mediumTween()) { fullHeight -> fullHeight / 10 }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) {
+                val playStaggeredEntrance =
+                    page == 0 && entranceReady && !reducedMotion && !hasCompletedFirstSlideEntrance
+                val showPage = reducedMotion || page != 0 || entranceReady
+                if (showPage) {
                     WelcomeSlideContent(
                         slide = slide,
                         tagColor = tagColor,
-                        heroEntrance = showEntrance,
-                        reducedMotion = reducedMotion
+                        playStaggeredEntrance = playStaggeredEntrance,
+                        reducedMotion = reducedMotion,
+                        onStaggeredEntranceComplete = {
+                            hasCompletedFirstSlideEntrance = true
+                        },
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
@@ -247,7 +218,7 @@ fun WelcomeScreen(
                             fontFamily = BodyFont,
                             fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(MockupDimens.SKIP_LINK),
-                            lineHeight = mockupSp(16f)
+                            lineHeight = mockupSp(MockupDimens.SKIP_LINK_LINE),
                         ),
                         color = colors.purpleDeep,
                         textDecoration = TextDecoration.Underline,
@@ -262,50 +233,73 @@ fun WelcomeScreen(
                 onPageSelected = { goToPage(it) }
             )
         }
+
+        // Above the full-screen pager so BACK and corner decos receive taps.
+        if (currentPage > 0) {
+            WelcomePixelBackButton(
+                onClick = { goToPage(currentPage - 1) },
+                modifier = Modifier
+                    .zIndex(1f)
+                    .align(Alignment.TopStart)
+                    .padding(start = mockupDp(20), top = mockupDp(24))
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .zIndex(1f)
+                    .align(Alignment.TopStart)
+                    .padding(start = mockupDp(20), top = mockupDp(24))
+                    .alpha(0.85f)
+                    .wobbleOnTap(),
+            ) {
+                ThemeWelcomeDecoTopStart(
+                    size = mockupDp(MockupDimens.DECO_ICON),
+                    modifier = Modifier.floating(phaseMillis = 0),
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .zIndex(1f)
+                .align(Alignment.TopEnd)
+                .padding(end = mockupDp(22), top = mockupDp(36))
+                .alpha(0.85f)
+                .wobbleOnTap(),
+        ) {
+            ThemeWelcomeDecoTopEnd(
+                size = mockupDp(MockupDimens.DECO_ICON_SMALL),
+                modifier = Modifier.floating(phaseMillis = 400),
+            )
+        }
+        Box(
+            modifier = Modifier
+                .zIndex(1f)
+                .align(Alignment.BottomStart)
+                .padding(start = mockupDp(18), bottom = mockupDp(170))
+                .alpha(0.85f)
+                .wobbleOnTap(),
+        ) {
+            ThemeWelcomeDecoBottomStart(
+                size = mockupDp(MockupDimens.DECO_ICON),
+                modifier = Modifier.floating(phaseMillis = 800),
+            )
+        }
     }
 }
 
 @Composable
 private fun WelcomeAnimatedBackground(pageIndex: Int, reducedMotion: Boolean) {
-    if (reducedMotion) {
-        Box(Modifier.fillMaxSize()) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(ambientWelcomeColor(pageIndex))
-            )
-            ThemeDecorBackground(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.35f),
-            )
-        }
-    } else {
-        AnimatedContent(
-            targetState = pageIndex,
-            transitionSpec = {
-                if (reducedMotion) {
-                    fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
-                } else {
-                    sweetScreenTransition(fromDepth = 0, toDepth = 0, tabDirection = 1)
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-            label = "welcome-bg"
-        ) { index ->
-            Box(Modifier.fillMaxSize()) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(ambientWelcomeColor(index))
-                )
-                ThemeDecorBackground(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .alpha(0.42f),
-                )
-            }
-        }
+    val bgColor by animateColorAsState(
+        targetValue = ambientWelcomeColor(pageIndex),
+        animationSpec = if (reducedMotion) SweetMotion.shortTween() else SweetMotion.mediumTween(),
+        label = "welcomeBg",
+    )
+    Box(Modifier.fillMaxSize().background(bgColor)) {
+        ThemeDecorBackground(
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(if (reducedMotion) 0.35f else 0.42f),
+        )
     }
 }
 
@@ -313,15 +307,17 @@ private fun WelcomeAnimatedBackground(pageIndex: Int, reducedMotion: Boolean) {
 private fun WelcomeSlideContent(
     slide: WelcomeSlide,
     tagColor: Color,
-    heroEntrance: Boolean,
-    reducedMotion: Boolean
+    playStaggeredEntrance: Boolean,
+    reducedMotion: Boolean,
+    onStaggeredEntranceComplete: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = SweetTheme.colors
-    var entranceStage by remember(heroEntrance) {
-        mutableIntStateOf(if (!heroEntrance || reducedMotion) 3 else 0)
+    var entranceStage by remember {
+        mutableIntStateOf(if (reducedMotion || !playStaggeredEntrance) 3 else 0)
     }
-    LaunchedEffect(heroEntrance, reducedMotion) {
-        if (!heroEntrance || reducedMotion) {
+    LaunchedEffect(playStaggeredEntrance, reducedMotion) {
+        if (!playStaggeredEntrance || reducedMotion) {
             entranceStage = 3
             return@LaunchedEffect
         }
@@ -330,13 +326,13 @@ private fun WelcomeSlideContent(
         entranceStage = 2
         delay(220)
         entranceStage = 3
+        onStaggeredEntranceComplete()
     }
     val slideEnter = fadeIn(SweetMotion.mediumTween()) +
         slideInVertically(SweetMotion.mediumTween()) { fullHeight -> fullHeight / 12 }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .padding(horizontal = mockupDp(4)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -351,7 +347,7 @@ private fun WelcomeSlideContent(
                     style = TextStyle(
                         fontFamily = PixelFont,
                         fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
-                        lineHeight = mockupSp(29f)
+                        lineHeight = mockupSp(MockupDimens.WELCOME_TITLE_LINE),
                     ),
                     color = colors.pinkDeep,
                     textAlign = TextAlign.Center,
@@ -359,12 +355,13 @@ private fun WelcomeSlideContent(
                     maxLines = 1,
                     modifier = Modifier.widthIn(max = 220.dp)
                 )
+                Spacer(Modifier.height(mockupDp(MockupDimens.WELCOME_TITLE_GAP)))
                 Text(
                     slide.bottomTitle,
                     style = TextStyle(
                         fontFamily = PixelFont,
                         fontSize = mockupSp(MockupDimens.WELCOME_TITLE),
-                        lineHeight = mockupSp(29f)
+                        lineHeight = mockupSp(MockupDimens.WELCOME_TITLE_LINE),
                     ),
                     color = colors.purpleDeep,
                     textAlign = TextAlign.Center,
@@ -372,14 +369,14 @@ private fun WelcomeSlideContent(
                     maxLines = 1,
                     modifier = Modifier.widthIn(max = 220.dp)
                 )
-                Spacer(Modifier.height(mockupDp(8)))
+                Spacer(Modifier.height(mockupDp(14)))
                 Text(
                     slide.subtitle,
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = SecondaryTextWeight,
                         fontSize = mockupSp(MockupDimens.WELCOME_TAG),
-                        lineHeight = mockupSp(19.5f)
+                        lineHeight = mockupSp(MockupDimens.WELCOME_TAG_LINE),
                     ),
                     color = tagColor,
                     textAlign = TextAlign.Center,
@@ -526,7 +523,8 @@ private fun WelcomeFeatureChip(
                 label,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.FEAT_CHIP_TEXT_F)
+                    fontSize = mockupSp(MockupDimens.FEAT_CHIP_TEXT_F),
+                    lineHeight = mockupSp(18f),
                 ),
                 color = colors.ink
             )

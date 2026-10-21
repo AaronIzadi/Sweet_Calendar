@@ -210,7 +210,9 @@ fun SettingsScreen(
                     )
                     PenMiniIcon(
                         size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
-                        color = Color.White
+                        color = colors.lemon,
+                        eraserColor = Color.White,
+                        tipColor = colors.cream,
                     )
                 }
                 Text(
@@ -523,7 +525,12 @@ private fun NameEditDialog(
                 color = colors.ink,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(sheetDialogTitlePaddingModifier()),
+                    .padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        top = mockupDp(16),
+                        bottom = mockupDp(2),
+                    ),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
 
@@ -531,21 +538,20 @@ private fun NameEditDialog(
                 modifier = Modifier.padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
-                    top = mockupDp(8),
+                    top = mockupDp(0),
                     bottom = mockupDp(8)
                 )
             ) {
                 Text(
-                    "NAME",
+                    "Name",
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = FontWeight.Bold,
-                        fontSize = mockupSp(MockupDimens.FIELD_LABEL),
-                        letterSpacing = mockupSp(0.3f),
-                        lineHeight = mockupSp(14f)
+                        fontSize = mockupSp(MockupDimens.PROFILE_NAME_LABEL_F),
+                        lineHeight = mockupSp(MockupDimens.PROFILE_NAME_LABEL_LINE),
                     ),
-                    color = settingsFieldLabelColor(),
-                    modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(6))
+                    color = colors.ink,
+                    modifier = Modifier.padding(top = mockupDp(4), bottom = mockupDp(8))
                 )
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Box(
@@ -562,8 +568,8 @@ private fun NameEditDialog(
                         textStyle = TextStyle(
                             fontFamily = BodyFont,
                             fontWeight = SecondaryTextWeight,
-                            fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
-                            lineHeight = mockupSp(18f),
+                            fontSize = mockupSp(MockupDimens.PROFILE_NAME_INPUT_F),
+                            lineHeight = mockupSp(MockupDimens.PROFILE_NAME_INPUT_LINE),
                             color = colors.ink
                         ),
                         cursorBrush = SolidColor(colors.pink),
@@ -579,8 +585,8 @@ private fun NameEditDialog(
                                     style = TextStyle(
                                         fontFamily = BodyFont,
                                         fontWeight = SecondaryTextWeight,
-                                        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
-                                        lineHeight = mockupSp(18f)
+                                        fontSize = mockupSp(MockupDimens.PROFILE_NAME_INPUT_F),
+                                        lineHeight = mockupSp(MockupDimens.PROFILE_NAME_INPUT_LINE),
                                     ),
                                     color = settingsFieldPlaceholderColor()
                                 )

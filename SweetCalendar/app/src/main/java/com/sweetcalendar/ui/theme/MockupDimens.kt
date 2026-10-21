@@ -14,10 +14,14 @@ object MockupDimens {
     const val DECO_ICON_SMALL = 24
     const val FEAT_CHIP_ICON = 16
     const val WELCOME_TITLE = 18
+    const val WELCOME_TITLE_LINE = 30f
+    const val WELCOME_TITLE_GAP = 10
     const val WELCOME_TAG = 14
+    const val WELCOME_TAG_LINE = 24f
     const val FEAT_CHIP_TEXT = 12
     const val FEAT_CHIP_TEXT_F = 12f
     const val SKIP_LINK = 12
+    const val SKIP_LINK_LINE = 18f
     const val PAGE_DOT = 7
 
     // Today
@@ -92,13 +96,20 @@ object MockupDimens {
     const val PRIORITY_CHIP_MIN_H = 48
 
     // Add / Edit task
-    const val SHEET_HEADER_BTN = 12
-    const val SHEET_HEADER_BTN_LINE = 14f
-    const val SHEET_HEADER_ICON = 11
+    const val SHEET_HEADER_BTN = 10
+    const val SHEET_HEADER_BTN_LINE = 12f
+    const val SHEET_HEADER_ICON = 12
+    const val SHEET_HEADER_BTN_V_PAD = 2
+    const val SHEET_HEADER_BTN_GAP = 4
+    const val SHEET_HEADER_BTN_RADIUS = 6
     const val SHEET_TITLE = 17
     const val FIELD_LABEL = 12
     const val FIELD_TEXT = 14
     const val FIELD_TEXT_F = 14f
+    const val PROFILE_NAME_LABEL_F = 15f
+    const val PROFILE_NAME_LABEL_LINE = 21f
+    const val PROFILE_NAME_INPUT_F = 13f
+    const val PROFILE_NAME_INPUT_LINE = 18f
     const val SWATCH_TEXT_F = 12f
     const val SWATCH_ICON = 21
     const val PRIORITY_CHIP_TEXT = 12
@@ -145,6 +156,22 @@ object MockupDimens {
     const val SETTINGS_GROUP_LABEL = 11
     const val SETTINGS_ROW_LABEL_F = 13.5f
     const val SETTINGS_ROW_VALUE_F = 12f
+    const val ABOUT_TITLE_F = 22f
+    const val ABOUT_TITLE_LINE = 32f
+    const val ABOUT_VERSION_F = 18f
+    const val ABOUT_VERSION_LINE = 28f
+    const val ABOUT_BODY_F = 20f
+    const val ABOUT_BODY_LINE = 30f
+    const val ABOUT_LEAD_F = 22f
+    const val ABOUT_LEAD_LINE = 32f
+    /** About dialog height as a fraction of screen height (0–1). */
+    const val ABOUT_DIALOG_HEIGHT_FRACTION = 0.88f
+    const val ABOUT_DIALOG_VERTICAL_MARGIN = 20
+    /** Panel inner height at text scale 1.0 (before [LocalMockupScale]). */
+    const val ABOUT_PANEL_REF_HEIGHT = 340f
+    const val ABOUT_HEADER_REF_HEIGHT = 80f
+    const val ABOUT_TEXT_SCALE_MIN = 0.42f
+    const val ABOUT_TEXT_SCALE_MAX = 1.05f
     const val SETTINGS_ROW_GAP = 12
     const val SETTINGS_ROW_PAD_H = 14
     const val SETTINGS_ROW_PAD_V = 12
@@ -156,7 +183,7 @@ object MockupDimens {
     const val SETTINGS_PROFILE_NAME_F = 14.5f
     const val SETTINGS_PROFILE_SUB_F = 12f
     const val SETTINGS_PROFILE_ICON = 24
-    const val SETTINGS_PROFILE_EDIT_ICON = 14
+    const val SETTINGS_PROFILE_EDIT_ICON = 18
     const val SETTINGS_CHEVRON_F = 14f
 
     // Archive / Completed

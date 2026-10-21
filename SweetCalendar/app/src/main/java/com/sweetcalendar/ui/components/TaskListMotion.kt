@@ -1,6 +1,5 @@
 package com.sweetcalendar.ui.components
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -19,17 +18,15 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.Text
@@ -37,17 +34,14 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.sweetcalendar.ui.motion.popIn
+import com.sweetcalendar.ui.motion.strikeThroughSweep
 import com.sweetcalendar.ui.theme.SweetMotion
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.rememberReducedMotion
 
 private val taskCardShape = RoundedCornerShape(14.dp)
-
-private val checkPopSpring = spring<Float>(
-    dampingRatio = Spring.DampingRatioMediumBouncy,
-    stiffness = Spring.StiffnessMedium,
-)
 
 private val listItemPlacementSpring = spring<IntOffset>(
     dampingRatio = Spring.DampingRatioNoBouncy,
@@ -148,6 +142,7 @@ fun AnimatedTaskTitle(
         animationSpec = SweetMotion.shortTween(),
         label = "taskTitleColor",
     )
+    var textLayout by remember { mutableStateOf<TextLayoutResult?>(null) }
 
     Text(
         text = text,
@@ -155,22 +150,18 @@ fun AnimatedTaskTitle(
         color = titleColor,
         maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
-        modifier = modifier.drawBehind {
-            if (strikeProgress <= 0f) return@drawBehind
-            val lineY = size.height * 0.52f
-            drawLine(
-                color = titleColor.copy(alpha = 0.9f),
-                start = Offset(0f, lineY),
-                end = Offset(size.width * strikeProgress, lineY),
-                strokeWidth = 2.5f,
-                cap = StrokeCap.Round,
-            )
-        },
+        onTextLayout = { textLayout = it },
+        modifier = modifier.strikeThroughSweep(
+            progress = { strikeProgress },
+            layout = { textLayout },
+            color = titleColor.copy(alpha = 0.9f),
+            thickness = 2.5.dp,
+        ),
     )
 }
 
 @Composable
-fun PoppingTaskCompleteIcon(
+fun TaskCompleteCheckIcon(
     size: Dp,
     bgColor: androidx.compose.ui.graphics.Color,
     pop: Boolean,
@@ -178,32 +169,17 @@ fun PoppingTaskCompleteIcon(
     modifier: Modifier = Modifier,
 ) {
     val reducedMotion = rememberReducedMotion()
-    val scale = remember { Animatable(1f) }
-
-    LaunchedEffect(pop) {
-        if (pop && !reducedMotion) {
-            scale.snapTo(0.5f)
-            scale.animateTo(1.12f, checkPopSpring)
-            scale.animateTo(1f, spring(stiffness = Spring.StiffnessMedium))
-        } else if (!pop) {
-            scale.snapTo(1f)
-        }
-    }
+    val popModifier = if (pop && !reducedMotion) Modifier.popIn(from = 0.5f) else Modifier
 
     ThemeCompletedCheckIcon(
         size = size,
         bgColor = bgColor,
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scale.value
-                scaleY = scale.value
-            }
-            .then(
-                Modifier.clickable(
-                    onClick = onClick,
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() },
-                )
+            .then(popModifier)
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
             ),
     )
 }

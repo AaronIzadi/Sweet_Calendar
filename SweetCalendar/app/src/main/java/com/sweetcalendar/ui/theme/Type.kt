@@ -23,15 +23,55 @@ val BodyFont: FontFamily =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) QuicksandFont else FontFamily.SansSerif
 
 val AppTypography = Typography(
-    headlineMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 19.sp, lineHeight = 26.sp),
-    headlineSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 24.sp),
-    titleLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 28.sp),
-    titleMedium = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 17.sp, lineHeight = 24.sp),
-    titleSmall = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 14.sp, lineHeight = 20.sp),
-    bodyLarge = TextStyle(fontFamily = BodyFont, fontWeight = FontWeight.Bold, fontSize = 18.sp, lineHeight = 26.sp),
-    bodyMedium = TextStyle(fontFamily = BodyFont, fontWeight = SecondaryTextWeight, fontSize = 14.sp, lineHeight = 20.sp),
-    bodySmall = TextStyle(fontFamily = BodyFont, fontWeight = SecondaryTextWeight, fontSize = 13.sp, lineHeight = 18.sp),
-    labelLarge = TextStyle(fontFamily = PixelFont, fontSize = 12.sp, lineHeight = 16.sp),
-    labelMedium = TextStyle(fontFamily = PixelFont, fontSize = 11.sp, lineHeight = 15.sp),
-    labelSmall = TextStyle(fontFamily = PixelFont, fontSize = 10.sp, lineHeight = 14.sp),
+    headlineMedium = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 19.sp,
+        lineHeight = 28.sp,
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        lineHeight = 26.sp,
+    ),
+    titleLarge = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 30.sp,
+    ),
+    titleMedium = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 17.sp,
+        lineHeight = 26.sp,
+    ),
+    titleSmall = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 14.sp,
+        lineHeight = 22.sp,
+    ),
+    bodyLarge = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp,
+        lineHeight = 28.sp,
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = 14.sp,
+        lineHeight = 22.sp,
+    ),
+    bodySmall = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = 13.sp,
+        lineHeight = 20.sp,
+    ),
+    labelLarge = TextStyle(fontFamily = PixelFont, fontSize = 12.sp, lineHeight = 18.sp),
+    labelMedium = TextStyle(fontFamily = PixelFont, fontSize = 11.sp, lineHeight = 17.sp),
+    labelSmall = TextStyle(fontFamily = PixelFont, fontSize = 10.sp, lineHeight = 15.sp),
 )

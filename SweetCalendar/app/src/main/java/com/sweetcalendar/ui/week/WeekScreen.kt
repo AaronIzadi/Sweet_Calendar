@@ -41,6 +41,8 @@ import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -87,6 +89,7 @@ fun WeekScreen(
     val selectedDayTasks = remember(tasksByDay, selectedDay) {
         tasksByDay[selectedDay].orEmpty()
     }
+    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
     val weekHasTasks = remember(tasksByDay) {
         tasksByDay.values.any { it.isNotEmpty() }
     }
@@ -194,9 +197,10 @@ fun WeekScreen(
                     WeekDayLabel(selectedDay, calendarSystem)
                 }
                 items(selectedDayTasks, key = { it.id }) { task ->
+                    val isNew = remember(task.id) { isNewTask(task.id) }
                     SweetTaskCard(
                         task = task,
-                        modifier = sweetTaskItemMotion(),
+                        modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                         onClick = { onEditTask(task) },
                         onToggleComplete = { onCompleteTask(task) },
                         onDelete = { onDeleteTask(task) },

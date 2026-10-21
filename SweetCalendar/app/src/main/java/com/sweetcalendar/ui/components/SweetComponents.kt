@@ -28,7 +28,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +56,8 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.ui.motion.pressScale
+import com.sweetcalendar.ui.motion.pressScaleNested
 import com.sweetcalendar.ui.navigation.AppDestination
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -347,7 +348,7 @@ private fun MockupTaskCard(
         wasDone = task.isDone
     }
 
-    Box(modifier = modifier.padding(bottom = mockupDp(10)).sweetPressScale()) {
+    Box(modifier = modifier.padding(bottom = mockupDp(10)).pressScaleNested()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -380,7 +381,7 @@ private fun MockupTaskCard(
             ) {
                 when {
                     task.isDone -> {
-                        PoppingTaskCompleteIcon(
+                        TaskCompleteCheckIcon(
                             size = taskIcon,
                             bgColor = if (colors.isDark) colors.mint else MintGreen,
                             pop = popCheck,
@@ -799,7 +800,12 @@ fun SweetFab(
         ),
         label = "fabIconRotation",
     )
-    Box(modifier = modifier.size(mockupDp(MockupDimens.FAB_SIZE)).sweetPressScale()) {
+    val fabInteraction = remember { MutableInteractionSource() }
+    Box(
+        modifier = modifier
+            .size(mockupDp(MockupDimens.FAB_SIZE))
+            .pressScale(fabInteraction, pressedScale = 0.95f),
+    ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -812,7 +818,11 @@ fun SweetFab(
                 .matchParentSize()
                 .clip(shape)
                 .background(faceColor)
-                .clickable(onClick = onClick),
+                .clickable(
+                    interactionSource = fabInteraction,
+                    indication = null,
+                    onClick = onClick,
+                ),
             contentAlignment = Alignment.Center
         ) {
             ThemeFabIcon(
@@ -923,12 +933,17 @@ private fun NavItem(
             iconScale.snapTo(1f)
         }
     }
+    val navInteraction = remember { MutableInteractionSource() }
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(mockupDp(12)))
             .background(if (selected) colors.navActiveBg else Color.Transparent)
-            .sweetPressScale()
-            .clickable(onClick = onClick)
+            .pressScale(navInteraction, pressedScale = 0.95f)
+            .clickable(
+                interactionSource = navInteraction,
+                indication = null,
+                onClick = onClick,
+            )
             .padding(horizontal = mockupDp(10), vertical = mockupDp(6)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(mockupDp(4))

@@ -38,6 +38,8 @@ import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatAlternateCalendarLine
 import com.sweetcalendar.ui.theme.BodyFont
@@ -80,6 +82,7 @@ fun DayDetailScreen(
     val holidays = events.filter { it.isHoliday && it.description.isNotBlank() }
     val occasions = events.filter { !it.isHoliday && it.description.isNotBlank() }
     val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
+    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
 
     Box(modifier = modifier.fillMaxSize().background(colors.cream)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -135,9 +138,10 @@ fun DayDetailScreen(
                 if (tasks.isNotEmpty()) {
                     item { SweetSectionLabel("TASKS") }
                     items(tasks, key = { it.id }) { task ->
+                        val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
-                            modifier = sweetTaskItemMotion(),
+                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                             onClick = { onTaskClick(task) },
                             style = TaskCardStyle.Mockup
                         )

@@ -37,6 +37,7 @@ import com.sweetcalendar.ui.theme.SprinklesRed
 import com.sweetcalendar.ui.theme.SweetMotion
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
+import com.sweetcalendar.ui.motion.popIn
 import com.sweetcalendar.ui.theme.rememberReducedMotion
 import kotlinx.coroutines.delay
 import kotlin.math.cos
@@ -221,10 +222,12 @@ fun CelebrationJarHero(modifier: Modifier = Modifier) {
     }
 
     Box(
-        modifier = modifier.graphicsLayer {
-            scaleX = scale.value
-            scaleY = scale.value
-        },
+        modifier = modifier
+            .popIn(from = 0.65f)
+            .graphicsLayer {
+                scaleX = scale.value
+                scaleY = scale.value
+            },
         contentAlignment = Alignment.Center,
     ) {
         ThemeStatsJarIcon(size = mockupDp(52))

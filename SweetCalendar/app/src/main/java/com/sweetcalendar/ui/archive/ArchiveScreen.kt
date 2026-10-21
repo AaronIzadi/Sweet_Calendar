@@ -32,6 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.stats.ArchiveFilter
 import com.sweetcalendar.ui.stats.computeMonthCompletionPercent
@@ -82,6 +84,7 @@ fun ArchiveScreen(
     val totalDone = tasks.count { it.isDone }
     val streak = remember(tasks) { computeStreak(tasks) }
     val monthPct = remember(tasks) { computeMonthCompletionPercent(tasks) }
+    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
 
     BackHandler(onBack = onBack)
 
@@ -169,9 +172,10 @@ fun ArchiveScreen(
                         dayTasks.sortedBy { it.reminderTime.orEmpty() },
                         key = { it.id }
                     ) { task ->
+                        val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
-                            modifier = sweetTaskItemMotion(),
+                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                             onClick = { onTaskClick(task) },
                             style = TaskCardStyle.Mockup
                         )

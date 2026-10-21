@@ -81,6 +81,10 @@ private fun sheetHeaderBtnStyle(): TextStyle = TextStyle(
     lineHeight = mockupSp(MockupDimens.SHEET_HEADER_BTN_LINE),
 )
 
+/** Matches [sheetHeaderBtnStyle] line height so pixel icons align with CLOSE / SAVE labels. */
+@Composable
+private fun sheetHeaderIconSize(): Dp = mockupDp(MockupDimens.SHEET_HEADER_BTN_LINE)
+
 /** Title area at top of sheets / dialogs (Android: actions live at the bottom). */
 @Composable
 fun sheetDialogTitlePaddingModifier(): Modifier = Modifier.padding(
@@ -94,8 +98,8 @@ fun sheetDialogTitlePaddingModifier(): Modifier = Modifier.padding(
 fun sheetFooterPaddingModifier(): Modifier = Modifier.padding(
     start = mockupDp(18),
     end = mockupDp(18),
-    top = mockupDp(12),
-    bottom = mockupDp(16),
+    top = mockupDp(10),
+    bottom = mockupDp(12),
 )
 
 @Composable
@@ -117,15 +121,15 @@ fun SheetHeaderCloseAction(
     enabled: Boolean = true,
 ) {
     val colors = SweetTheme.colors
-    val iconSize = mockupDp(MockupDimens.SHEET_HEADER_ICON)
+    val iconSize = sheetHeaderIconSize()
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(mockupDp(8)))
+            .clip(RoundedCornerShape(mockupDp(MockupDimens.SHEET_HEADER_BTN_RADIUS)))
             .semantics { contentDescription = label }
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = mockupDp(4)),
+            .padding(vertical = mockupDp(MockupDimens.SHEET_HEADER_BTN_V_PAD)),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(mockupDp(6))
+        horizontalArrangement = Arrangement.spacedBy(mockupDp(MockupDimens.SHEET_HEADER_BTN_GAP))
     ) {
         ClosePixelIcon(size = iconSize, color = colors.purpleDeep)
         Text(
@@ -146,15 +150,15 @@ fun SheetHeaderConfirmAction(
     showCheckIcon: Boolean = true,
     enabled: Boolean = true,
 ) {
-    val iconSize = mockupDp(MockupDimens.SHEET_HEADER_ICON)
+    val iconSize = sheetHeaderIconSize()
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(mockupDp(8)))
+            .clip(RoundedCornerShape(mockupDp(MockupDimens.SHEET_HEADER_BTN_RADIUS)))
             .semantics { contentDescription = label }
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = mockupDp(4)),
+            .padding(vertical = mockupDp(MockupDimens.SHEET_HEADER_BTN_V_PAD)),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(mockupDp(6))
+        horizontalArrangement = Arrangement.spacedBy(mockupDp(MockupDimens.SHEET_HEADER_BTN_GAP))
     ) {
         if (showCheckIcon) {
             CheckPixelIcon(size = iconSize, color = textColor)
@@ -212,7 +216,7 @@ fun SheetFooterCloseOnly(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(sheetFooterPaddingModifier()),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SheetHeaderCloseAction(

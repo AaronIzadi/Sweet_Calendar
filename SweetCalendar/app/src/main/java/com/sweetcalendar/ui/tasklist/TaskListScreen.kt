@@ -39,6 +39,8 @@ import com.sweetcalendar.ui.components.EmptyTasksState
 import com.sweetcalendar.ui.components.PixelButton
 import com.sweetcalendar.ui.components.TaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.themePixelBorder
 import com.sweetcalendar.ui.theme.SweetColors
 import com.sweetcalendar.ui.theme.SweetTheme
@@ -102,6 +104,7 @@ fun TaskListScreen(
     val visibleTasks = remember(tasks, filter, searchQuery) {
         filterTasks(tasks, filter, searchQuery)
     }
+    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
     val today = remember { JalaliDate.today() }
     val pendingCount = remember(tasks) { tasks.count { !it.isDone } }
     val colors = SweetTheme.colors
@@ -185,9 +188,10 @@ fun TaskListScreen(
                     else -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
                             items(visibleTasks, key = { it.id }) { task ->
+                                val isNew = remember(task.id) { isNewTask(task.id) }
                                 TaskCard(
                                     task = task,
-                                    modifier = sweetTaskItemMotion(),
+                                    modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                                     onClick = { onEditTask(task) },
                                     onEdit = { onEditTask(task) },
                                     onComplete = { onCompleteTask(task) },

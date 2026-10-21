@@ -32,6 +32,8 @@ import com.sweetcalendar.ui.components.StreakPill
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatDisplayWithWeekday
 import com.sweetcalendar.ui.theme.MockupDimens
@@ -94,6 +96,7 @@ fun TodayScreen(
     val pending = todayTasks.filter { !it.isDone }
     val done = todayTasks.filter { it.isDone }
     val streak = remember(tasks) { computeStreak(tasks) }
+    val isNewTask = rememberNewItemTracker(todayTasks.map { it.id })
 
     Column(
         modifier = modifier
@@ -167,9 +170,10 @@ fun TodayScreen(
                 if (pending.isNotEmpty()) {
                     item { SweetSectionLabel("TODAY") }
                     items(pending, key = { it.id }) { task ->
+                        val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
-                            modifier = sweetTaskItemMotion(),
+                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                             onClick = { onEditTask(task) },
                             onToggleComplete = { onCompleteTask(task) },
                             onDelete = { onDeleteTask(task) },
@@ -201,9 +205,10 @@ fun TodayScreen(
                         }
                     }
                     items(done, key = { it.id }) { task ->
+                        val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
-                            modifier = sweetTaskItemMotion(),
+                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                             onClick = { onEditTask(task) },
                             onToggleComplete = { onCompleteTask(task) },
                             onDelete = { onDeleteTask(task) },

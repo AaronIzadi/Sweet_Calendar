@@ -46,6 +46,7 @@ import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.themeCelebrationMessage
+import com.sweetcalendar.ui.motion.confettiBurst
 import com.sweetcalendar.ui.theme.themeCelebrationTitle
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
@@ -302,7 +303,16 @@ fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(mockupDp(16)))
-                    .background(colors.cream),
+                    .background(colors.cream)
+                    .confettiBurst(
+                        colors = listOf(
+                            colors.pink,
+                            colors.lemon,
+                            colors.mint,
+                            colors.purple,
+                            colors.pinkDeep,
+                        ),
+                    ),
             ) {
                 CelebrationBurstBackdrop(
                     modifier = Modifier

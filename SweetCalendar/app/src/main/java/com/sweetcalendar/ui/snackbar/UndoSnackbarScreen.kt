@@ -31,6 +31,8 @@ import com.sweetcalendar.ui.archive.ArchiveStatCard
 import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.stats.ArchiveFilter
 import com.sweetcalendar.ui.stats.countDeletedThisWeek
@@ -60,6 +62,7 @@ fun RecoverSnackbarScreen(
     val grouped = remember(filtered) { groupDeletedTasksByDay(filtered) }
     val deletedThisWeek = remember(deletedTasks) { countDeletedThisWeek(deletedTasks) }
     val expiringSoon = remember(deletedTasks) { countExpiringDeletedTasks(deletedTasks) }
+    val isNewTask = rememberNewItemTracker(deletedTasks.map { it.id })
 
     BackHandler(onBack = onBack)
 
@@ -147,9 +150,10 @@ fun RecoverSnackbarScreen(
                             ArchiveDayLabel(label)
                         }
                         items(dayTasks, key = { it.id }) { task ->
+                            val isNew = remember(task.id) { isNewTask(task.id) }
                             SweetTaskCard(
                                 task = task,
-                                modifier = sweetTaskItemMotion(),
+                                modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                                 style = TaskCardStyle.Mockup,
                                 showDate = true,
                                 onRecover = { onRestore(task) },

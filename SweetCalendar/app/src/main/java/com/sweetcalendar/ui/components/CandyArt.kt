@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -451,21 +452,30 @@ fun CalMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = 
     )
 }
 
-/** Small pixel pen — edit / rename affordance. */
+/** Small pixel pencil — edit / rename affordance (eraser, body, tip). */
 @Composable
-fun PenMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {
+fun PenMiniIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 12.dp,
+    color: Color = GrapePurple,
+    eraserColor: Color? = null,
+    tipColor: Color? = null,
+) {
+    val eraser = eraserColor ?: color.copy(alpha = 0.65f)
+    val tip = tipColor ?: color
     PixelIcon(
         rows = listOf(
-            ".....1",
-            "....11",
-            "...11.",
-            "..11..",
-            ".11...",
-            "11....",
+            ".ee....",
+            ".e11...",
+            "..111..",
+            "...111.",
+            "....111",
+            ".....11",
+            "......12",
         ),
-        palette = mapOf('1' to color),
+        palette = mapOf('1' to color, '2' to tip, 'e' to eraser),
         size = size,
-        modifier = modifier
+        modifier = modifier.graphicsLayer { scaleX = -1f },
     )
 }
 
