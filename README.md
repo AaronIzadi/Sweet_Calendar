@@ -1,82 +1,74 @@
-# Sweet Calendar
+# 🍬 Sweet Calendar
 
-A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) calendar**, with optional Gregorian mode, Iranian holidays, reminders, stats, home-screen widgets, and a playful pixel-art UI.
+A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) calendar** 📅, with optional Gregorian mode, Iranian holidays 🇮🇷, reminders 🔔, stats 📊, home-screen widgets 📱, and a playful pixel-art UI 🎮.
 
-**Stack:** Kotlin · Jetpack Compose · Material 3 · Room · Retrofit
+**🛠️ Stack:** Kotlin · Jetpack Compose · Material 3 · Room · Retrofit
 
-**Application ID:** `com.sweetcalendar`
-
----
-
-## Features
-
-### Calendar and navigation
-
-- **Today**, **Week**, and **Month** views with bottom navigation
-- **Jalali (Persian/Shamsi)** calendar with optional **Gregorian** mode
-- Switch calendar system and **week start day** in Settings
-- **Day detail** and **holiday** screens
-
-### Tasks
-
-- Title, notes, category, date, optional time and **reminders**
-- Complete, edit, archive, **search**, and **undo delete** (snackbar)
-- Custom **Sweet** time and date pickers aligned with the mockup UI
-
-### Holidays (Iran)
-
-- Iranian holidays and occasions via the **time.ir** API
-- Fetched when needed, **cached in Room**, usable offline after a month is loaded
-
-### Stats and delight
-
-- **Streaks**, jar progress, and a **stats** screen
-- Light motion and celebration feedback (respects system **reduced motion** when animator scale is off)
-
-### Personalization
-
-- **Dark mode**
-- **App theme:** Bubblegum (candy) or Orbit (space)
-- Custom **display name** (profile card on Settings)
-- Show/hide **local holidays**
-
-### Data
-
-- **Backup and export** (CSV, Excel, PDF) from Settings
-
-### Home-screen widgets
-
-- **Today tasks** widget
-- **Jar progress** widget
-
-### UI
-
-- Mockup-driven layout with **Quicksand** body type and **pixel** labels
-- Shared motion in `ui/motion/Motion.kt`
-- Color system documented in [`SweetCalendar/docs/color-palette.md`](SweetCalendar/docs/color-palette.md) (`PinkText`, `onPink`, nav inactive tokens, field outlines)
+**📦 Application ID:** `com.sweetcalendar`
 
 ---
 
-## Requirements
+## ✨ Features
 
-- **JDK 17** (required; other versions often break Gradle)
-- **Android SDK** — Platform 34, Build-Tools 34, Platform-Tools
-- **Android Studio** Koala or newer (recommended)
-- Network for first-time dependency download
+### 📅 Calendar and navigation
+- 🏠 **Today**, **Week**, and **Month** views with bottom navigation
+- 🇮🇷 **Jalali (Persian/Shamsi)** calendar with optional **Gregorian** mode
+- 🔄 Switch calendar system and **week start day** in Settings
+- 🗓️ **Day detail** and **holiday** screens
+
+### ✅ Tasks
+- 📝 Title, notes, category, date, optional time, and **reminders**
+- ✔️ Complete, edit, archive, **search**, and **undo delete** (snackbar)
+- 🍭 Custom **Sweet** time and date pickers aligned with the mockup UI
+
+### 🇮🇷 Holidays (Iran)
+- 🎉 Iranian holidays and occasions via the **time.ir** API
+- 💾 Fetched when needed, **cached in Room**, and usable offline after a month is loaded
+
+### 📊 Stats and delight
+- 🔥 **Streaks**, jar progress, and a **stats** screen
+- 🎊 Light motion and celebration feedback (respects system **reduced motion** when animator scale is off)
+
+### 🎨 Personalization
+- 🌙 **Dark mode**
+- 🪐 **App theme:** Bubblegum (candy) or Orbit (space)
+- 👤 Custom **display name** (profile card on Settings)
+- 🎊 Show/hide **local holidays**
+
+### 📤 Data
+- 💾 **Backup and export** (CSV, Excel, PDF) from Settings
+
+### 📱 Home-screen widgets
+- 📋 **Today tasks** widget
+- 🍯 **Jar progress** widget
+
+### 🖼️ UI
+- 🎨 Mockup-driven layout with **Quicksand** body type and **pixel** labels
+- ✨ Shared motion in `ui/motion/Motion.kt`
+- 🌈 Color system documented in [`SweetCalendar/docs/color-palette.md`](SweetCalendar/docs/color-palette.md) (`PinkText`, `onPink`, nav inactive tokens, field outlines)
 
 ---
 
-## Setup
+## 📋 Requirements
 
-### 1. Open the project
+- ☕ **JDK 17** (required; other versions often break Gradle)
+- 🤖 **Android SDK** — Platform 34, Build-Tools 34, Platform-Tools
+- 💻 **Android Studio** Koala or newer (recommended)
+- 🌐 Network for first-time dependency download
+
+---
+
+## 🚀 Setup
+
+### 1️⃣ Open the project
 
 Open the `SweetCalendar/` directory in Android Studio (Gradle root).
 
-### 2. Sync Gradle
+### 2️⃣ Sync Gradle
 
 Allow Gradle to download dependencies.
 
-### 3. `local.properties`
+### 3️⃣ ⚙️ `local.properties`
 
 Create `SweetCalendar/local.properties` if needed:
 
@@ -85,20 +77,20 @@ sdk.dir=C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
 TIME_IR_API_KEY=your_api_key_here
 ```
 
-**time.ir API key** — optional but recommended for reliable holiday data. Get a key from [time.ir](https://time.ir) and add `TIME_IR_API_KEY`. Without it, holidays may not load.
+**🔑 time.ir API key** — optional but recommended for reliable holiday data. Get a key from [time.ir](https://time.ir) and add `TIME_IR_API_KEY`. Without it, holidays may not load.
 
-**Windows:** run `.\setup-sdk.ps1` from `SweetCalendar/` to scaffold SDK paths and `local.properties`.
+**🪟 Windows:** Run `.\setup-sdk.ps1` from `SweetCalendar/` to scaffold SDK paths and `local.properties`.
 
 ---
 
-## Run the app
+## ▶️ Run the app
 
-### Android Studio
+### 💻 Android Studio
 
 1. Start an emulator or connect a device (USB debugging on).
 2. Run the **app** configuration.
 
-### Command line
+### ⌨️ Command line
 
 From `SweetCalendar/`:
 
@@ -107,7 +99,7 @@ From `SweetCalendar/`:
 adb shell am start -n com.sweetcalendar/.MainActivity
 ```
 
-Windows PowerShell:
+**🪟 Windows PowerShell:**
 
 ```powershell
 cd SweetCalendar
@@ -115,7 +107,7 @@ cd SweetCalendar
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell am start -n com.sweetcalendar/.MainActivity
 ```
 
-### BlueStacks
+### 🖥️ BlueStacks
 
 Enable **Android Debug Bridge (ADB)** in BlueStacks, then from `SweetCalendar/`:
 
@@ -125,7 +117,7 @@ Enable **Android Debug Bridge (ADB)** in BlueStacks, then from `SweetCalendar/`:
 
 ---
 
-## Project layout
+## 🗂️ Project layout
 
 ```text
 SweetCalendar/
@@ -135,28 +127,28 @@ SweetCalendar/
 │   ├── data/
 │   │   ├── local/          Room (tasks, event cache)
 │   │   ├── remote/         time.ir client
-│   │   └── prefs/          User preferences
+│   │   └── prefs/           User preferences
 │   ├── repository/
-│   ├── reminder/           Alarms and notifications
-│   ├── export/             CSV, Excel, PDF export
-│   ├── widget/             Home-screen widgets
+│   ├── reminder/            Alarms and notifications
+│   ├── export/              CSV, Excel, PDF export
+│   ├── widget/              Home-screen widgets
 │   ├── ui/
 │   │   ├── today/ week/ calendar/ daydetail/
 │   │   ├── addtask/ taskdetail/ tasklist/
 │   │   ├── holiday/ search/ archive/ stats/
 │   │   ├── settings/ welcome/ permission/ offline/
-│   │   ├── motion/         Shared animations
+│   │   ├── motion/          Shared animations
 │   │   ├── navigation/
-│   │   ├── components/     Shared Compose UI
-│   │   └── theme/          Colors, type, mockup scale
+│   │   ├── components/      Shared Compose UI
+│   │   └── theme/           Colors, type, mockup scale
 │   ├── MainActivity.kt
-│   └── CalendarTodoApp.kt    Application class
+│   └── CalendarTodoApp.kt   Application class
 ├── docs/color-palette.md
-├── resources/pixel-art/    Source art (processed into drawables)
+├── resources/pixel-art/     Source art (processed into drawables)
 └── scripts/process_pixel_art.py
 ```
 
-### Jalali math
+### 🧮 Jalali math
 
 ```text
 jalali/
@@ -168,7 +160,7 @@ Arithmetic Jalali/Gregorian conversion with no third-party calendar dependency. 
 
 ---
 
-## Pixel-art assets
+## 🎮 Pixel-art assets
 
 Sources live in `SweetCalendar/resources/pixel-art/`. They are processed into transparent PNGs for the APK:
 
@@ -181,55 +173,55 @@ See `scripts/process_pixel_art.py` (`OUTPUT_NAMES`) when adding or replacing art
 
 ---
 
-## Offline behavior
+## 📴 Offline behavior
 
-| Data     | Behavior                                      |
-| -------- | --------------------------------------------- |
-| Tasks    | Fully local (Room)                            |
-| Holidays | Online fetch once per month, then Room cache  |
-
----
-
-## First launch
-
-1. **Welcome** carousel (skippable)
-2. **Notification permission** when reminders are used
-3. Main app: **Today** tab by default
+| Data | Behavior |
+| --- | --- |
+| 📝 Tasks | Fully local (Room) |
+| 🎉 Holidays | Online fetch once per month, then Room cache |
 
 ---
 
-## Accessibility and contrast
+## 🌱 First launch
 
-- **`pinkText`** — small pink labels and icons on cream/paper (not bright `Pink` / `PinkDeep`)
-- **`onPink`** — ink-colored labels on pink button fills
-- **`fieldOutline`** — visible input borders where `line` is too subtle
-- **Reduced motion:** when system animator duration is `0`, the app shortens or disables many animations (`rememberReducedMotion()`)
-
-Details: [`SweetCalendar/docs/color-palette.md`](SweetCalendar/docs/color-palette.md)
+1. 👋 **Welcome** carousel (skippable)
+2. 🔔 **Notification permission** when reminders are used
+3. 🏠 Main app: **Today** tab by default
 
 ---
 
-## Troubleshooting
+## ♿ Accessibility and contrast
+
+- 💗 **`pinkText`** — small pink labels and icons on cream/paper (not bright `Pink` / `PinkDeep`)
+- 🖋️ **`onPink`** — ink-colored labels on pink button fills
+- 📝 **`fieldOutline`** — visible input borders where `line` is too subtle
+- 🎞️ **Reduced motion:** when system animator duration is `0`, the app shortens or disables many animations (`rememberReducedMotion()`)
+
+📖 Details: [`SweetCalendar/docs/color-palette.md`](SweetCalendar/docs/color-palette.md)
+
+---
+
+## 🛠️ Troubleshooting
 
 | Issue | What to check |
-| ----- | ------------- |
-| Java / Gradle errors | Gradle JDK = **17** (Android Studio → Settings → Build Tools → Gradle) |
-| Holidays missing | Internet, `TIME_IR_API_KEY`, retry after failed month fetch |
-| Wrong project root | Open `SweetCalendar/`, not the parent repo folder only |
+| --- | --- |
+| ☕ Java / Gradle errors | Gradle JDK = **17** (Android Studio → Settings → Build Tools → Gradle) |
+| 🎉 Holidays missing | Internet, `TIME_IR_API_KEY`, retry after failed month fetch |
+| 📂 Wrong project root | Open `SweetCalendar/`, not the parent repo folder only |
 
 ---
 
-## Tech stack (summary)
+## 🧰 Tech stack (summary)
 
-| Piece        | Use                          |
-| ------------ | ---------------------------- |
-| Kotlin       | Language                     |
-| Compose      | UI                           |
-| Room         | Tasks and holiday cache      |
-| Retrofit     | time.ir                      |
-| AlarmManager | Reminders                    |
-| App Widgets  | Today list and jar progress  |
+| Piece | Use |
+| --- | --- |
+| 🟣 Kotlin | Language |
+| 🎨 Compose | UI |
+| 💾 Room | Tasks and holiday cache |
+| 🌐 Retrofit | time.ir |
+| ⏰ AlarmManager | Reminders |
+| 📱 App Widgets | Today list and jar progress |
 
 ---
 
-Plan your day, track your goals, keep it sweet.
+🍬 **Plan your day, track your goals, keep it sweet.** 💖
