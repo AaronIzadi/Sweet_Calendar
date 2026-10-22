@@ -3,6 +3,7 @@ package com.sweetcalendar.ui.permission
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,22 +14,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import com.sweetcalendar.ui.components.ThemeAlarmHeroIcon
 import com.sweetcalendar.ui.components.SweetPixelButton
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.ambientPastelAccentPink
+import com.sweetcalendar.ui.theme.ambientPastelInk
+import com.sweetcalendar.ui.theme.ambientPastelLink
+import com.sweetcalendar.ui.theme.ambientPastelMuted
 import com.sweetcalendar.ui.theme.ambientPermissionBackground
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-
-@Composable
-private fun permissionSecondaryColor(): Color = SweetTheme.colors.muted
 
 @Composable
 fun NotificationPermissionScreen(
@@ -37,22 +39,30 @@ fun NotificationPermissionScreen(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val titleColor = ambientPastelInk()
+    val bodyColor = ambientPastelMuted()
+    val linkColor = ambientPastelLink()
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(ambientPermissionBackground())
-            .padding(
-                start = mockupDp(MockupDimens.PERMISSION_PAD_H),
-                end = mockupDp(MockupDimens.PERMISSION_PAD_H),
-                bottom = mockupDp(MockupDimens.PERMISSION_PAD_BOTTOM)
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(colors.cream),
     ) {
+        Box(Modifier.fillMaxSize().background(ambientPermissionBackground()))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = mockupDp(MockupDimens.PERMISSION_PAD_H),
+                    end = mockupDp(MockupDimens.PERMISSION_PAD_H),
+                    bottom = mockupDp(MockupDimens.PERMISSION_PAD_BOTTOM)
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
         ThemeAlarmHeroIcon(
             size = mockupDp(MockupDimens.PERMISSION_BELL),
-            color = colors.pinkText
+            color = ambientPastelAccentPink()
         )
         Spacer(Modifier.height(mockupDp(20)))
         Text(
@@ -63,7 +73,7 @@ fun NotificationPermissionScreen(
                 fontSize = mockupSp(MockupDimens.PERMISSION_TITLE),
                 lineHeight = mockupSp(22.4f)
             ),
-            color = colors.ink,
+            color = titleColor,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(mockupDp(10)))
@@ -75,7 +85,7 @@ fun NotificationPermissionScreen(
                 fontSize = mockupSp(MockupDimens.PERMISSION_SUB),
                 lineHeight = mockupSp(MockupDimens.PERMISSION_SUB * 1.65f)
             ),
-            color = colors.muted,
+            color = bodyColor,
             textAlign = TextAlign.Center
         )
         Spacer(Modifier.height(mockupDp(26)))
@@ -96,13 +106,15 @@ fun NotificationPermissionScreen(
                     fontSize = mockupSp(MockupDimens.PERMISSION_SECONDARY),
                     lineHeight = mockupSp(16f)
                 ),
-                color = permissionSecondaryColor(),
+                color = linkColor,
                 textAlign = TextAlign.Center,
+                textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(onClick = onDismiss)
                     .padding(mockupDp(12))
             )
+        }
         }
     }
 }

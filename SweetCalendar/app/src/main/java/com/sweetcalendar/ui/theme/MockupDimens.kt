@@ -156,22 +156,18 @@ object MockupDimens {
     const val SETTINGS_GROUP_LABEL = 11
     const val SETTINGS_ROW_LABEL_F = 13.5f
     const val SETTINGS_ROW_VALUE_F = 12f
-    const val ABOUT_TITLE_F = 22f
-    const val ABOUT_TITLE_LINE = 32f
-    const val ABOUT_VERSION_F = 18f
-    const val ABOUT_VERSION_LINE = 28f
-    const val ABOUT_BODY_F = 20f
-    const val ABOUT_BODY_LINE = 30f
-    const val ABOUT_LEAD_F = 22f
-    const val ABOUT_LEAD_LINE = 32f
-    /** About dialog height as a fraction of screen height (0–1). */
-    const val ABOUT_DIALOG_HEIGHT_FRACTION = 0.88f
-    const val ABOUT_DIALOG_VERTICAL_MARGIN = 20
-    /** Panel inner height at text scale 1.0 (before [LocalMockupScale]). */
-    const val ABOUT_PANEL_REF_HEIGHT = 340f
-    const val ABOUT_HEADER_REF_HEIGHT = 80f
-    const val ABOUT_TEXT_SCALE_MIN = 0.42f
-    const val ABOUT_TEXT_SCALE_MAX = 1.05f
+    const val ABOUT_TITLE_F = 17f
+    const val ABOUT_TITLE_LINE = 22f
+    const val ABOUT_VERSION_F = 12.5f
+    const val ABOUT_VERSION_LINE = 16f
+    const val ABOUT_BODY_F = 12.5f
+    const val ABOUT_BODY_LINE = 16.5f
+    const val ABOUT_LEAD_F = 13.5f
+    const val ABOUT_LEAD_LINE = 17.5f
+    /** Max height of the about body block as a fraction of screen height (compact popup). */
+    const val ABOUT_POPUP_BODY_MAX_FRACTION = 0.52f
+    const val ABOUT_TEXT_SCALE_MIN = 0.22f
+    const val ABOUT_TEXT_SCALE_MAX = 1f
     const val SETTINGS_ROW_GAP = 12
     const val SETTINGS_ROW_PAD_H = 14
     const val SETTINGS_ROW_PAD_V = 12

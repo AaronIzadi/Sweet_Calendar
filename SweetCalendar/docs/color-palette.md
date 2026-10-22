@@ -19,7 +19,7 @@ Accent colors (`pink`, `purple`, `mint`, …) stay bright in dark mode; depth co
 
 ## Ambient washes (`AmbientColors.kt`)
 
-Full-screen or hero areas that used gradients now use **fixed** mid-tone solids (candy vs space) that do **not** change with light/dark mode — e.g. welcome, notification permission, holiday hero, jar fill, settings profile card.
+Full-screen or hero areas use **fixed** washes that do **not** flip with light/dark mode. Welcome and the notification-permission screen share the same pastel candy slides / space sky (`ambientWelcomeColor` / `ambientPermissionBackground`). Other heroes (holiday, jar, settings profile) keep their own mid-tone solids. On pastels, use `ambientPastelInk` / `ambientPastelMuted` / `ambientPastelLink` so text stays dark-on-pastel even when the app theme is dark.
 
 ## Space theme
 

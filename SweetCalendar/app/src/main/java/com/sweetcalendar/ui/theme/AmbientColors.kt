@@ -11,13 +11,11 @@ object AmbientColors {
     val CandyWelcome = Color(0xFFFFE8F2)
     val CandyWelcomeAltA = Color(0xFFF3E8FB)
     val CandyWelcomeAltB = Color(0xFFE5F7EE)
-    val CandyPermission = Color(0xFF8A7D96)
     val CandyHolidayHero = Color(0xFF7A8F8A)
     val CandyJarFill = Color(0xFFBC8FB0)
     val CandyProfileCard = Color(0xFFAD6FA6)
 
     val SpaceWelcome = Color(0xFFEAF0FF)
-    val SpacePermission = Color(0xFF7278A0)
     val SpaceHolidayHero = Color(0xFF6B7A8F)
     val SpaceJarFill = Color(0xFFA88FBC)
     val SpaceProfileCard = Color(0xFF9578C8)
@@ -33,9 +31,22 @@ fun ambientWelcomeColor(slideIndex: Int = 0): Color {
     }
 }
 
+/** Same pastel wash as welcome slide 0 (notifications prompt follows intro look). */
 @Composable
-fun ambientPermissionBackground(): Color =
-    if (SweetTheme.isSpace) AmbientColors.SpacePermission else AmbientColors.CandyPermission
+fun ambientPermissionBackground(): Color = ambientWelcomeColor(slideIndex = 0)
+
+/** Readable on fixed pastel washes — does not use light [SweetColors.ink] in dark app theme. */
+@Composable
+fun ambientPastelInk(): Color = if (SweetTheme.isSpace) SpaceInk else Ink
+
+@Composable
+fun ambientPastelMuted(): Color = if (SweetTheme.isSpace) SpaceChocDeep else ChocDeep
+
+@Composable
+fun ambientPastelLink(): Color = if (SweetTheme.isSpace) SpacePurpleDeep else PurpleDeep
+
+@Composable
+fun ambientPastelAccentPink(): Color = if (SweetTheme.isSpace) SpacePinkText else PinkText
 
 @Composable
 fun ambientHolidayHeroBackground(): Color =
