@@ -31,9 +31,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.ui.components.ClockMiniIcon
 import com.sweetcalendar.ui.components.DialogKeyboardInsets
+import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.SheetFooterBar
@@ -85,7 +85,7 @@ fun SweetTimePickerDialog(
         onConfirm(formatTime24(toHour24(h, isPm), m))
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         DialogKeyboardInsets()
         ProvideMockupScale {
             SweetDialogSurface {

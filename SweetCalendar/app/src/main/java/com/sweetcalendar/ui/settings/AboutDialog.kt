@@ -36,7 +36,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
+import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.BuildConfig
 import com.sweetcalendar.ui.components.SheetFooterCloseOnly
 import com.sweetcalendar.ui.components.SweetDialogSurface
@@ -94,7 +94,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
         color = colors.ink
     )
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
             SweetDialogSurface {
                 Column(

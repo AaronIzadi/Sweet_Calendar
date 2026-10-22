@@ -7,12 +7,14 @@ import com.sweetcalendar.export.TaskExportRepository
 import com.sweetcalendar.reminder.NotificationHelper
 import com.sweetcalendar.repository.EventRepository
 import com.sweetcalendar.repository.TaskRepository
+import com.sweetcalendar.widget.WidgetPreviews
 
 class CalendarTodoApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
         NotificationHelper.ensureChannel(this)
+        WidgetPreviews.sync(this)
     }
 
     val taskRepository: TaskRepository by lazy {

@@ -16,14 +16,47 @@ internal object WidgetUi {
     }
 
     fun applyProgress(views: RemoteViews, progress: Int, theme: WidgetTheme.Colors) {
-        if (theme.isDark) {
-            views.setViewVisibility(R.id.widget_progress, View.GONE)
-            views.setViewVisibility(R.id.widget_progress_dark, View.VISIBLE)
-            views.setProgressBar(R.id.widget_progress_dark, 100, progress, false)
-        } else {
-            views.setViewVisibility(R.id.widget_progress_dark, View.GONE)
-            views.setViewVisibility(R.id.widget_progress, View.VISIBLE)
-            views.setProgressBar(R.id.widget_progress, 100, progress, false)
+        applyThemedProgress(
+            views = views,
+            progress = progress,
+            theme = theme,
+            candyLight = R.id.widget_progress_candy_light,
+            candyDark = R.id.widget_progress_candy_dark,
+            spaceLight = R.id.widget_progress_space_light,
+            spaceDark = R.id.widget_progress_space_dark,
+        )
+    }
+
+    fun applyJarProgress(views: RemoteViews, progress: Int, theme: WidgetTheme.Colors) {
+        applyThemedProgress(
+            views = views,
+            progress = progress,
+            theme = theme,
+            candyLight = R.id.widget_jar_progress_candy_light,
+            candyDark = R.id.widget_jar_progress_candy_dark,
+            spaceLight = R.id.widget_jar_progress_space_light,
+            spaceDark = R.id.widget_jar_progress_space_dark,
+        )
+    }
+
+    private fun applyThemedProgress(
+        views: RemoteViews,
+        progress: Int,
+        theme: WidgetTheme.Colors,
+        @IdRes candyLight: Int,
+        @IdRes candyDark: Int,
+        @IdRes spaceLight: Int,
+        @IdRes spaceDark: Int,
+    ) {
+        val active = when {
+            theme.isSpace && theme.isDark -> spaceDark
+            theme.isSpace -> spaceLight
+            theme.isDark -> candyDark
+            else -> candyLight
         }
+        for (id in listOf(candyLight, candyDark, spaceLight, spaceDark)) {
+            views.setViewVisibility(id, if (id == active) View.VISIBLE else View.GONE)
+        }
+        views.setProgressBar(active, 100, progress.coerceIn(0, 100), false)
     }
 }

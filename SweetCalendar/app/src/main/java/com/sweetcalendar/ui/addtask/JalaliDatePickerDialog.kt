@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.ui.components.DialogCenterMotion
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.selectedOnAccentTextColor
@@ -56,6 +57,7 @@ fun JalaliDatePickerDialog(
             }
         },
         title = {
+            DialogCenterMotion()
             Text("Pick a date", color = colors.ink)
         },
         text = {

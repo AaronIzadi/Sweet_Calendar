@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
+
 package com.sweetcalendar.ui.theme
 
 import android.os.Build
@@ -5,17 +7,27 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.sweetcalendar.R
 
 val PixelFont = FontFamily(Font(R.font.press_start_2p))
 
+private fun quicksandFont(weight: FontWeight): Font =
+    Font(
+        resId = R.font.quicksand_variable,
+        weight = weight,
+        variationSettings = FontVariation.Settings(FontVariation.weight(weight.weight)),
+    )
+
 private val QuicksandFont = FontFamily(
-    Font(R.font.quicksand_variable, weight = FontWeight.Medium),
-    Font(R.font.quicksand_variable, weight = FontWeight.SemiBold),
-    Font(R.font.quicksand_variable, weight = FontWeight.Bold),
-    Font(R.font.quicksand_variable, weight = FontWeight.ExtraBold),
+    quicksandFont(FontWeight.Normal),
+    quicksandFont(FontWeight.Medium),
+    quicksandFont(FontWeight.SemiBold),
+    quicksandFont(FontWeight.Bold),
+    quicksandFont(FontWeight.ExtraBold),
+    quicksandFont(FontWeight.Black),
 )
 
 // Variable fonts are unreliable below API 26 (common on older emulators).

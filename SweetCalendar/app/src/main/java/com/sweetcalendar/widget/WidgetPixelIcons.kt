@@ -7,78 +7,57 @@ import com.sweetcalendar.ui.components.TaskCategory
 
 object WidgetPixelIcons {
 
-    fun categoryBitmap(category: TaskCategory, sizePx: Int, isDark: Boolean = false, isSpace: Boolean = false): Bitmap {
-        if (isSpace) {
-            val rows = when (category) {
-                TaskCategory.Work -> ROCKET_ROWS
-                TaskCategory.Personal -> STAR_ROWS
-                TaskCategory.Home -> RING_PLANET_ROWS
-            }
-            val palette = when (category) {
-                TaskCategory.Work -> if (isDark) {
-                    mapOf(
-                        '1' to 0xFFECEFF7.toInt(),
-                        'o' to 0xFF5FE6E0.toInt(),
-                        '2' to 0xFFFF6AC8.toInt(),
-                        'f' to 0xFFFFD466.toInt(),
-                    )
-                } else {
-                    mapOf(
-                        '1' to 0xFFC9BFF2.toInt(),
-                        'o' to 0xFF1F9E98.toInt(),
-                        '2' to 0xFFD63F9E.toInt(),
-                        'f' to 0xFFDE9F14.toInt(),
-                    )
-                }
-                TaskCategory.Personal -> mapOf(
-                    '1' to if (isDark) 0xFFFF6AC8.toInt() else 0xFFD63F9E.toInt()
-                )
-                TaskCategory.Home -> if (isDark) {
-                    mapOf('p' to 0xFF33C8C2.toInt(), 'r' to 0xFFFFD466.toInt())
-                } else {
-                    mapOf('p' to 0xFF1F9E98.toInt(), 'r' to 0xFFDE9F14.toInt())
-                }
-            }
-            return render(rows, palette, sizePx)
+    /** Bubblegum: nav lollipop. Orbit: rocket (same as in-app chrome). */
+    fun brandBitmap(sizePx: Int, theme: WidgetTheme.Colors): Bitmap {
+        if (theme.isSpace) {
+            return render(ROCKET_ROWS, spaceRocketPalette(theme), sizePx)
         }
+        val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val headPx = (sizePx * 0.58f).toInt().coerceAtLeast(1)
+        val head = render(NAV_LOLLIPOP_HEAD_ROWS, lollipopHeadPalette(theme), headPx)
+        val stickPx = (sizePx * 0.42f).toInt().coerceAtLeast(1)
+        val stick = render(NAV_LOLLIPOP_STICK_ROWS, mapOf('t' to theme.purple), stickPx)
+        canvas.drawBitmap(head, (sizePx - headPx) / 2f, 0f, null)
+        canvas.drawBitmap(stick, (sizePx - stickPx) / 2f, headPx * 0.92f, null)
+        return bitmap
+    }
 
+    fun categoryBitmap(category: TaskCategory, sizePx: Int, theme: WidgetTheme.Colors): Bitmap {
         val rows = when (category) {
             TaskCategory.Work -> BRIEFCASE_ROWS
             TaskCategory.Personal -> HEART_ROWS
             TaskCategory.Home -> HOME_ROWS
         }
         val color = when (category) {
-            TaskCategory.Work ->
-                if (isDark) 0xFFC3AEEF.toInt() else 0xFF5B3F82.toInt()
-            TaskCategory.Personal ->
-                if (isDark) 0xFFFF8CBE.toInt() else 0xFFE0487F.toInt()
-            TaskCategory.Home ->
-                if (isDark) 0xFF6FE0B4.toInt() else 0xFF4FB894.toInt()
+            TaskCategory.Work -> if (theme.isDark) 0xFFC3AEEF.toInt() else theme.purpleDeep
+            TaskCategory.Personal -> if (theme.isDark) 0xFFFF8FBB.toInt() else theme.pinkDeep
+            TaskCategory.Home -> theme.mintDeep
         }
         return render(rows, mapOf('1' to color), sizePx)
     }
 
-    fun jarIconBitmap(sizePx: Int, isDark: Boolean = false, isSpace: Boolean = false): Bitmap {
-        if (isSpace) {
-            val palette = if (isDark) {
-                mapOf('1' to 0xFFECEFF7.toInt(), 'p' to 0xFFFFD466.toInt())
-            } else {
-                mapOf('1' to 0xFF6B4FD6.toInt(), 'p' to 0xFFDE9F14.toInt())
-            }
-            return render(SATELLITE_ROWS, palette, sizePx)
-        }
-        return chocolateBitmap(sizePx, isDark)
+    private fun lollipopHeadPalette(theme: WidgetTheme.Colors): Map<Char, Int> {
+        val head = if (theme.isDark) theme.pink else theme.pinkDeep
+        return mapOf('a' to head, 'b' to 0xFFFFFFFF.toInt())
     }
 
-    fun chocolateBitmap(sizePx: Int, isDark: Boolean = false): Bitmap {
-        val fill = if (isDark) 0xFFC99770.toInt() else 0xFF8A5A38.toInt()
-        val seam = if (isDark) 0xFF8A6B4E.toInt() else 0xFF5A3A22.toInt()
-        return render(
-            rows = CHOCOLATE_ROWS,
-            palette = mapOf('b' to fill, 'd' to seam, 'o' to fill),
-            sizePx = sizePx
-        )
-    }
+    private fun spaceRocketPalette(theme: WidgetTheme.Colors): Map<Char, Int> =
+        if (theme.isDark) {
+            mapOf(
+                '1' to 0xFFECEFF7.toInt(),
+                'o' to 0xFF5FE6E0.toInt(),
+                '2' to 0xFFFF6AC8.toInt(),
+                'f' to 0xFFFFD466.toInt(),
+            )
+        } else {
+            mapOf(
+                '1' to 0xFFC9BFF2.toInt(),
+                'o' to 0xFF1F9E98.toInt(),
+                '2' to 0xFFD63F9E.toInt(),
+                'f' to 0xFFDE9F14.toInt(),
+            )
+        }
 
     private fun render(rows: List<String>, palette: Map<Char, Int>, sizePx: Int): Bitmap {
         val cols = rows.maxOf { it.length }
@@ -105,6 +84,25 @@ object WidgetPixelIcons {
         return bitmap
     }
 
+    private val NAV_LOLLIPOP_HEAD_ROWS = listOf(
+        "..aaaa..",
+        ".aabaaa.",
+        "aabaabaa",
+        "aabaabaa",
+        "aabaabaa",
+        "aabaabaa",
+        ".aabaaa.",
+        "..aaaa.."
+    )
+
+    private val NAV_LOLLIPOP_STICK_ROWS = listOf(
+        "...tt...",
+        "...tt...",
+        "...tt...",
+        "...tt...",
+        "...tt..."
+    )
+
     private val ROCKET_ROWS = listOf(
         "....1....",
         "...111...",
@@ -117,31 +115,6 @@ object WidgetPixelIcons {
         "22..1..22",
         "...fff...",
         "....f....",
-    )
-
-    private val RING_PLANET_ROWS = listOf(
-        "...pppp...",
-        "..pppppp..",
-        ".pppppppp.",
-        "rrrrrrrrrr",
-        "rrrrrrrrrr",
-        ".pppppppp.",
-        "..pppppp..",
-        "...pppp...",
-    )
-
-    private val STAR_ROWS = listOf(
-        "...1...",
-        "...1...",
-        "1111111",
-        "...1...",
-        "...1...",
-    )
-
-    private val SATELLITE_ROWS = listOf(
-        "....1....",
-        "pp.111.pp",
-        "pp.111.pp",
     )
 
     private val BRIEFCASE_ROWS = listOf(
@@ -168,14 +141,4 @@ object WidgetPixelIcons {
         ".1.1.1.",
         ".11111."
     )
-
-    private val CHOCOLATE_ROWS = List(8) { row ->
-        List(8) { col ->
-            when {
-                row == 0 || row == 7 || col == 0 || col == 7 -> 'o'
-                row == 3 || row == 4 || col == 3 || col == 4 -> 'd'
-                else -> 'b'
-            }
-        }.joinToString("")
-    }
 }

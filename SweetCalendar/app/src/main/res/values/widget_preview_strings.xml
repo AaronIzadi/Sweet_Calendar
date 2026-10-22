@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_preview_date">Today · 2 of 3 done</string>
+    <string name="widget_preview_task_1">Buy groceries</string>
+    <string name="widget_preview_task_2">Team standup</string>
+    <string name="widget_preview_task_3">Water plants</string>
+    <string name="widget_preview_jar_label">Today\'s jar</string>
+    <string name="widget_preview_jar_count">2 / 3</string>
+</resources>

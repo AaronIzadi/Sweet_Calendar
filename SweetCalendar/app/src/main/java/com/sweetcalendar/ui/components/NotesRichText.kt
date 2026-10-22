@@ -2,7 +2,9 @@ package com.sweetcalendar.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -121,25 +126,51 @@ private fun stripInlineNotesMarkup(line: String): String {
     return sb.toString()
 }
 
+/** Body text uses ExtraBold in the app; notes rendering uses a lighter base so emphasis reads clearly. */
+private fun notesRenderBaseStyle(baseStyle: SpanStyle): SpanStyle {
+    val weight = baseStyle.fontWeight ?: FontWeight.Normal
+    val renderWeight = when {
+        weight.weight >= FontWeight.SemiBold.weight -> FontWeight.Normal
+        else -> weight
+    }
+    return baseStyle.copy(
+        fontWeight = renderWeight,
+        fontFamily = baseStyle.fontFamily ?: BodyFont,
+    )
+}
+
+private fun notesBoldStyle(base: SpanStyle): SpanStyle =
+    base.copy(
+        fontWeight = FontWeight.ExtraBold,
+        fontFamily = BodyFont,
+    )
+
+private fun notesItalicStyle(base: SpanStyle): SpanStyle =
+    base.copy(fontStyle = FontStyle.Italic)
+
 fun buildNotesAnnotatedString(
     text: String,
     baseStyle: SpanStyle,
 ): AnnotatedString = buildAnnotatedString {
+    val base = notesRenderBaseStyle(baseStyle)
     val lines = text.split('\n')
     lines.forEachIndexed { index, line ->
         val isBullet = line.startsWith("- ")
         val body = if (isBullet) line.drop(2) else line
         if (isBullet) {
-            withStyle(baseStyle) { append("•  ") }
+            withStyle(base) { append("•  ") }
         }
-        appendInlineNotes(body, baseStyle)
+        appendInlineNotes(body, base)
         if (index < lines.lastIndex) append('\n')
     }
 }
 
-private fun AnnotatedString.Builder.appendInlineNotes(text: String, base: SpanStyle) {
-    val bold = base.copy(fontWeight = FontWeight.Bold)
-    val italic = base.copy(fontStyle = FontStyle.Italic)
+private fun AnnotatedString.Builder.appendInlineNotes(
+    text: String,
+    base: SpanStyle,
+) {
+    val bold = notesBoldStyle(base)
+    val italic = notesItalicStyle(base)
     var i = 0
     while (i < text.length) {
         if (text.startsWith("**", i)) {
@@ -164,8 +195,13 @@ private fun AnnotatedString.Builder.appendInlineNotes(text: String, base: SpanSt
             if (nextBold == -1) text.length else nextBold,
             if (nextItalicStar == -1) text.length else nextItalicStar,
         ).min()
-        withStyle(base) { append(text.substring(i, nextSpecial)) }
-        i = nextSpecial
+        if (nextSpecial <= i) {
+            withStyle(base) { append(text[i]) }
+            i++
+        } else {
+            withStyle(base) { append(text.substring(i, nextSpecial)) }
+            i = nextSpecial
+        }
     }
 }
 
@@ -176,10 +212,18 @@ fun RichNotesText(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    val base = style.toSpanStyle().copy(color = color)
+    val renderStyle = style.copy(
+        fontWeight = FontWeight.Normal,
+        fontFamily = style.fontFamily ?: BodyFont,
+    )
+    val base = renderStyle.toSpanStyle().copy(
+        color = color,
+        fontWeight = FontWeight.Normal,
+        fontFamily = BodyFont,
+    )
     Text(
         text = buildNotesAnnotatedString(text, base),
-        style = style,
+        style = renderStyle,
         color = Color.Unspecified,
         modifier = modifier,
     )
@@ -191,7 +235,7 @@ fun NotesFormatToolbar(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier.focusProperties { canFocus = false },
         horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -215,7 +259,13 @@ private fun NotesFormatButton(
             .clip(RoundedCornerShape(radius))
             .border(mockupDp(1), colors.fieldOutline, RoundedCornerShape(radius))
             .background(colors.surfaceInset)
-            .clickable(onClick = onClick)
+            .pointerInput(onClick) {
+                awaitEachGesture {
+                    awaitFirstDown(pass = PointerEventPass.Initial)
+                    onClick()
+                    waitForUpOrCancellation()
+                }
+            }
             .padding(horizontal = mockupDp(12), vertical = mockupDp(6)),
         contentAlignment = Alignment.Center,
     ) {

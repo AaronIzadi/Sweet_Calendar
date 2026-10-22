@@ -69,5 +69,6 @@ object SweetWidgets {
     fun updateAll(context: Context) {
         TodayWidgetProvider.updateInstances(context)
         JarWidgetProvider.updateInstances(context)
+        WidgetPreviews.sync(context)
     }
 }

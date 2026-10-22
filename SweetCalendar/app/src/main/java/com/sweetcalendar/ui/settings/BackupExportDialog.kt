@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
+import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.export.ExportCacheResult
 import com.sweetcalendar.export.ExportFormat
@@ -88,7 +88,7 @@ fun BackupExportDialog(
         }
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
             SweetDialogSurface {
             Column(

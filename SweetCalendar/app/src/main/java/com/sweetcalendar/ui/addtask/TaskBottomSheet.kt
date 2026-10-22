@@ -33,6 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +49,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +61,7 @@ import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.NotesFormatToolbar
+import com.sweetcalendar.ui.components.RichNotesText
 import com.sweetcalendar.ui.components.applyNotesFormat
 import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.ClockMiniIcon
@@ -66,7 +70,6 @@ import com.sweetcalendar.ui.theme.themeAddTaskButtonText
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.components.ClosePixelIcon
 import com.sweetcalendar.ui.components.SheetFooterBar
-import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.components.SweetBigSaveButton
 import com.sweetcalendar.ui.components.SweetSwitch
@@ -140,6 +143,9 @@ fun TaskBottomSheet(
     var notesField by remember(existingTask) {
         mutableStateOf(TextFieldValue(existingTask?.notes.orEmpty()))
     }
+    var notesFormatSelection by remember(existingTask) {
+        mutableStateOf<TextRange?>(null)
+    }
     var category by remember(existingTask) {
         mutableStateOf(TaskCategory.fromString(existingTask?.category.orEmpty()))
     }
@@ -187,6 +193,7 @@ fun TaskBottomSheet(
     var notesFieldFocused by remember { mutableStateOf(false) }
     val titleBringIntoView = remember { BringIntoViewRequester() }
     val notesBringIntoView = remember { BringIntoViewRequester() }
+    val notesFocusRequester = remember { FocusRequester() }
 
     fun scrollNotesIntoView() {
         scope.launch {
@@ -219,7 +226,6 @@ fun TaskBottomSheet(
             scrollState.animateScrollTo(scrollState.maxValue)
         }
     }
-
     BackHandler {
         if (titleFieldFocused || notesFieldFocused) {
             focusManager.clearFocus(force = true)
@@ -407,8 +413,15 @@ fun TaskBottomSheet(
                 FieldLabel("NOTES")
                 NotesFormatToolbar(
                     onFormat = { format ->
-                        notesField = applyNotesFormat(notesField, format)
-                        if (notesFieldFocused) scrollNotesIntoView()
+                        val selection = notesFormatSelection ?: notesField.selection
+                        notesField = applyNotesFormat(
+                            notesField.copy(selection = selection),
+                            format,
+                        )
+                        notesFormatSelection = notesField.selection
+                        notesFieldFocused = true
+                        notesFocusRequester.requestFocus()
+                        scrollNotesIntoView()
                     },
                     modifier = Modifier.padding(bottom = mockupDp(6)),
                 )
@@ -416,16 +429,26 @@ fun TaskBottomSheet(
                     value = notesField,
                     onValueChange = { new ->
                         notesField = new
+                        if (notesFieldFocused) {
+                            notesFormatSelection = new.selection
+                        }
                         if (notesFieldFocused) scrollNotesIntoView()
                     },
+                    showRichPreview = !notesFieldFocused,
+                    onRequestEdit = { notesFocusRequester.requestFocus() },
                     placeholder = "Add a note (optional)",
                     minLines = 3,
                     maxLines = 8,
                     textFieldModifier = formTextFieldModifier(
                         bringIntoView = notesBringIntoView,
-                        onFocused = { notesFieldFocused = it },
+                        onFocused = { focused ->
+                            notesFieldFocused = focused
+                            if (focused) {
+                                notesFormatSelection = notesField.selection
+                            }
+                        },
                         scrollToEndOnFocus = true,
-                    ),
+                    ).focusRequester(notesFocusRequester),
                 )
 
                 Spacer(Modifier.height(mockupDp(22)))
@@ -437,9 +460,7 @@ fun TaskBottomSheet(
 
             SheetFooterBar(
                 onClose = onDismiss,
-                trailing = {
-                    SheetHeaderConfirmAction(label = "SAVE", onClick = { submit() })
-                }
+                closeLabel = "DISCARD",
             )
         }
     }
@@ -538,6 +559,8 @@ private fun FormIconSlot(
 private fun SweetNotesField(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
+    showRichPreview: Boolean,
+    onRequestEdit: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
     minLines: Int = 3,
@@ -553,31 +576,58 @@ private fun SweetNotesField(
         lineHeight = mockupSp(18f)
     )
     val multilineMinHeight = mockupDp(MockupDimens.FIELD_TEXT_F * minLines + 6f)
+    val fieldPadding = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = mockupDp(14), vertical = mockupDp(12))
+        .defaultMinSize(minHeight = multilineMinHeight)
+        .heightIn(min = multilineMinHeight)
     PaperSurface(
         shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
         cornerRadius = radius,
         modifier = modifier,
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = false,
-            minLines = minLines,
-            maxLines = maxLines,
-            textStyle = fieldTextStyle.copy(color = colors.ink),
-            cursorBrush = SolidColor(colors.pinkText),
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = mockupDp(14), vertical = mockupDp(12))
-                .defaultMinSize(minHeight = multilineMinHeight)
-                .heightIn(min = multilineMinHeight)
-                .then(textFieldModifier)
-                .showKeyboardOnFocus(),
-            decorationBox = { inner ->
+                .defaultMinSize(minHeight = multilineMinHeight),
+        ) {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                singleLine = false,
+                minLines = minLines,
+                maxLines = maxLines,
+                textStyle = fieldTextStyle.copy(color = colors.ink),
+                cursorBrush = SolidColor(colors.pinkText),
+                modifier = fieldPadding
+                    .then(textFieldModifier)
+                    .showKeyboardOnFocus(),
+                decorationBox = { inner ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = multilineMinHeight),
+                        contentAlignment = Alignment.TopStart,
+                    ) {
+                        if (value.text.isEmpty() && placeholder.isNotEmpty() && !showRichPreview) {
+                            Text(
+                                placeholder,
+                                style = fieldTextStyle,
+                                color = formPlaceholderColor(),
+                            )
+                        }
+                        inner()
+                    }
+                }
+            )
+            if (showRichPreview) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = multilineMinHeight),
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(radius))
+                        .background(colors.paper)
+                        .clickable(onClick = onRequestEdit)
+                        .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
                     contentAlignment = Alignment.TopStart,
                 ) {
                     if (value.text.isEmpty() && placeholder.isNotEmpty()) {
@@ -586,11 +636,16 @@ private fun SweetNotesField(
                             style = fieldTextStyle,
                             color = formPlaceholderColor(),
                         )
+                    } else if (value.text.isNotEmpty()) {
+                        RichNotesText(
+                            text = value.text,
+                            style = fieldTextStyle,
+                            color = colors.ink,
+                        )
                     }
-                    inner()
                 }
             }
-        )
+        }
     }
 }
 

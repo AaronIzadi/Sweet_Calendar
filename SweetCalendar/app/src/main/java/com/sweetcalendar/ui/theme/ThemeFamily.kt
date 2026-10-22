@@ -6,7 +6,10 @@ enum class ThemeFamily(val settingsValue: String) {
 
     companion object {
         fun fromPref(value: String): ThemeFamily =
-            entries.find { it.name.equals(value, ignoreCase = true) } ?: Candy
+            entries.find {
+                it.name.equals(value, ignoreCase = true) ||
+                    it.settingsValue.equals(value, ignoreCase = true)
+            } ?: Candy
     }
 
     val widgetJarLabel: String

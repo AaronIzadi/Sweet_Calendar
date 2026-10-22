@@ -29,7 +29,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             try {
                 appWidgetIds.forEach { id ->
                     val views = try {
-                        buildViews(appContext)
+                        buildRemoteViews(appContext, WidgetDataLoader.loadToday(appContext))
                     } catch (_: Exception) {
                         safeFallbackViews(appContext)
                     }
@@ -50,45 +50,30 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val ids = manager.getAppWidgetIds(component)
             if (ids.isEmpty()) return
             val views = try {
-                buildViews(context)
+                buildRemoteViews(context, WidgetDataLoader.loadToday(context))
             } catch (_: Exception) {
                 safeFallbackViews(context)
             }
             ids.forEach { manager.updateAppWidget(it, views) }
         }
 
-        private fun safeFallbackViews(context: Context): RemoteViews {
+        fun buildRemoteViews(context: Context, data: TodayWidgetData): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_today)
             val theme = WidgetTheme.colors(context)
+            val density = context.resources.displayMetrics.density
+            val headerPx = (16f * density).toInt().coerceAtLeast(1)
+            val taskIconPx = (14f * density).toInt().coerceAtLeast(1)
+
             WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
+            views.setImageViewBitmap(R.id.widget_header_icon, WidgetPixelIcons.brandBitmap(headerPx, theme))
             views.setTextColor(R.id.widget_title, theme.ink)
             views.setTextViewText(R.id.widget_title, context.getString(R.string.app_name))
-            views.setTextViewText(R.id.widget_date, "Today")
-            views.setTextColor(R.id.widget_date, theme.muted)
-            WidgetUi.applyProgress(views, 0, theme)
-            WidgetUi.applyAddButton(views, R.id.widget_add_button, theme)
-            views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
-            views.setTextViewText(R.id.widget_empty_state, "No tasks today")
-            views.setTextColor(R.id.widget_empty_state, theme.muted)
-            listOf(R.id.widget_task_row_1, R.id.widget_task_row_2, R.id.widget_task_row_3).forEach {
-                views.setViewVisibility(it, View.GONE)
-            }
-            val openApp = openAppIntent(context, 0)
-            views.setOnClickPendingIntent(R.id.widget_root, openApp)
-            views.setOnClickPendingIntent(R.id.widget_add_button, openApp)
-            return views
-        }
-
-        private fun buildViews(context: Context): RemoteViews {
-            val views = RemoteViews(context.packageName, R.layout.widget_today)
-            val theme = WidgetTheme.colors(context)
-            val data = WidgetDataLoader.loadToday(context)
-            val iconPx = (14f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
-
-            WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
-            views.setTextColor(R.id.widget_title, theme.ink)
             views.setTextViewText(R.id.widget_date, data.dateLabel)
             views.setTextColor(R.id.widget_date, theme.muted)
+            views.setTextViewText(R.id.widget_jar_label, WidgetCopy.todayJarLabel(theme.isSpace))
+            views.setTextViewText(R.id.widget_jar_count, WidgetCopy.jarCount(data.done, data.total))
+            views.setTextColor(R.id.widget_jar_label, theme.ink)
+            views.setTextColor(R.id.widget_jar_count, theme.ink)
             WidgetUi.applyProgress(views, data.progress, theme)
             WidgetUi.applyAddButton(views, R.id.widget_add_button, theme)
 
@@ -106,7 +91,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 iconId = R.id.widget_task_1_icon,
                 checkboxId = R.id.widget_task_1_checkbox,
                 titleId = R.id.widget_task_1_title,
-                iconPx = iconPx,
+                iconPx = taskIconPx,
                 task = data.displayTasks.getOrNull(0)
             )
             bindTaskRow(
@@ -116,7 +101,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 iconId = R.id.widget_task_2_icon,
                 checkboxId = R.id.widget_task_2_checkbox,
                 titleId = R.id.widget_task_2_title,
-                iconPx = iconPx,
+                iconPx = taskIconPx,
                 task = data.displayTasks.getOrNull(1)
             )
             bindTaskRow(
@@ -126,10 +111,38 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 iconId = R.id.widget_task_3_icon,
                 checkboxId = R.id.widget_task_3_checkbox,
                 titleId = R.id.widget_task_3_title,
-                iconPx = iconPx,
+                iconPx = taskIconPx,
                 task = data.displayTasks.getOrNull(2)
             )
 
+            val openApp = openAppIntent(context, 0)
+            views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            views.setOnClickPendingIntent(R.id.widget_add_button, openApp)
+            return views
+        }
+
+        private fun safeFallbackViews(context: Context): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_today)
+            val theme = WidgetTheme.colors(context)
+            val headerPx = (16f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
+            views.setImageViewBitmap(R.id.widget_header_icon, WidgetPixelIcons.brandBitmap(headerPx, theme))
+            views.setTextColor(R.id.widget_title, theme.ink)
+            views.setTextViewText(R.id.widget_title, context.getString(R.string.app_name))
+            views.setTextViewText(R.id.widget_date, "Today")
+            views.setTextColor(R.id.widget_date, theme.muted)
+            views.setTextViewText(R.id.widget_jar_label, WidgetCopy.todayJarLabel(theme.isSpace))
+            views.setTextViewText(R.id.widget_jar_count, WidgetCopy.jarCount(0, 0))
+            views.setTextColor(R.id.widget_jar_label, theme.ink)
+            views.setTextColor(R.id.widget_jar_count, theme.ink)
+            WidgetUi.applyProgress(views, 0, theme)
+            WidgetUi.applyAddButton(views, R.id.widget_add_button, theme)
+            views.setViewVisibility(R.id.widget_empty_state, View.VISIBLE)
+            views.setTextViewText(R.id.widget_empty_state, "No tasks today")
+            views.setTextColor(R.id.widget_empty_state, theme.muted)
+            listOf(R.id.widget_task_row_1, R.id.widget_task_row_2, R.id.widget_task_row_3).forEach {
+                views.setViewVisibility(it, View.GONE)
+            }
             val openApp = openAppIntent(context, 0)
             views.setOnClickPendingIntent(R.id.widget_root, openApp)
             views.setOnClickPendingIntent(R.id.widget_add_button, openApp)
@@ -155,7 +168,7 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val category = TaskCategory.fromString(task.category)
             views.setImageViewBitmap(
                 iconId,
-                WidgetPixelIcons.categoryBitmap(category, iconPx, theme.isDark, theme.isSpace)
+                WidgetPixelIcons.categoryBitmap(category, iconPx, theme)
             )
             views.setImageViewResource(
                 checkboxId,

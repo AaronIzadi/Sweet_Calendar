@@ -58,7 +58,6 @@ import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.motion.pressScale
-import com.sweetcalendar.ui.motion.pressScaleNested
 import com.sweetcalendar.ui.navigation.AppDestination
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -349,12 +348,12 @@ private fun MockupTaskCard(
     androidx.compose.runtime.LaunchedEffect(task.isDone) {
         wasDone = task.isDone
     }
+    val cardInteractionSource = remember { MutableInteractionSource() }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = mockupDp(10))
-            .pressScaleNested()
     ) {
         Box(
             modifier = Modifier
@@ -368,14 +367,19 @@ private fun MockupTaskCard(
                 .fillMaxWidth()
                 .alpha(cardAlpha)
                 .clip(shape)
-                .background(colors.paper),
+                .background(colors.paper)
+                .clickable(
+                    onClick = onClick,
+                    interactionSource = cardInteractionSource,
+                    indication = null,
+                )
+                .pressScale(cardInteractionSource),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(width = mockupDp(MockupDimens.TASK_ACCENT_W), height = taskAccentH)
                     .background(accent)
-                    .clickable(onClick = onClick)
             )
             Row(
                 modifier = Modifier
@@ -422,7 +426,6 @@ private fun MockupTaskCard(
                         .padding(start = mockupDp(10))
                         .weight(1f, fill = true)
                         .widthIn(min = 0.dp)
-                        .clickable(onClick = onClick)
                 ) {
                     AnimatedTaskTitle(
                         text = buildMockupTaskTitle(task.title, highlightQuery, colors),
@@ -485,10 +488,7 @@ private fun MockupTaskCard(
                         }
                     }
                     !task.isDone -> {
-                        TaskCardPriorityMarker(
-                            priority = priority,
-                            onClick = onClick,
-                        )
+                        TaskCardPriorityMarker(priority = priority)
                     }
                 }
             }
@@ -499,7 +499,6 @@ private fun MockupTaskCard(
 @Composable
 private fun TaskCardPriorityMarker(
     priority: TaskPriority,
-    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val count = priority.sparkleCount
@@ -508,12 +507,7 @@ private fun TaskCardPriorityMarker(
     Box(
         modifier = modifier
             .padding(start = mockupDp(4))
-            .width(mockupDp(MockupDimens.TASK_CARD_PRIORITY_SLOT))
-            .clickable(
-                onClick = onClick,
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            ),
+            .width(mockupDp(MockupDimens.TASK_CARD_PRIORITY_SLOT)),
         contentAlignment = Alignment.CenterEnd,
     ) {
         Row(

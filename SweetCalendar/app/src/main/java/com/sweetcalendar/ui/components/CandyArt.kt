@@ -436,10 +436,10 @@ fun CalMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = 
     PixelIcon(
         rows = listOf(
             "111111",
-            "1.1.1.",
+            "1.1.11",
             "111111",
             "1....1",
-            "1.1.1.",
+            "1.1.11",
             "111111"
         ),
         palette = mapOf('1' to color),

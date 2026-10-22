@@ -36,7 +36,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.window.Dialog
+import com.sweetcalendar.ui.components.SweetDialog
+import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.BuildConfig
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.export.TaskExportRunner
@@ -145,8 +146,9 @@ fun SettingsScreen(
     val rowIconSlot = mockupDp(MockupDimens.SETTINGS_ROW_ICON)
     val miniIcon = mockupDp(MockupDimens.MINI_FIELD_ICON)
 
+    Box(modifier = modifier.fillMaxSize()) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(colors.cream)
             .verticalScroll(scrollState)
@@ -310,19 +312,19 @@ fun SettingsScreen(
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    ThemeSettingsWidgetIcon(size = miniIcon)
+                    ThemeSettingsJarWidgetIcon(size = rowIconSlot)
                 }
             },
-            label = "Today tasks widget",
+            label = "Jar progress widget",
             value = "Pin from launcher"
         )
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
-                    ThemeSettingsJarWidgetIcon(size = rowIconSlot)
+                    ThemeSettingsWidgetIcon(size = miniIcon)
                 }
             },
-            label = "Jar progress widget",
+            label = "Today tasks widget",
             value = "Pin from launcher"
         )
 
@@ -444,6 +446,7 @@ fun SettingsScreen(
             onDismiss = { showBackupDialog = false }
         )
     }
+    }
 }
 
 @Composable
@@ -509,7 +512,7 @@ private fun NameEditDialog(
     var name by remember(initialName) { mutableStateOf(initialName) }
     val fieldShape = RoundedCornerShape(mockupDp(MockupDimens.FORM_FIELD_RADIUS))
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         DialogKeyboardInsets()
         ProvideMockupScale {
             SweetDialogSurface {
@@ -647,9 +650,8 @@ private fun SettingsPickerDialog(
 ) {
     val colors = SweetTheme.colors
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetModalOverlay(onDismissRequest = onDismiss) {
         ProvideMockupScale {
-            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -681,7 +683,6 @@ private fun SettingsPickerDialog(
                 )
 
                 SheetFooterCloseOnly(onClose = onDismiss)
-            }
             }
         }
     }

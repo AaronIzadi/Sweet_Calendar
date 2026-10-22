@@ -37,7 +37,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.theme.BodyFont
@@ -238,7 +237,7 @@ fun PixelConfirmDialog(
     val colors = SweetTheme.colors
     val deleteColor = Color(0xFFD9455E)
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
             SweetDialogSurface {
             Column(
@@ -303,7 +302,7 @@ fun PixelConfirmDialog(
 fun CompleteCelebrationDialog(onDismiss: () -> Unit) {
     val colors = SweetTheme.colors
 
-    Dialog(onDismissRequest = onDismiss) {
+    SweetDialog(onDismissRequest = onDismiss) {
         ProvideMockupScale {
             SweetDialogSurface {
             Box(
