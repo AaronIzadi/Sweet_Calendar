@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
@@ -43,6 +45,7 @@ import com.sweetcalendar.ui.components.TaskHeartIcon
 import com.sweetcalendar.ui.components.TaskHomeIcon
 import com.sweetcalendar.ui.components.TaskPriority
 import com.sweetcalendar.ui.components.SweetIconButton
+import com.sweetcalendar.ui.components.RichNotesText
 import com.sweetcalendar.ui.components.formatTime12h
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -56,7 +59,6 @@ private val DeleteLinkColor = Color(0xFFD9455E)
 private val WorkHeroBgLight = Color(0xFFEDE8F7)
 private const val DETAIL_ACTION_BTN_GAP = 8
 private const val DETAIL_PRIORITY_SPARKLE_TRACK_W = 22
-private const val DETAIL_PRIORITY_LABEL_W = 44
 private const val DETAIL_PRIORITY_SPARKLE_SIZE = 6
 
 @Composable
@@ -152,6 +154,26 @@ fun TaskDetailScreen(
                                 ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
                             },
                             text = formatTime12h(time)
+                        )
+                    }
+                    if (task.isDone) {
+                        task.completedAt?.let { completedAt ->
+                            MetaRow(
+                                icon = {
+                                    ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
+                                },
+                                text = formatTaskCompletedAt(completedAt),
+                            )
+                        }
+                    } else {
+                        val remaining = remember(task.jalaliDate) {
+                            formatRemainingUntilTaskDayEnd(date)
+                        }
+                        MetaRow(
+                            icon = {
+                                ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
+                            },
+                            text = remaining,
                         )
                     }
                     if (task.repeatWeekly) {
@@ -359,7 +381,10 @@ private fun DetailPriorityBadge(
                 color = colors.purpleDeep,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
-                modifier = Modifier.width(mockupDp(DETAIL_PRIORITY_LABEL_W))
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = mockupDp(0))
             )
         }
     }
@@ -412,8 +437,8 @@ private fun NotesBox(text: String) {
                 .clip(RoundedCornerShape(radius))
                 .background(colors.shadow)
         )
-        Text(
-            text,
+        RichNotesText(
+            text = text,
             style = TextStyle(
                 fontFamily = BodyFont,
                 fontWeight = SecondaryTextWeight,

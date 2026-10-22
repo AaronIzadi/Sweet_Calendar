@@ -46,7 +46,9 @@ import com.sweetcalendar.ui.components.ClockMiniIcon
 import com.sweetcalendar.ui.components.PenMiniIcon
 import com.sweetcalendar.ui.components.SettingsBoxUncheckedIcon
 import com.sweetcalendar.ui.components.SheetFooterBar
+import com.sweetcalendar.ui.components.DialogKeyboardInsets
 import com.sweetcalendar.ui.components.SweetDialogSurface
+import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.SheetFooterCloseOnly
 import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
 import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
@@ -506,6 +508,7 @@ private fun NameEditDialog(
     val fieldShape = RoundedCornerShape(mockupDp(MockupDimens.FORM_FIELD_RADIUS))
 
     Dialog(onDismissRequest = onDismiss) {
+        DialogKeyboardInsets()
         ProvideMockupScale {
             SweetDialogSurface {
             Column(
@@ -578,7 +581,8 @@ private fun NameEditDialog(
                             .clip(fieldShape)
                             .border(mockupDp(1), colors.fieldOutline, fieldShape)
                             .background(colors.paper)
-                            .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
+                            .padding(horizontal = mockupDp(14), vertical = mockupDp(12))
+                            .showKeyboardOnFocus(),
                         decorationBox = { inner ->
                             if (name.isEmpty()) {
                                 Text(

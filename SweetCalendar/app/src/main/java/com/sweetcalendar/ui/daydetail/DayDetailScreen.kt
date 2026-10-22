@@ -64,6 +64,7 @@ fun DayDetailScreen(
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
+    onCompleteTask: (TaskEntity) -> Unit = {},
     onAddTask: () -> Unit,
     onHolidayClick: (DayEvent) -> Unit = {},
     modifier: Modifier = Modifier
@@ -149,6 +150,7 @@ fun DayDetailScreen(
                             task = task,
                             modifier = sweetTaskItemMotion().appearOnEnter(isNew),
                             onClick = { onTaskClick(task) },
+                            onToggleComplete = { onCompleteTask(task) },
                             style = TaskCardStyle.Mockup
                         )
                     }
@@ -208,7 +210,7 @@ fun DayDetailScreen(
 }
 
 @Composable
-private fun DayEventCard(
+fun DayEventCard(
     title: String,
     meta: String,
     accentColor: Color,

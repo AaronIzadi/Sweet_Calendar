@@ -40,8 +40,8 @@ interface TaskDao {
     @Query("DELETE FROM tasks WHERE deletedAt IS NOT NULL AND deletedAt < :cutoff")
     suspend fun purgeDeletedBefore(cutoff: Long)
 
-    @Query("UPDATE tasks SET isDone = :done WHERE id = :id")
-    suspend fun setDone(id: Long, done: Boolean)
+    @Query("UPDATE tasks SET isDone = :done, completedAt = :completedAt WHERE id = :id")
+    suspend fun setDone(id: Long, done: Boolean, completedAt: Long?)
 
     @Query(
         "SELECT * FROM tasks WHERE reminderTime IS NOT NULL AND isDone = 0 AND deletedAt IS NULL"

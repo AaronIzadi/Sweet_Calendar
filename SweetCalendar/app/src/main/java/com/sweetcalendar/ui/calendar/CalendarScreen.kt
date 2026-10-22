@@ -57,7 +57,11 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.TaskCategory
+import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
+import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
+import com.sweetcalendar.ui.daydetail.DayEventCard
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.PixelFont
@@ -103,6 +107,7 @@ fun MonthScreen(
     viewModel: CalendarViewModel,
     onDayClick: (JalaliDate) -> Unit,
     onOfflineClick: () -> Unit = {},
+    onEventClick: (DayEvent) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -197,13 +202,45 @@ fun MonthScreen(
                 .padding(start = 18.dp, end = 18.dp, top = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            LegendItem(color = colors.pinkDeep, shape = DotShape.Circle, label = "Personal")
-            LegendItem(color = colors.purpleDeep, shape = DotShape.Diamond, label = "Work")
-            LegendItem(color = colors.mintDeep, shape = DotShape.Leaf, label = "Home")
+            CategoryLegendItem(TaskCategory.Personal, "Personal")
+            CategoryLegendItem(TaskCategory.Work, "Work")
+            CategoryLegendItem(TaskCategory.Home, "Home")
             if (state.showHolidays) {
                 LegendItem(color = colors.mintDeep, shape = DotShape.Ring, label = "Holiday")
             }
         }
+
+        if (state.showHolidays && state.todayEvents.isNotEmpty()) {
+            val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
+            val occasions = state.todayEvents.filter { !it.isHoliday }
+            val holidays = state.todayEvents.filter { it.isHoliday }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
+            ) {
+                SweetSectionLabel("TODAY")
+                occasions.forEach { event ->
+                    DayEventCard(
+                        title = event.description,
+                        meta = "Calendar occasion · time.ir",
+                        accentColor = colors.purpleDeep,
+                        icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
+                        onClick = { onEventClick(event) }
+                    )
+                }
+                holidays.forEach { event ->
+                    DayEventCard(
+                        title = event.description,
+                        meta = "Official occasion · time.ir",
+                        accentColor = colors.mintDeep,
+                        icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
+                        onClick = { onEventClick(event) }
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(90.dp))
     }
 }
@@ -497,9 +534,14 @@ private fun MonthDayCell(
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
+                    val monthTaskIcon = mockupDp(MockupDimens.MONTH_CELL_TASK_ICON)
                     cell.taskCategories.forEach { category ->
-                        val (color, dotShape) = categoryDotStyleComposable(category)
-                        CategoryDot(color, dotShape, isToday)
+                        Box(
+                            modifier = Modifier.alpha(if (isToday) 0.9f else 1f),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            ThemeCategoryTaskIcon(category = category, size = monthTaskIcon)
+                        }
                     }
                     if (cell.hasOccasion) {
                         CategoryDot(colors.lemonDeep, DotShape.Square, isToday)
@@ -514,12 +556,21 @@ private fun MonthDayCell(
 }
 
 @Composable
-private fun categoryDotStyleComposable(category: TaskCategory): Pair<Color, DotShape> {
-    val colors = SweetTheme.colors
-    return when (category) {
-        TaskCategory.Personal -> colors.pinkDeep to DotShape.Circle
-        TaskCategory.Work -> colors.purpleDeep to DotShape.Diamond
-        TaskCategory.Home -> colors.mintDeep to DotShape.Leaf
+private fun CategoryLegendItem(category: TaskCategory, label: String) {
+    val legendIcon = mockupDp(MockupDimens.MONTH_LEGEND_DOT)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(mockupDp(5))
+    ) {
+        ThemeCategoryTaskIcon(category = category, size = legendIcon)
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = SecondaryTextWeight,
+                fontSize = mockupSp(MockupDimens.MONTH_LEGEND_TEXT_F)
+            ),
+            color = monthLegendTextColor()
+        )
     }
 }
 

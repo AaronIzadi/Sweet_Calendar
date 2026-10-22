@@ -59,5 +59,8 @@ class TaskRepository(private val dao: TaskDao) {
         dao.purgeDeletedBefore(now - retentionMs)
     }
 
-    suspend fun setDone(id: Long, done: Boolean) = dao.setDone(id, done)
+    suspend fun setDone(id: Long, done: Boolean) {
+        val completedAt = if (done) System.currentTimeMillis() else null
+        dao.setDone(id, done, completedAt)
+    }
 }

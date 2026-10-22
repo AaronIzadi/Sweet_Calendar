@@ -74,7 +74,7 @@ fun Modifier.pressScale(
 
 /**
  * Press feedback for containers with nested click targets (e.g. task cards).
- * Uses the final pointer pass so child clickables still receive taps.
+ * Skips the squash when a child [clickable] already handled the press.
  */
 fun Modifier.pressScaleNested(pressedScale: Float = 0.95f): Modifier = composed {
     val reducedMotion = rememberReducedMotion()
@@ -97,7 +97,7 @@ fun Modifier.pressScaleNested(pressedScale: Float = 0.95f): Modifier = composed 
     }.pointerInput(reducedMotion) {
         if (reducedMotion) return@pointerInput
         awaitEachGesture {
-            awaitFirstDown(requireUnconsumed = false)
+            awaitFirstDown(requireUnconsumed = true)
             pressed = true
             waitForUpOrCancellation(pass = PointerEventPass.Final)
             pressed = false

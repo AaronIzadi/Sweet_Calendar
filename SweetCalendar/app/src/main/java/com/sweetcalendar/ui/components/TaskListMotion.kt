@@ -113,7 +113,11 @@ fun SwipeToDeleteTaskCard(
                 }
             }
         },
-        content = { content() },
+        content = {
+            Box(Modifier.fillMaxWidth()) {
+                content()
+            }
+        },
     )
 }
 

@@ -18,6 +18,8 @@ data class TaskEntity(
     val priority: String = "Medium",
     val repeatWeekly: Boolean = false,
     val isDone: Boolean = false,
+    /** Local millis when the task was marked complete; cleared when marked incomplete. */
+    val completedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     /** When set, task is in the trash and hidden from active lists. */
     val deletedAt: Long? = null

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.SearchGroupLabel
 import com.sweetcalendar.ui.components.SearchIcon
+import com.sweetcalendar.ui.components.RequestKeyboardOnEnter
+import com.sweetcalendar.ui.components.searchFieldFocus
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
@@ -74,13 +78,16 @@ fun SearchScreen(
     val isNewTask = rememberNewItemTracker(tasks.map { it.id })
     val chipBackground = if (colors.isDark) colors.surfaceElevated else RecentChipBackgroundLight
     val placeholderColor = searchPlaceholderColor()
+    val searchFocus = remember { FocusRequester() }
 
     BackHandler(onBack = onBack)
+    RequestKeyboardOnEnter(searchFocus)
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
+            .imePadding()
     ) {
         Box(
             modifier = Modifier
@@ -128,7 +135,9 @@ fun SearchScreen(
                             color = colors.ink
                         ),
                         cursorBrush = SolidColor(colors.pinkText),
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .searchFieldFocus(searchFocus),
                         decorationBox = { inner ->
                             if (query.isEmpty()) {
                                 Text(

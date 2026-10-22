@@ -8,10 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,11 +25,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.window.Dialog
 import com.sweetcalendar.ui.components.ClockMiniIcon
+import com.sweetcalendar.ui.components.DialogKeyboardInsets
+import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.SheetFooterBar
 import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
@@ -53,18 +61,38 @@ fun SweetTimePickerDialog(
 
     var hour12 by remember(reminderTime) { mutableIntStateOf(initialHour12) }
     var minute by remember(reminderTime) { mutableIntStateOf(initialMinute) }
+    var hourInput by remember(reminderTime) { mutableStateOf(initialHour12.toString()) }
+    var minuteInput by remember(reminderTime) { mutableStateOf("%02d".format(initialMinute)) }
     var isPm by remember(reminderTime) { mutableStateOf(initialPm) }
 
-    val preview24 = remember(hour12, minute, isPm) {
-        formatTime24(toHour24(hour12, isPm), minute)
+    fun resolvedHour12(): Int =
+        hourInput.filter(Char::isDigit).toIntOrNull()?.coerceIn(1, 12) ?: hour12
+
+    fun resolvedMinute(): Int =
+        minuteInput.filter(Char::isDigit).toIntOrNull()?.coerceIn(0, 59) ?: minute
+
+    val preview24 = remember(hourInput, minuteInput, isPm, hour12, minute) {
+        formatTime24(toHour24(resolvedHour12(), isPm), resolvedMinute())
+    }
+
+    fun confirmTime() {
+        val h = resolvedHour12()
+        val m = resolvedMinute()
+        hour12 = h
+        minute = m
+        hourInput = h.toString()
+        minuteInput = "%02d".format(m)
+        onConfirm(formatTime24(toHour24(h, isPm), m))
     }
 
     Dialog(onDismissRequest = onDismiss) {
+        DialogKeyboardInsets()
         ProvideMockupScale {
             SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .imePadding()
                     .clip(RoundedCornerShape(mockupDp(16)))
                     .background(colors.cream)
             ) {
@@ -120,11 +148,23 @@ fun SweetTimePickerDialog(
                         horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TimeStepperColumn(
+                        TimeEditableColumn(
                             label = "HOUR",
-                            valueText = hour12.toString(),
-                            onIncrement = { hour12 = if (hour12 >= 12) 1 else hour12 + 1 },
-                            onDecrement = { hour12 = if (hour12 <= 1) 12 else hour12 - 1 },
+                            value = hourInput,
+                            onValueChange = { raw ->
+                                val digits = raw.filter(Char::isDigit).take(2)
+                                hourInput = digits
+                                digits.toIntOrNull()?.let { hour12 = it.coerceIn(1, 12) }
+                            },
+                            onIncrement = {
+                                hour12 = if (hour12 >= 12) 1 else hour12 + 1
+                                hourInput = hour12.toString()
+                            },
+                            onDecrement = {
+                                hour12 = if (hour12 <= 1) 12 else hour12 - 1
+                                hourInput = hour12.toString()
+                            },
+                            maxLength = 2,
                             modifier = Modifier.weight(1f)
                         )
                         Text(
@@ -137,11 +177,23 @@ fun SweetTimePickerDialog(
                             color = colors.muted,
                             modifier = Modifier.padding(bottom = mockupDp(20))
                         )
-                        TimeStepperColumn(
+                        TimeEditableColumn(
                             label = "MIN",
-                            valueText = "%02d".format(minute),
-                            onIncrement = { minute = if (minute >= 59) 0 else minute + 1 },
-                            onDecrement = { minute = if (minute <= 0) 59 else minute - 1 },
+                            value = minuteInput,
+                            onValueChange = { raw ->
+                                val digits = raw.filter(Char::isDigit).take(2)
+                                minuteInput = digits
+                                digits.toIntOrNull()?.let { minute = it.coerceIn(0, 59) }
+                            },
+                            onIncrement = {
+                                minute = if (minute >= 59) 0 else minute + 1
+                                minuteInput = "%02d".format(minute)
+                            },
+                            onDecrement = {
+                                minute = if (minute <= 0) 59 else minute - 1
+                                minuteInput = "%02d".format(minute)
+                            },
+                            maxLength = 2,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -169,10 +221,11 @@ fun SweetTimePickerDialog(
 
                 SheetFooterBar(
                     onClose = onDismiss,
+                    closeLabel = "DISCARD",
                     trailing = {
                         SheetHeaderConfirmAction(
                             label = "OK",
-                            onClick = { onConfirm(preview24) }
+                            onClick = { confirmTime() }
                         )
                     }
                 )
@@ -183,14 +236,24 @@ fun SweetTimePickerDialog(
 }
 
 @Composable
-private fun TimeStepperColumn(
+private fun TimeEditableColumn(
     label: String,
-    valueText: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
+    maxLength: Int,
     modifier: Modifier = Modifier,
 ) {
     val colors = SweetTheme.colors
+    val fieldStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = FontWeight.Bold,
+        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F + 4f),
+        lineHeight = mockupSp(22f),
+        textAlign = TextAlign.Center,
+    )
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -208,7 +271,32 @@ private fun TimeStepperColumn(
         )
         StepperChevron(text = "▲", onClick = onIncrement)
         Spacer(Modifier.size(mockupDp(6)))
-        TimeValueSurface(valueText = valueText)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
+                    .clip(RoundedCornerShape(radius))
+                    .background(colors.shadow)
+            )
+            BasicTextField(
+                value = value,
+                onValueChange = { raw ->
+                    onValueChange(raw.filter(Char::isDigit).take(maxLength))
+                },
+                singleLine = true,
+                textStyle = fieldStyle.copy(color = colors.ink),
+                cursorBrush = SolidColor(colors.pinkText),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .zIndex(1f)
+                    .showKeyboardOnFocus()
+                    .clip(RoundedCornerShape(radius))
+                    .background(colors.paper)
+                    .padding(vertical = mockupDp(14), horizontal = mockupDp(8)),
+            )
+        }
         Spacer(Modifier.size(mockupDp(6)))
         StepperChevron(text = "▼", onClick = onDecrement)
     }
@@ -230,41 +318,6 @@ private fun StepperChevron(text: String, onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .padding(horizontal = mockupDp(16), vertical = mockupDp(6))
     )
-}
-
-@Composable
-private fun TimeValueSurface(valueText: String) {
-    val colors = SweetTheme.colors
-    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
-                .clip(RoundedCornerShape(radius))
-                .background(colors.shadow)
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(radius))
-                .background(colors.paper)
-                .padding(vertical = mockupDp(14)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                valueText,
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.FIELD_TEXT_F + 4f),
-                    lineHeight = mockupSp(22f)
-                ),
-                color = colors.ink,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
 }
 
 @Composable

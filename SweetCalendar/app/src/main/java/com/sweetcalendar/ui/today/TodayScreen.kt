@@ -92,9 +92,13 @@ fun TodayScreen(
     val colors = SweetTheme.colors
     val today = remember { JalaliDate.today() }
     val todayIso = today.formatIso()
-    val todayTasks = remember(tasks) { tasks.filter { it.jalaliDate == todayIso } }
-    val pending = todayTasks.filter { !it.isDone }
-    val done = todayTasks.filter { it.isDone }
+    val todayTasks = remember(tasks) {
+        tasks
+            .filter { it.jalaliDate == todayIso }
+            .sortedBy { it.createdAt }
+    }
+    val pending = remember(todayTasks) { todayTasks.filter { !it.isDone } }
+    val done = remember(todayTasks) { todayTasks.filter { it.isDone } }
     val streak = remember(tasks) { computeStreak(tasks) }
     val isNewTask = rememberNewItemTracker(todayTasks.map { it.id })
 
@@ -167,9 +171,28 @@ fun TodayScreen(
                     }
                 }
             } else {
-                if (pending.isNotEmpty()) {
-                    item { SweetSectionLabel("TODAY") }
-                    items(pending, key = { it.id }) { task ->
+                item { SweetSectionLabel("TODAY") }
+                if (done.isNotEmpty()) {
+                    if (pending.isNotEmpty()) {
+                        items(pending, key = { it.id }) { task ->
+                            val isNew = remember(task.id) { isNewTask(task.id) }
+                            SweetTaskCard(
+                                task = task,
+                                modifier = sweetTaskItemMotion().appearOnEnter(isNew),
+                                onClick = { onEditTask(task) },
+                                onToggleComplete = { onCompleteTask(task) },
+                                onDelete = { onDeleteTask(task) },
+                                style = TaskCardStyle.Mockup
+                            )
+                        }
+                    }
+                    item {
+                        CompletedTodayLink(
+                            count = done.size,
+                            onClick = onOpenArchive,
+                        )
+                    }
+                    items(done, key = { it.id }) { task ->
                         val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
@@ -180,31 +203,8 @@ fun TodayScreen(
                             style = TaskCardStyle.Mockup
                         )
                     }
-                }
-                if (done.isNotEmpty()) {
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .padding(top = 6.dp, bottom = 6.dp)
-                                .clickable(onClick = onOpenArchive),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            ThemeCompletedCheckIcon(
-                                size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
-                                bgColor = if (colors.isDark) colors.mint else MintGreen
-                            )
-                            Text(
-                                "${done.size} completed today",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F)
-                                ),
-                                color = colors.muted
-                            )
-                        }
-                    }
-                    items(done, key = { it.id }) { task ->
+                } else {
+                    items(todayTasks, key = { it.id }) { task ->
                         val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
@@ -219,5 +219,33 @@ fun TodayScreen(
             }
             item { Spacer(Modifier.height(90.dp)) }
         }
+    }
+}
+
+@Composable
+private fun CompletedTodayLink(
+    count: Int,
+    onClick: () -> Unit,
+) {
+    val colors = SweetTheme.colors
+    Row(
+        modifier = Modifier
+            .padding(top = 6.dp, bottom = 6.dp)
+            .clickable(onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        ThemeCompletedCheckIcon(
+            size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
+            bgColor = if (colors.isDark) colors.mint else MintGreen
+        )
+        Text(
+            "$count completed today",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F)
+            ),
+            color = colors.muted
+        )
     }
 }

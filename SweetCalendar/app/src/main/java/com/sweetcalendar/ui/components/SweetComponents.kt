@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
@@ -277,13 +278,14 @@ fun SweetTaskCard(
     metaStyle: TaskMetaStyle = TaskMetaStyle.Default,
     style: TaskCardStyle = TaskCardStyle.Interactive
 ) {
+    val listModifier = modifier.fillMaxWidth()
     when (style) {
         TaskCardStyle.Mockup -> {
             val swipeToDelete = onDelete != null && onRecover == null
             if (swipeToDelete) {
                 SwipeToDeleteTaskCard(
                     onDelete = { onDelete!!() },
-                    modifier = modifier,
+                    modifier = listModifier,
                 ) {
                     MockupTaskCard(
                         task = task,
@@ -304,7 +306,7 @@ fun SweetTaskCard(
                     onToggleComplete = onToggleComplete,
                     onRecover = onRecover,
                     onDelete = onDelete,
-                    modifier = modifier,
+                    modifier = listModifier,
                     showDate = showDate,
                     highlightQuery = highlightQuery,
                     metaStyle = metaStyle,
@@ -312,7 +314,7 @@ fun SweetTaskCard(
             }
         }
         TaskCardStyle.Interactive -> InteractiveTaskCard(
-            task, onClick, onToggleComplete, onDelete, modifier, showDate
+            task, onClick, onToggleComplete, onDelete, listModifier, showDate
         )
     }
 }
@@ -348,7 +350,12 @@ private fun MockupTaskCard(
         wasDone = task.isDone
     }
 
-    Box(modifier = modifier.padding(bottom = mockupDp(10)).pressScaleNested()) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = mockupDp(10))
+            .pressScaleNested()
+    ) {
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -373,6 +380,8 @@ private fun MockupTaskCard(
             Row(
                 modifier = Modifier
                     .weight(1f)
+                    .widthIn(min = 0.dp)
+                    .fillMaxWidth()
                     .padding(
                         horizontal = mockupDp(MockupDimens.TASK_CARD_PAD_H),
                         vertical = mockupDp(MockupDimens.TASK_CARD_PAD_V)
@@ -388,20 +397,18 @@ private fun MockupTaskCard(
                             onClick = onToggleComplete ?: onClick,
                         )
                     }
-                    onToggleComplete != null -> {
-                        TaskCheckbox(
-                            checked = false,
-                            onClick = {
+                    else -> {
+                        val onIconClick = if (onToggleComplete != null) {
+                            {
                                 TaskCompletionPop.schedulePop(task.id)
                                 onToggleComplete()
-                            },
-                            modifier = Modifier.size(taskIcon)
-                        )
-                    }
-                    else -> {
+                            }
+                        } else {
+                            onClick
+                        }
                         Box(
                             modifier = Modifier.clickable(
-                                onClick = onClick,
+                                onClick = onIconClick,
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
                             )
@@ -413,7 +420,8 @@ private fun MockupTaskCard(
                 Column(
                     modifier = Modifier
                         .padding(start = mockupDp(10))
-                        .weight(1f)
+                        .weight(1f, fill = true)
+                        .widthIn(min = 0.dp)
                         .clickable(onClick = onClick)
                 ) {
                     AnimatedTaskTitle(
@@ -427,6 +435,7 @@ private fun MockupTaskCard(
                         inkColor = colors.ink,
                         mutedColor = colors.muted,
                         maxLines = 2,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     val meta = when (metaStyle) {
                         TaskMetaStyle.SearchResult -> buildList {
@@ -455,7 +464,9 @@ private fun MockupTaskCard(
                             color = colors.muted,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = mockupDp(2))
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = mockupDp(2))
                         )
                     }
                 }
@@ -473,10 +484,44 @@ private fun MockupTaskCard(
                             }
                         }
                     }
-                    !task.isDone && priority == TaskPriority.High -> {
-                        ThemeSparkleIcon(size = mockupDp(MockupDimens.SPARKLE_ICON))
+                    !task.isDone -> {
+                        TaskCardPriorityMarker(
+                            priority = priority,
+                            onClick = onClick,
+                        )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TaskCardPriorityMarker(
+    priority: TaskPriority,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val count = priority.sparkleCount
+    val sparkleSize = mockupDp(10)
+    val gap = mockupDp(1)
+    Box(
+        modifier = modifier
+            .padding(start = mockupDp(4))
+            .width(mockupDp(MockupDimens.TASK_CARD_PRIORITY_SLOT))
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+            ),
+        contentAlignment = Alignment.CenterEnd,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            repeat(count) {
+                ThemeSparkleIcon(size = sparkleSize)
             }
         }
     }
@@ -581,22 +626,36 @@ private fun InteractiveTaskCard(
                 .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (onToggleComplete != null) {
-                TaskCheckbox(
-                    checked = task.isDone,
-                    onClick = onToggleComplete,
-                    modifier = Modifier.padding(end = 8.dp)
+            Box(
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .then(
+                        if (onToggleComplete != null && !task.isDone) {
+                            Modifier.clickable(onClick = onToggleComplete)
+                        } else {
+                            Modifier
+                        }
+                    ),
+            ) {
+                TaskCategoryIcon(
+                    category = category,
+                    size = mockupDp(MockupDimens.TASK_ICON),
                 )
             }
-            LegacyCategoryIcon(category = category, size = 16.dp)
-            Column(modifier = Modifier.padding(start = 10.dp).weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .weight(1f)
+                    .widthIn(min = 0.dp)
+            ) {
                 Text(
                     task.title,
                     style = MaterialTheme.typography.titleSmall,
                     color = if (task.isDone) colors.muted else colors.ink,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    textDecoration = if (task.isDone) TextDecoration.LineThrough else null
+                    textDecoration = if (task.isDone) TextDecoration.LineThrough else null,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 val meta = buildList {
                     task.reminderTime?.let { add(formatTime12h(it)) }

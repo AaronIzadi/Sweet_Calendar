@@ -38,6 +38,8 @@ import com.sweetcalendar.ui.components.ThemeDecorBackground
 import com.sweetcalendar.ui.components.EmptyTasksState
 import com.sweetcalendar.ui.components.PixelButton
 import com.sweetcalendar.ui.components.TaskCard
+import com.sweetcalendar.ui.components.showKeyboardOnFocus
+import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
@@ -258,7 +260,9 @@ private fun SearchBar(
             singleLine = true,
             textStyle = MaterialTheme.typography.bodySmall.copy(color = colors.ink),
             cursorBrush = SolidColor(colors.pinkText),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .showKeyboardOnFocus(),
             decorationBox = { inner ->
                 if (query.isEmpty()) {
                     Text(

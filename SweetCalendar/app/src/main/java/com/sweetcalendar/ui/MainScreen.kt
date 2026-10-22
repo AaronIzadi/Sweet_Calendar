@@ -89,7 +89,11 @@ private sealed class OverlayState {
     data object Search : OverlayState()
     data object Archive : OverlayState()
     data object Stats : OverlayState()
-    data class HolidayDetail(val date: JalaliDate, val event: DayEvent) : OverlayState()
+    data class HolidayDetail(
+        val date: JalaliDate,
+        val event: DayEvent,
+        val returnTo: OverlayState = None,
+    ) : OverlayState()
     data object NotificationPermission : OverlayState()
     data object Offline : OverlayState()
     data object RecoverSnackbar : OverlayState()
@@ -280,7 +284,7 @@ fun MainScreen(
                         Snackbar(
                             snackbarData = data,
                             containerColor = if (colors.isDark) colors.bannerBg else colors.chocDeep,
-                            contentColor = colors.cream,
+                            contentColor = if (colors.isDark) colors.ink else colors.cream,
                             actionColor = colors.lemon
                         )
                     }
@@ -376,7 +380,14 @@ fun MainScreen(
                                     viewModel.selectDate(date)
                                     overlay = OverlayState.DayDetail(date)
                                 },
-                                onOfflineClick = { overlay = OverlayState.Offline }
+                                onOfflineClick = { overlay = OverlayState.Offline },
+                                onEventClick = { event ->
+                                    overlay = OverlayState.HolidayDetail(
+                                        date = JalaliDate.today(),
+                                        event = event,
+                                        returnTo = OverlayState.None,
+                                    )
+                                }
                             )
                             AppDestination.Settings -> SettingsScreen(
                                 tasks = allTasks,
@@ -469,9 +480,14 @@ fun MainScreen(
                             calendarSystem = calendarState.calendarSystem,
                             onBack = { overlay = OverlayState.None },
                             onTaskClick = { openTaskDetail(it, current) },
+                            onCompleteTask = { completeTask(it) },
                             onAddTask = { sheetState = SheetState.Add(current.date) },
                             onHolidayClick = { event ->
-                                overlay = OverlayState.HolidayDetail(current.date, event)
+                                overlay = OverlayState.HolidayDetail(
+                                    date = current.date,
+                                    event = event,
+                                    returnTo = current,
+                                )
                             }
                         )
                     }
@@ -481,7 +497,7 @@ fun MainScreen(
                         description = current.event.additionalDescription.ifBlank { current.event.description },
                         isHoliday = current.event.isHoliday,
                         calendarSystem = calendarState.calendarSystem,
-                        onBack = { overlay = OverlayState.DayDetail(current.date) }
+                        onBack = { overlay = current.returnTo }
                     )
                     OverlayState.Offline -> OfflineScreen(
                         onBack = { overlay = OverlayState.None },

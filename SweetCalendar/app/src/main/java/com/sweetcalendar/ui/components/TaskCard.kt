@@ -45,6 +45,7 @@ import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.components.notesPlainTextPreview
 import com.sweetcalendar.ui.theme.themeCelebrationMessage
 import com.sweetcalendar.ui.motion.confettiBurst
 import com.sweetcalendar.ui.theme.themeCelebrationTitle
@@ -61,6 +62,7 @@ fun TaskCard(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val category = remember(task.category) { TaskCategory.fromString(task.category) }
     val date = remember(task.jalaliDate) { JalaliDate.parseIso(task.jalaliDate) }
     var menuOpen by remember { mutableStateOf(false) }
     val panelBg = if (task.isDone) colors.paper.copy(alpha = 0.75f) else colors.paper
@@ -105,6 +107,11 @@ fun TaskCard(
                     color = colors.muted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+                ThemeCategoryTaskIcon(
+                    category = category,
+                    size = 22.dp,
+                    modifier = Modifier.padding(top = 4.dp),
                 )
             }
 
@@ -171,7 +178,7 @@ fun TaskCard(
 
                 if (task.notes.isNotBlank()) {
                     Text(
-                        task.notes,
+                        notesPlainTextPreview(task.notes),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.muted,
                         maxLines = 1,

@@ -1,6 +1,7 @@
 package com.sweetcalendar.ui.addtask
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,13 +10,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,16 +32,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,6 +57,9 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
+import com.sweetcalendar.ui.components.NotesFormatToolbar
+import com.sweetcalendar.ui.components.applyNotesFormat
+import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.ClockMiniIcon
 import com.sweetcalendar.ui.components.ThemeSparkleIcon
 import com.sweetcalendar.ui.theme.themeAddTaskButtonText
@@ -63,7 +80,7 @@ import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-
+import kotlinx.coroutines.launch
 private val SelectedChipTextColor = Color.Black
 
 @Composable
@@ -107,6 +124,7 @@ data class TaskFormData(
     val repeatWeekly: Boolean
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskBottomSheet(
     date: JalaliDate,
@@ -119,7 +137,9 @@ fun TaskBottomSheet(
     val colors = SweetTheme.colors
     val isEdit = existingTask != null
     var title by remember(existingTask) { mutableStateOf(existingTask?.title.orEmpty()) }
-    var notes by remember(existingTask) { mutableStateOf(existingTask?.notes.orEmpty()) }
+    var notesField by remember(existingTask) {
+        mutableStateOf(TextFieldValue(existingTask?.notes.orEmpty()))
+    }
     var category by remember(existingTask) {
         mutableStateOf(TaskCategory.fromString(existingTask?.category.orEmpty()))
     }
@@ -148,7 +168,7 @@ fun TaskBottomSheet(
         onConfirm(
             TaskFormData(
                 title = title.trim(),
-                notes = notes.trim(),
+                notes = notesField.text.trim(),
                 jalaliDate = selectedDate,
                 reminderTime = reminderTime.takeIf { reminderEnabled },
                 category = category.label,
@@ -158,7 +178,56 @@ fun TaskBottomSheet(
         )
     }
 
-    BackHandler(onBack = onDismiss)
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    var titleFieldFocused by remember { mutableStateOf(false) }
+    var notesFieldFocused by remember { mutableStateOf(false) }
+    val titleBringIntoView = remember { BringIntoViewRequester() }
+    val notesBringIntoView = remember { BringIntoViewRequester() }
+
+    fun scrollNotesIntoView() {
+        scope.launch {
+            notesBringIntoView.bringIntoView()
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    fun formTextFieldModifier(
+        bringIntoView: BringIntoViewRequester,
+        onFocused: (Boolean) -> Unit,
+        scrollToEndOnFocus: Boolean = false,
+    ): Modifier = Modifier
+        .bringIntoViewRequester(bringIntoView)
+        .onFocusEvent { state ->
+            onFocused(state.isFocused)
+            if (state.isFocused) {
+                scope.launch {
+                    bringIntoView.bringIntoView()
+                    if (scrollToEndOnFocus) {
+                        scrollState.animateScrollTo(scrollState.maxValue)
+                    }
+                }
+            }
+        }
+
+    LaunchedEffect(notesField.text, notesFieldFocused) {
+        if (notesFieldFocused) {
+            notesBringIntoView.bringIntoView()
+            scrollState.animateScrollTo(scrollState.maxValue)
+        }
+    }
+
+    BackHandler {
+        if (titleFieldFocused || notesFieldFocused) {
+            focusManager.clearFocus(force = true)
+            keyboardController?.hide()
+        } else {
+            onDismiss()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -166,7 +235,13 @@ fun TaskBottomSheet(
             .zIndex(2f)
             .background(colors.cream)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
+        ) {
             Text(
                 if (isEdit) "Edit task" else "New task",
                 style = TextStyle(
@@ -185,7 +260,7 @@ fun TaskBottomSheet(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState, enabled = !titleFieldFocused)
                     .padding(
                         start = mockupDp(18),
                         end = mockupDp(18),
@@ -202,7 +277,11 @@ fun TaskBottomSheet(
                     },
                     placeholder = "e.g. Call mom about Nowruz trip",
                     singleLine = true,
-                    isError = showTitleError
+                    isError = showTitleError,
+                    textFieldModifier = formTextFieldModifier(
+                        bringIntoView = titleBringIntoView,
+                        onFocused = { titleFieldFocused = it },
+                    ),
                 )
                 if (showTitleError) {
                     Text(
@@ -242,14 +321,7 @@ fun TaskBottomSheet(
                         readOnly = true,
                         modifier = Modifier
                             .weight(1f)
-                            .clickable {
-                                if (reminderEnabled) {
-                                    showTimePicker = true
-                                } else {
-                                    reminderEnabled = true
-                                    showTimePicker = true
-                                }
-                            },
+                            .clickable { showTimePicker = true },
                         leading = {
                             ClockMiniIcon(
                                 size = mockupDp(MockupDimens.MINI_FIELD_ICON),
@@ -333,12 +405,27 @@ fun TaskBottomSheet(
                 }
 
                 FieldLabel("NOTES")
-                SweetField(
-                    value = notes,
-                    onValueChange = { notes = it },
+                NotesFormatToolbar(
+                    onFormat = { format ->
+                        notesField = applyNotesFormat(notesField, format)
+                        if (notesFieldFocused) scrollNotesIntoView()
+                    },
+                    modifier = Modifier.padding(bottom = mockupDp(6)),
+                )
+                SweetNotesField(
+                    value = notesField,
+                    onValueChange = { new ->
+                        notesField = new
+                        if (notesFieldFocused) scrollNotesIntoView()
+                    },
                     placeholder = "Add a note (optional)",
-                    singleLine = false,
-                    minLines = 3
+                    minLines = 3,
+                    maxLines = 8,
+                    textFieldModifier = formTextFieldModifier(
+                        bringIntoView = notesBringIntoView,
+                        onFocused = { notesFieldFocused = it },
+                        scrollToEndOnFocus = true,
+                    ),
                 )
 
                 Spacer(Modifier.height(mockupDp(22)))
@@ -448,6 +535,66 @@ private fun FormIconSlot(
 }
 
 @Composable
+private fun SweetNotesField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    minLines: Int = 3,
+    maxLines: Int = 8,
+    textFieldModifier: Modifier = Modifier,
+) {
+    val colors = SweetTheme.colors
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    val fieldTextStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
+        lineHeight = mockupSp(18f)
+    )
+    val multilineMinHeight = mockupDp(MockupDimens.FIELD_TEXT_F * minLines + 6f)
+    PaperSurface(
+        shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
+        cornerRadius = radius,
+        modifier = modifier,
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = false,
+            minLines = minLines,
+            maxLines = maxLines,
+            textStyle = fieldTextStyle.copy(color = colors.ink),
+            cursorBrush = SolidColor(colors.pinkText),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = mockupDp(14), vertical = mockupDp(12))
+                .defaultMinSize(minHeight = multilineMinHeight)
+                .heightIn(min = multilineMinHeight)
+                .then(textFieldModifier)
+                .showKeyboardOnFocus(),
+            decorationBox = { inner ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = multilineMinHeight),
+                    contentAlignment = Alignment.TopStart,
+                ) {
+                    if (value.text.isEmpty() && placeholder.isNotEmpty()) {
+                        Text(
+                            placeholder,
+                            style = fieldTextStyle,
+                            color = formPlaceholderColor(),
+                        )
+                    }
+                    inner()
+                }
+            }
+        )
+    }
+}
+
+@Composable
 private fun SweetField(
     value: String,
     onValueChange: (String) -> Unit,
@@ -455,8 +602,10 @@ private fun SweetField(
     placeholder: String = "",
     singleLine: Boolean = true,
     minLines: Int = 1,
+    maxLines: Int = Int.MAX_VALUE,
     isError: Boolean = false,
     readOnly: Boolean = false,
+    textFieldModifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null
 ) {
@@ -493,19 +642,47 @@ private fun SweetField(
                     modifier = Modifier.weight(1f)
                 )
             } else {
+                val multilineMinHeight = mockupDp(MockupDimens.FIELD_TEXT_F * minLines + 6f)
                 BasicTextField(
                     value = value,
                     onValueChange = onValueChange,
                     singleLine = singleLine,
                     minLines = minLines,
+                    maxLines = if (singleLine) 1 else maxLines,
                     textStyle = fieldTextStyle.copy(color = colors.ink),
                     cursorBrush = SolidColor(colors.pinkText),
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = true)
+                        .then(
+                            if (!singleLine) {
+                                Modifier
+                                    .defaultMinSize(minHeight = multilineMinHeight)
+                                    .heightIn(min = multilineMinHeight)
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .then(textFieldModifier)
+                        .showKeyboardOnFocus(),
                     decorationBox = { inner ->
-                        if (value.isEmpty() && placeholder.isNotEmpty()) {
-                            Text(placeholder, style = fieldTextStyle, color = formPlaceholderColor())
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (!singleLine) Modifier.heightIn(min = multilineMinHeight) else Modifier
+                                ),
+                            contentAlignment = Alignment.TopStart,
+                        ) {
+                            if (value.isEmpty() && placeholder.isNotEmpty()) {
+                                Text(
+                                    placeholder,
+                                    style = fieldTextStyle,
+                                    color = formPlaceholderColor(),
+                                )
+                            }
+                            inner()
                         }
-                        inner()
                     }
                 )
             }

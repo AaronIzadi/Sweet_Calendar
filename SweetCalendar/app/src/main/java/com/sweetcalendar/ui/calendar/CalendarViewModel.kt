@@ -49,6 +49,7 @@ data class CalendarUiState(
     val monthCells: List<DayCellInfo?> = emptyList(),
     val selectedDayTasks: List<TaskEntity> = emptyList(),
     val selectedDayEvents: List<DayEvent> = emptyList(),
+    val todayEvents: List<DayEvent> = emptyList(),
     val isLoadingEvents: Boolean = false,
     val eventsLoadFailed: Boolean = false,
     val showHolidays: Boolean = true,
@@ -177,6 +178,23 @@ class CalendarViewModel(
     }.let { base ->
         combine(base, selectedDate.flatMapLatest { taskRepository.observeForDate(it.formatIso()) }) { state, tasks ->
             state.copy(selectedDayTasks = tasks)
+        }
+    }.let { withTasks ->
+        combine(withTasks, showHolidays, eventRepository.observeForDate(JalaliDate.today().formatIso())) { state, show, rawToday ->
+            val todayEvents = if (show) {
+                rawToday
+                    .filter { it.description.isNotBlank() }
+                    .map {
+                        DayEvent(
+                            description = it.description,
+                            additionalDescription = it.additionalDescription,
+                            isHoliday = it.isHoliday
+                        )
+                    }
+            } else {
+                emptyList()
+            }
+            state.copy(todayEvents = todayEvents)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarUiState())
 
@@ -395,6 +413,8 @@ class CalendarViewModel(
                         eventRepository.ensureGregorianMonthCached(month.year, month.month, forceRefresh)
                     }
                 }
+                val today = JalaliDate.today()
+                eventRepository.ensureMonthCached(today.year, today.month, forceRefresh)
             }
             eventsLoadFailed.value = result.isFailure
             isLoadingEvents.value = false

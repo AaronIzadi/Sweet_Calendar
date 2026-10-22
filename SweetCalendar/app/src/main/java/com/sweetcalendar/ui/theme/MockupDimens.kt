@@ -43,6 +43,8 @@ object MockupDimens {
     const val TASK_CARD_PAD_H = 12
     const val TASK_CARD_PAD_V = 10
     const val SPARKLE_ICON = 15
+    /** Trailing high-priority sparkles on list cards (3× mini sparkle). */
+    const val TASK_CARD_PRIORITY_SLOT = 34
     const val COMPLETED_ROW_ICON = 14
     const val COMPLETED_LABEL = 12
     const val COMPLETED_LABEL_F = 12f
@@ -69,6 +71,7 @@ object MockupDimens {
     const val MONTH_DAY_NUM = 12
     const val MONTH_DAY_NUM_F = 12.5f
     const val MONTH_CELL_DOT = 4
+    const val MONTH_CELL_TASK_ICON = 7
     const val MONTH_LEGEND_DOT = 9
     const val MONTH_LEGEND_TEXT = 11
     const val MONTH_LEGEND_TEXT_F = 12f
