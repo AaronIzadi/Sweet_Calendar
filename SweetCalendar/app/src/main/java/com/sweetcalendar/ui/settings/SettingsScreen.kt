@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -110,6 +111,7 @@ private fun profileAvatarBackgroundColor(): Color {
 
 @Composable
 fun SettingsScreen(
+    scrollState: ScrollState = rememberScrollState(),
     tasks: List<TaskEntity>,
     userName: String,
     darkMode: Boolean,
@@ -147,7 +149,7 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = mockupDp(18))
     ) {
         Spacer(Modifier.height(mockupDp(6)))

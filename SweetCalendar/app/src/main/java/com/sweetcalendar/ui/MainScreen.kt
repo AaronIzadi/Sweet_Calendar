@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -333,6 +335,9 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
+                val settingsScrollState = rememberSaveable(saver = ScrollState.Saver) {
+                    ScrollState(0)
+                }
                 AnimatedContent(
                     targetState = ScreenKey(overlay, destination),
                     transitionSpec = {
@@ -390,6 +395,7 @@ fun MainScreen(
                                 }
                             )
                             AppDestination.Settings -> SettingsScreen(
+                                scrollState = settingsScrollState,
                                 tasks = allTasks,
                                 userName = userName,
                                 darkMode = darkMode,
