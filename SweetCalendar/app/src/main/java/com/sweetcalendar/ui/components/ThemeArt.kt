@@ -51,18 +51,10 @@ fun ThemeCategoryTaskIcon(
     modifier: Modifier = Modifier,
     size: Dp = 16.dp
 ) {
-    if (SweetTheme.isSpace) {
-        when (category) {
-            TaskCategory.Personal -> StarIcon(modifier = modifier, size = size)
-            TaskCategory.Home -> RingPlanetIcon(modifier = modifier, size = size)
-            TaskCategory.Work -> RocketIcon(modifier = modifier, size = size)
-        }
-    } else {
-        when (category) {
-            TaskCategory.Personal -> TaskHeartIcon(modifier = modifier, size = size)
-            TaskCategory.Home -> TaskHomeIcon(modifier = modifier, size = size)
-            TaskCategory.Work -> TaskBriefcaseIcon(modifier = modifier, size = size)
-        }
+    when (category) {
+        TaskCategory.Personal -> TaskHeartIcon(modifier = modifier, size = size)
+        TaskCategory.Home -> TaskHomeIcon(modifier = modifier, size = size)
+        TaskCategory.Work -> TaskBriefcaseIcon(modifier = modifier, size = size)
     }
 }
 
@@ -72,18 +64,10 @@ fun ThemeCategorySwatchIcon(
     modifier: Modifier = Modifier,
     size: Dp = 16.dp
 ) {
-    if (SweetTheme.isSpace) {
-        when (category) {
-            TaskCategory.Personal -> StarIcon(modifier = modifier, size = size)
-            TaskCategory.Home -> RingPlanetIcon(modifier = modifier, size = size)
-            TaskCategory.Work -> RocketIcon(modifier = modifier, size = size)
-        }
-    } else {
-        when (category) {
-            TaskCategory.Personal -> PeppermintCandyIcon(modifier = modifier, size = size)
-            TaskCategory.Home -> ChocolateIcon(modifier = modifier, size = size)
-            TaskCategory.Work -> WrappedCandyIcon(modifier = modifier, size = size)
-        }
+    when (category) {
+        TaskCategory.Personal -> PeppermintCandyIcon(modifier = modifier, size = size)
+        TaskCategory.Home -> ChocolateIcon(modifier = modifier, size = size)
+        TaskCategory.Work -> WrappedCandyIcon(modifier = modifier, size = size)
     }
 }
 
@@ -134,7 +118,7 @@ fun ThemeOfflineHeroIcon(
 @Composable
 fun ThemeStreakIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
     if (SweetTheme.isSpace) {
-        CometIcon(modifier = modifier, size = size)
+        MoonIcon(modifier = modifier, size = size)
     } else {
         val colors = SweetTheme.colors
         MockupChocolateIcon(
@@ -255,11 +239,7 @@ fun ThemeNavWeekIcon(
 
 @Composable
 fun ThemeSparkleIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
-    if (SweetTheme.isSpace) {
-        CometIcon(modifier = modifier, size = size)
-    } else {
-        SparkleIcon(modifier = modifier, size = size)
-    }
+    SparkleIcon(modifier = modifier, size = size)
 }
 
 @Composable
@@ -301,7 +281,7 @@ fun ThemeSettingsWidgetIcon(modifier: Modifier = Modifier, size: Dp = 12.dp) {
 @Composable
 fun ThemeSettingsJarWidgetIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     if (SweetTheme.isSpace) {
-        CometIcon(modifier = modifier, size = size)
+        RocketIcon(modifier = modifier, size = size)
     } else {
         SettingsChocolateIcon(modifier = modifier, size = size)
     }
@@ -310,7 +290,7 @@ fun ThemeSettingsJarWidgetIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) 
 @Composable
 fun ThemeStatsJarIcon(modifier: Modifier = Modifier, size: Dp = 40.dp) {
     if (SweetTheme.isSpace) {
-        CometIcon(modifier = modifier, size = size)
+        MoonWithRingIcon(modifier = modifier, size = size)
     } else {
         StatsJarChocolateIcon(modifier = modifier, size = size)
     }

@@ -91,20 +91,6 @@ fun spaceIconPalette(): SpaceIconPalette {
     }
 }
 
-private val RocketRows = listOf(
-    "....1....",
-    "...111...",
-    "..11111..",
-    "..1ooo1..",
-    "..1ooo1..",
-    "..11111..",
-    "..11111..",
-    ".2.111.2.",
-    "22..1..22",
-    "...fff...",
-    "....f....",
-)
-
 private val RingPlanetRows = listOf(
     "...pppp...",
     "..pppppp..",
@@ -149,15 +135,6 @@ private val AstroCheckRows = listOf(
     "..mmm..",
 )
 
-private val MoonRows = listOf(
-    "..111.",
-    ".11111",
-    "111111",
-    "111111",
-    ".11111",
-    "..111.",
-)
-
 @Composable
 fun RocketIcon(
     modifier: Modifier = Modifier,
@@ -165,7 +142,7 @@ fun RocketIcon(
     palette: SpaceIconPalette = spaceIconPalette()
 ) {
     PixelIcon(
-        rows = RocketRows,
+        rows = navRocketPixelRows,
         palette = mapOf(
             '1' to palette.rocketBody,
             'o' to palette.rocketWindow,
@@ -267,8 +244,25 @@ fun MoonIcon(
     palette: SpaceIconPalette = spaceIconPalette()
 ) {
     PixelIcon(
-        rows = MoonRows,
+        rows = moonPixelRows,
         palette = mapOf('1' to palette.moon),
+        size = size,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun MoonWithRingIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 40.dp,
+    palette: SpaceIconPalette = spaceIconPalette()
+) {
+    PixelIcon(
+        rows = moonWithRingPixelRows,
+        palette = mapOf(
+            'm' to palette.moon,
+            'r' to palette.planetRing,
+        ),
         size = size,
         modifier = modifier
     )

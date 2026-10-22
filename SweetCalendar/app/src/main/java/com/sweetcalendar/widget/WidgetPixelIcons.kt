@@ -4,13 +4,14 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import com.sweetcalendar.ui.components.TaskCategory
+import com.sweetcalendar.ui.components.navRocketPixelRows
 
 object WidgetPixelIcons {
 
-    /** Bubblegum: nav lollipop. Orbit: rocket (same as in-app chrome). */
+    /** Bubblegum: lollipop. Orbit: rocket (jar + today widget header). */
     fun brandBitmap(sizePx: Int, theme: WidgetTheme.Colors): Bitmap {
         if (theme.isSpace) {
-            return render(ROCKET_ROWS, spaceRocketPalette(theme), sizePx)
+            return render(navRocketPixelRows, spaceRocketPalette(theme), sizePx)
         }
         val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
@@ -101,20 +102,6 @@ object WidgetPixelIcons {
         "...tt...",
         "...tt...",
         "...tt..."
-    )
-
-    private val ROCKET_ROWS = listOf(
-        "....1....",
-        "...111...",
-        "..11111..",
-        "..1ooo1..",
-        "..1ooo1..",
-        "..11111..",
-        "..11111..",
-        ".2.111.2.",
-        "22..1..22",
-        "...fff...",
-        "....f....",
     )
 
     private val BRIEFCASE_ROWS = listOf(
