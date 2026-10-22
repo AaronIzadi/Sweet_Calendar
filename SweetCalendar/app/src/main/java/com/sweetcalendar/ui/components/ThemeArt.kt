@@ -60,8 +60,8 @@ fun ThemeCategoryTaskIcon(
     } else {
         when (category) {
             TaskCategory.Personal -> TaskHeartIcon(modifier = modifier, size = size)
-            TaskCategory.Home -> TaskLeafIcon(modifier = modifier, size = size)
-            TaskCategory.Work -> TaskGemIcon(modifier = modifier, size = size)
+            TaskCategory.Home -> TaskHomeIcon(modifier = modifier, size = size)
+            TaskCategory.Work -> TaskBriefcaseIcon(modifier = modifier, size = size)
         }
     }
 }

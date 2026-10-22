@@ -34,6 +34,7 @@ import com.sweetcalendar.ui.calendar.DayEvent
 import com.sweetcalendar.ui.components.JarProgressCard
 import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
 import com.sweetcalendar.ui.components.SweetFab
+import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
@@ -97,7 +98,12 @@ fun DayDetailScreen(
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SweetIconButton(label = "←", onClick = onBack)
+                SweetIconButton(onClick = onBack) {
+                    BackArrowMiniIcon(
+                        size = mockupDp(14),
+                        color = colors.purpleDeep
+                    )
+                }
                 Column(modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP))) {
                     Text(
                         primaryTitle,

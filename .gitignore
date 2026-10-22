@@ -32,9 +32,7 @@ local.properties
 .idea/deploymentTargetSelector.xml
 .idea/render.experimental.xml
 .idea/runConfigurations.xml
-.idea/gradle.xml
 .idea/compiler.xml
-.idea/misc.xml
 .idea/vcs.xml
 .idea/workspace.xml
 .idea/tasks.xml
@@ -45,6 +43,17 @@ local.properties
 .idea/dataSources.local.xml
 .idea/androidTestResultsUserPreferences.xml
 .idea/inspectionProfiles/
+# Machine-local when opening repo root (Sweet_Calendar/) in Android Studio
+.idea/.name
+.idea/deviceManager.xml
+.idea/markdown.xml
+# Shared run config + Gradle module link at repo root (see README)
+!.idea/runConfigurations/
+!.idea/runConfigurations/**
+.idea/runConfigurations/_template__*.xml
+!.idea/gradle.xml
+!.idea/AndroidProjectSystem.xml
+!.idea/misc.xml
 captures/
 .externalNativeBuild/
 .cxx/
@@ -55,6 +64,7 @@ captures/
 
 # Log/OS noise
 *.log
+*.hprof
 .DS_Store
 Thumbs.db
 

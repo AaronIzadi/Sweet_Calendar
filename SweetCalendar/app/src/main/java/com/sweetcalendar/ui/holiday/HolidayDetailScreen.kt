@@ -27,6 +27,7 @@ import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
+import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -96,12 +97,16 @@ fun HolidayDetailScreen(
             contentAlignment = Alignment.Center
         ) {
             SweetIconButton(
-                label = "←",
                 onClick = onBack,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(mockupDp(16))
-            )
+            ) {
+                BackArrowMiniIcon(
+                    size = mockupDp(14),
+                    color = colors.purpleDeep
+                )
+            }
             ThemeHolidayHeroIcon(size = mockupDp(MockupDimens.HOLIDAY_HERO_ICON))
         }
 

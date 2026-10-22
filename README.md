@@ -62,7 +62,7 @@ A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) cale
 
 ### 1️⃣ Open the project
 
-Open the `SweetCalendar/` directory in Android Studio (Gradle root).
+Open **either** the git repo root (`Sweet_Calendar/`) **or** the Gradle root (`SweetCalendar/`). Both are wired for an **app** run configuration after Gradle sync.
 
 ### 2️⃣ Sync Gradle
 
@@ -99,7 +99,14 @@ From `SweetCalendar/`:
 adb shell am start -n com.sweetcalendar/.MainActivity
 ```
 
-**🪟 Windows PowerShell:**
+**🪟 Windows PowerShell (emulator — starts AVD if needed):**
+
+```powershell
+cd SweetCalendar
+.\run-on-emulator.ps1
+```
+
+**Manual install:**
 
 ```powershell
 cd SweetCalendar
@@ -206,8 +213,11 @@ See `scripts/process_pixel_art.py` (`OUTPUT_NAMES`) when adding or replacing art
 | Issue | What to check |
 | --- | --- |
 | ☕ Java / Gradle errors | Gradle JDK = **17** (Android Studio → Settings → Build Tools → Gradle) |
+| 📱 Run does nothing / no device | Start an AVD in **Device Manager**; device dropdown must show `emulator-…` **device** (not offline). Or run `.\run-on-emulator.ps1` |
+| 💥 Emulator “crashes” / app vanishes | Often the **API 35 emulator** (Bluetooth system bug), not Sweet Calendar. Close AVD → `.\fix-emulator.ps1 -ColdBoot` → `.\run-on-emulator.ps1 -ColdBoot`. Save logs with `.\capture-crash-log.ps1` |
+| 📱 “Module not specified” | Use run config **app** (not “Sweet Calendar”). **File → Sync Project with Gradle Files** |
 | 🎉 Holidays missing | Internet, `TIME_IR_API_KEY`, retry after failed month fetch |
-| 📂 Wrong project root | Open `SweetCalendar/`, not the parent repo folder only |
+| 📂 Wrong project root | Repo root or `SweetCalendar/` both work after Gradle sync |
 
 ---
 

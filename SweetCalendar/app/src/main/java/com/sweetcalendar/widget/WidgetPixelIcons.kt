@@ -43,9 +43,9 @@ object WidgetPixelIcons {
         }
 
         val rows = when (category) {
-            TaskCategory.Work -> GEM_ROWS
+            TaskCategory.Work -> BRIEFCASE_ROWS
             TaskCategory.Personal -> HEART_ROWS
-            TaskCategory.Home -> LEAF_ROWS
+            TaskCategory.Home -> HOME_ROWS
         }
         val color = when (category) {
             TaskCategory.Work ->
@@ -144,14 +144,12 @@ object WidgetPixelIcons {
         "pp.111.pp",
     )
 
-    private val GEM_ROWS = listOf(
-        "...1...",
+    private val BRIEFCASE_ROWS = listOf(
         "..111..",
         ".11111.",
-        "1111111",
-        ".11111.",
-        "..111..",
-        "...1..."
+        "1.....1",
+        "1.111.1",
+        "1111111"
     )
 
     private val HEART_ROWS = listOf(
@@ -163,14 +161,12 @@ object WidgetPixelIcons {
         "...1..."
     )
 
-    private val LEAF_ROWS = listOf(
-        "..1....",
-        ".111...",
-        "11111..",
-        ".11111.",
-        "..1111.",
-        "...111.",
-        "....11."
+    private val HOME_ROWS = listOf(
+        "...1...",
+        "..111..",
+        ".1...1.",
+        ".1.1.1.",
+        ".11111."
     )
 
     private val CHOCOLATE_ROWS = List(8) { row ->

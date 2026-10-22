@@ -226,18 +226,16 @@ fun GummyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp, color: Color = Le
     }
 }
 
-/** Work category marker — purple gem from mockup `buildGem`. */
+/** Work category marker — purple briefcase outline. */
 @Composable
-fun TaskGemIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun TaskBriefcaseIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     PixelIcon(
         rows = listOf(
-            "...1...",
             "..111..",
             ".11111.",
-            "1111111",
-            ".11111.",
-            "..111..",
-            "...1..."
+            "1.....1",
+            "1.111.1",
+            "1111111"
         ),
         palette = mapOf('1' to themedCategoryGemColor()),
         size = size,
@@ -263,18 +261,16 @@ fun TaskHeartIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     )
 }
 
-/** Home category marker — mint leaf from mockup `buildLeaf`. */
+/** Home category marker — mint house outline. */
 @Composable
-fun TaskLeafIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun TaskHomeIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     PixelIcon(
         rows = listOf(
-            "..1....",
-            ".111...",
-            "11111..",
-            ".11111.",
-            "..1111.",
-            "...111.",
-            "....11."
+            "...1...",
+            "..111..",
+            ".1...1.",
+            ".1.1.1.",
+            ".11111."
         ),
         palette = mapOf('1' to themedCategoryLeafColor()),
         size = size,
@@ -445,6 +441,27 @@ fun CalMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = 
             "1....1",
             "1.1.1.",
             "111111"
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
+/** Pixel chevron pointing left — detail / sheet back affordance. */
+@Composable
+fun BackArrowMiniIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 12.dp,
+    color: Color = GrapePurple,
+) {
+    PixelIcon(
+        rows = listOf(
+            "..1....",
+            ".11....",
+            "111111.",
+            ".11....",
+            "..1....",
         ),
         palette = mapOf('1' to color),
         size = size,
