@@ -89,6 +89,8 @@ class CalendarViewModel(
     private val showHolidays = MutableStateFlow(true)
     private val weekStartsOn = MutableStateFlow(0)
     private val calendarSystem = MutableStateFlow(CalendarSystem.PERSIAN)
+    private val userBirthDate = MutableStateFlow<JalaliDate?>(null)
+    private val userName = MutableStateFlow("Friend")
 
     private val calendarMeta = combine(
         isLoadingEvents,
@@ -148,8 +150,10 @@ class CalendarViewModel(
     val uiState: StateFlow<CalendarUiState> = combine(
         monthContextFlow,
         taskRepository.observeAll(),
-        monthEventsFlow
-    ) { context, allTasks, monthEvents ->
+        monthEventsFlow,
+        userBirthDate,
+        userName,
+    ) { context, allTasks, monthEvents, birthDate, name ->
         val pMonth = context.persianMonth
         val gMonth = context.gregorianMonth
         val selected = context.selected
@@ -164,7 +168,7 @@ class CalendarViewModel(
                 val lastDay = pMonth.daysInMonth()
                 val rangeStart = JalaliDate(pMonth.year, pMonth.month, 1)
                 val rangeEnd = JalaliDate(pMonth.year, pMonth.month, lastDay)
-                allTasks.tasksByDateInRange(rangeStart, rangeEnd)
+                allTasks.tasksByDateInRange(rangeStart, rangeEnd, birthDate, name)
             }
             CalendarSystem.GREGORIAN -> {
                 val lastDay = gMonth.daysInMonth()
@@ -172,7 +176,7 @@ class CalendarViewModel(
                 val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
                 val start = minOf(rangeStart, rangeEnd)
                 val end = maxOf(rangeStart, rangeEnd)
-                allTasks.tasksByDateInRange(start, end)
+                allTasks.tasksByDateInRange(start, end, birthDate, name)
             }
         }
 
@@ -202,8 +206,8 @@ class CalendarViewModel(
             weekStartsOn = meta.weekStartsOn
         )
     }.let { base ->
-        combine(base, selectedDate, taskRepository.observeAll()) { state, selected, allTasks ->
-            state.copy(selectedDayTasks = allTasks.tasksOnDate(selected))
+        combine(base, selectedDate, taskRepository.observeAll(), userBirthDate, userName) { state, selected, allTasks, birthDate, name ->
+            state.copy(selectedDayTasks = allTasks.tasksOnDate(selected, birthDate, name))
         }
     }.let { withTasks ->
         combine(withTasks, showHolidays, calendarSystem) { state, show, system ->
@@ -286,6 +290,14 @@ class CalendarViewModel(
         selectedDate.value = date
     }
 
+    fun setUserBirthDate(date: JalaliDate?) {
+        userBirthDate.value = date
+    }
+
+    fun setUserName(name: String) {
+        userName.value = name.trim().ifBlank { "Friend" }
+    }
+
     fun setShowHolidays(enabled: Boolean) {
         showHolidays.value = enabled
         if (enabled) refreshEventsForVisibleMonth()
@@ -337,7 +349,8 @@ class CalendarViewModel(
                 category = form.category,
                 priority = form.priority,
                 recurrenceFreq = form.recurrenceFreq,
-                recurrenceCount = form.recurrenceCount,
+                recurrenceInterval = form.recurrenceInterval,
+                recurrenceWeekdays = form.recurrenceWeekdays,
             )
             val task = TaskEntity(
                 id = id,
@@ -349,7 +362,10 @@ class CalendarViewModel(
                 priority = form.priority,
                 repeatWeekly = form.recurrenceFreq == RecurrenceFreq.WEEKLY,
                 recurrenceFreq = form.recurrenceFreq.name,
-                recurrenceCount = form.recurrenceCount,
+                recurrenceInterval = form.recurrenceInterval,
+                recurrenceWeekdays = com.sweetcalendar.recurrence.RecurrenceWeekdays.encode(
+                    form.recurrenceWeekdays
+                ),
             )
             scheduleReminderSafely(task)
             refreshWidgets()

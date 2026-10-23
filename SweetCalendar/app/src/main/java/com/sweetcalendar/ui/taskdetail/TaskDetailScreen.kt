@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.recurrenceIntervalInlineTextStyle
 import com.sweetcalendar.recurrence.repeatSummary
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
@@ -102,6 +103,7 @@ fun TaskDetailScreen(
     onEdit: () -> Unit,
     onComplete: () -> Unit,
     onDelete: () -> Unit,
+    modifiable: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     BackHandler(onBack = onBack)
@@ -125,7 +127,8 @@ fun TaskDetailScreen(
             priority = priority,
             onBack = onBack,
             onEdit = onEdit,
-            onDelete = onDelete
+            onDelete = onDelete,
+            showActions = modifiable,
         )
 
         Column(modifier = Modifier.weight(1f)) {
@@ -183,7 +186,8 @@ fun TaskDetailScreen(
                             icon = {
                                 RepeatMiniIcon(size = miniIconSize, color = colors.purpleDeep)
                             },
-                            text = repeatLabel
+                            text = repeatLabel,
+                            textStyle = recurrenceIntervalInlineTextStyle(),
                         )
                     }
                 }
@@ -194,20 +198,22 @@ fun TaskDetailScreen(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(8),
-                        bottom = mockupDp(24)
-                    )
-            ) {
-                if (!task.isDone) {
-                    CompleteButton(text = "MARK COMPLETE", onClick = onComplete)
-                } else {
-                    DetailSecondaryButton(text = "MARK INCOMPLETE", onClick = onComplete)
+            if (modifiable) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = mockupDp(18),
+                            end = mockupDp(18),
+                            top = mockupDp(8),
+                            bottom = mockupDp(24)
+                        )
+                ) {
+                    if (!task.isDone) {
+                        CompleteButton(text = "MARK COMPLETE", onClick = onComplete)
+                    } else {
+                        DetailSecondaryButton(text = "MARK INCOMPLETE", onClick = onComplete)
+                    }
                 }
             }
         }
@@ -223,6 +229,7 @@ private fun TaskDetailHero(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    showActions: Boolean = true,
 ) {
     val colors = SweetTheme.colors
     val heroBg = detailCategoryHeroBackground(category)
@@ -270,19 +277,21 @@ private fun TaskDetailHero(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.spacedBy(mockupDp(DETAIL_ACTION_BTN_GAP))
                 ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(mockupDp(DETAIL_ACTION_BTN_GAP))) {
-                        SweetIconButton(onClick = onEdit) {
-                            PenMiniIcon(
-                                size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
-                                color = colors.purpleDeep
-                            )
-                        }
-                        SweetIconButton(onClick = onDelete) {
-                            TrashIcon(
-                                width = mockupDp(MockupDimens.TRASH_ICON_W),
-                                height = mockupDp(MockupDimens.TRASH_ICON_H),
-                                color = DeleteLinkColor
-                            )
+                    if (showActions) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(mockupDp(DETAIL_ACTION_BTN_GAP))) {
+                            SweetIconButton(onClick = onEdit) {
+                                PenMiniIcon(
+                                    size = mockupDp(MockupDimens.SETTINGS_PROFILE_EDIT_ICON),
+                                    color = colors.purpleDeep
+                                )
+                            }
+                            SweetIconButton(onClick = onDelete) {
+                                TrashIcon(
+                                    width = mockupDp(MockupDimens.TRASH_ICON_W),
+                                    height = mockupDp(MockupDimens.TRASH_ICON_H),
+                                    color = DeleteLinkColor
+                                )
+                            }
                         }
                     }
                     DetailPriorityBadge(
@@ -518,7 +527,17 @@ private fun DetailSecondaryButton(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun MetaRow(icon: @Composable () -> Unit, text: String) {
+private fun MetaRow(
+    icon: @Composable () -> Unit,
+    text: String,
+    textStyle: TextStyle? = null,
+) {
+    val resolvedStyle = textStyle ?: TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = mockupSp(MockupDimens.DETAIL_META_F),
+        lineHeight = mockupSp(17f),
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
@@ -526,12 +545,7 @@ private fun MetaRow(icon: @Composable () -> Unit, text: String) {
         icon()
         Text(
             text,
-            style = TextStyle(
-                fontFamily = BodyFont,
-                fontWeight = SecondaryTextWeight,
-                fontSize = mockupSp(MockupDimens.DETAIL_META_F),
-                lineHeight = mockupSp(17f)
-            ),
+            style = resolvedStyle,
             color = detailMetaTextColor()
         )
     }

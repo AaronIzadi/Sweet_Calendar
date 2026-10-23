@@ -23,6 +23,8 @@ data class TaskEntity(
     val recurrenceInterval: Int = 1,
     /** Total occurrences in the series (including the first); null = no limit. */
     val recurrenceCount: Int? = null,
+    /** Comma-separated weekday indices (0=Sat … 6=Fri). Empty = task date's weekday. */
+    val recurrenceWeekdays: String = "",
     /** Last Jalali date (inclusive) for this segment of a split series. */
     val seriesUntil: String? = null,
     /** When true, completing this row does not spawn the next occurrence. */

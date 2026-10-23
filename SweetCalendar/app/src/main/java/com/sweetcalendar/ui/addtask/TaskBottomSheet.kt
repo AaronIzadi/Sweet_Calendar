@@ -17,15 +17,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -65,7 +68,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.recurrenceIntervalInlineTextStyle
 import com.sweetcalendar.recurrence.recurrenceFrequency
+import com.sweetcalendar.recurrence.recurrenceWeekdaySet
 import com.sweetcalendar.recurrence.userLabel
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
@@ -120,14 +125,25 @@ data class TaskFormData(
     val category: String,
     val priority: String,
     val recurrenceFreq: RecurrenceFreq,
-    /** Total times the task should occur; null = no limit. */
-    val recurrenceCount: Int? = null,
+    /** Every N weeks or months, depending on [recurrenceFreq]. */
+    val recurrenceInterval: Int = 1,
+    val recurrenceWeekdays: Set<Int> = emptySet(),
 ) {
     val repeatWeekly: Boolean get() = recurrenceFreq == RecurrenceFreq.WEEKLY
 }
 
-internal fun parseRecurrenceCountInput(text: String): Int? =
-    text.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()?.coerceIn(1, 999)
+/** Empty field = every week/month (stored as interval 1). UI skips 1 and starts at 2. */
+internal fun parseRecurrenceIntervalInput(text: String): Int {
+    val trimmed = text.trim()
+    if (trimmed.isEmpty()) return 1
+    val parsed = trimmed.toIntOrNull() ?: return 1
+    return if (parsed < 2) 1 else parsed.coerceAtMost(999)
+}
+
+internal fun filterRecurrenceIntervalInput(text: String): String {
+    val digits = text.filter { it.isDigit() }.take(3)
+    return if (digits == "1") "" else digits
+}
 
 internal fun filterRecurrenceCountInput(text: String): String =
     text.filter { it.isDigit() }.take(3)
@@ -139,6 +155,7 @@ fun TaskBottomSheet(
     existingTask: TaskEntity?,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     eventRepository: EventRepository,
+    weekStartsOn: Int = 0,
     onDismiss: () -> Unit,
     onConfirm: (TaskFormData) -> Unit,
     modifier: Modifier = Modifier
@@ -161,8 +178,20 @@ fun TaskBottomSheet(
     var recurrenceFreq by remember(existingTask) {
         mutableStateOf(existingTask?.recurrenceFrequency() ?: RecurrenceFreq.NONE)
     }
-    var recurrenceCountText by remember(existingTask) {
-        mutableStateOf(existingTask?.recurrenceCount?.toString() ?: "")
+    var recurrenceIntervalText by remember(existingTask) {
+        mutableStateOf(
+            when {
+                existingTask == null -> ""
+                existingTask.recurrenceInterval <= 1 -> ""
+                else -> existingTask.recurrenceInterval.toString()
+            }
+        )
+    }
+    var recurrenceWeekdays by remember(existingTask, date) {
+        mutableStateOf(
+            existingTask?.recurrenceWeekdaySet()
+                ?: setOf(date.weekdayIndex())
+        )
     }
     var reminderEnabled by remember(existingTask) {
         mutableStateOf(existingTask?.reminderTime != null)
@@ -189,10 +218,15 @@ fun TaskBottomSheet(
                 category = category.label,
                 priority = priority.label,
                 recurrenceFreq = recurrenceFreq,
-                recurrenceCount = if (recurrenceFreq == RecurrenceFreq.NONE) {
-                    null
+                recurrenceInterval = if (recurrenceFreq == RecurrenceFreq.NONE) {
+                    1
                 } else {
-                    parseRecurrenceCountInput(recurrenceCountText)
+                    parseRecurrenceIntervalInput(recurrenceIntervalText)
+                },
+                recurrenceWeekdays = if (recurrenceFreq == RecurrenceFreq.NONE) {
+                    emptySet()
+                } else {
+                    recurrenceWeekdays
                 },
             )
         )
@@ -410,7 +444,10 @@ fun TaskBottomSheet(
                             onClick = {
                                 recurrenceFreq = freq
                                 if (freq == RecurrenceFreq.NONE) {
-                                    recurrenceCountText = ""
+                                    recurrenceIntervalText = ""
+                                    recurrenceWeekdays = emptySet()
+                                } else if (recurrenceWeekdays.isEmpty()) {
+                                    recurrenceWeekdays = setOf(selectedDate.weekdayIndex())
                                 }
                             },
                             modifier = Modifier
@@ -426,34 +463,85 @@ fun TaskBottomSheet(
                     exit = fadeOut() + shrinkVertically(),
                 ) {
                     Column(modifier = Modifier.padding(top = mockupDp(10))) {
-                        FieldLabel("HOW MANY TIMES")
-                        Text(
-                            "Including this task. Leave empty for no limit.",
-                            style = TextStyle(
-                                fontFamily = BodyFont,
-                                fontWeight = SecondaryTextWeight,
-                                fontSize = mockupSp(12f),
-                                lineHeight = mockupSp(16f),
-                            ),
-                            color = formMetaMutedColor(),
-                            modifier = Modifier.padding(bottom = mockupDp(8)),
-                        )
-                        RecurrenceCountStepper(
-                            value = recurrenceCountText,
-                            onValueChange = { recurrenceCountText = filterRecurrenceCountInput(it) },
-                            onDecrement = {
-                                val current = parseRecurrenceCountInput(recurrenceCountText)
-                                recurrenceCountText = when {
-                                    current == null -> ""
-                                    current <= 1 -> ""
-                                    else -> (current - 1).toString()
+                        FieldLabel("ON THESE DAYS")
+                        RecurrenceWeekdayRow(
+                            selected = recurrenceWeekdays,
+                            weekStartsOn = weekStartsOn,
+                            onToggle = { day ->
+                                recurrenceWeekdays = if (day in recurrenceWeekdays) {
+                                    val next = recurrenceWeekdays - day
+                                    if (next.isEmpty()) recurrenceWeekdays else next
+                                } else {
+                                    recurrenceWeekdays + day
                                 }
                             },
-                            onIncrement = {
-                                val current = parseRecurrenceCountInput(recurrenceCountText) ?: 0
-                                recurrenceCountText = (current + 1).coerceAtMost(999).toString()
-                            },
+                            modifier = Modifier.padding(bottom = mockupDp(12)),
                         )
+                        val intervalUnit = if (recurrenceFreq == RecurrenceFreq.WEEKLY) {
+                            "weeks."
+                        } else {
+                            "months."
+                        }
+                        val intervalInlineStyle = recurrenceIntervalInlineTextStyle()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxHeight(),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                Text(
+                                    "Repeat for",
+                                    style = intervalInlineStyle,
+                                    color = colors.ink,
+                                    maxLines = 1,
+                                )
+                            }
+                            RecurrenceCountStepper(
+                                value = recurrenceIntervalText,
+                                onValueChange = {
+                                    recurrenceIntervalText = filterRecurrenceIntervalInput(it)
+                                },
+                                onDecrement = {
+                                    val current = recurrenceIntervalText.trim().toIntOrNull()
+                                    recurrenceIntervalText = when {
+                                        current == null || current <= 2 -> ""
+                                        else -> (current - 1).toString()
+                                    }
+                                },
+                                onIncrement = {
+                                    val current = recurrenceIntervalText.trim().toIntOrNull()
+                                    recurrenceIntervalText = when {
+                                        current == null -> "2"
+                                        current < 2 -> "2"
+                                        else -> (current + 1).coerceAtMost(999).toString()
+                                    }
+                                },
+                                placeholder = "∞",
+                                textStyle = intervalInlineStyle,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .widthIn(min = mockupDp(0f), max = mockupDp(176f)),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(mockupDp(58f))
+                                    .fillMaxHeight(),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                Text(
+                                    intervalUnit,
+                                    style = intervalInlineStyle,
+                                    color = colors.ink,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -714,16 +802,19 @@ private fun SweetField(
     trailing: (@Composable () -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     textAlign: TextAlign? = null,
+    textStyle: TextStyle? = null,
 ) {
     val colors = SweetTheme.colors
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
     val resolvedAlign = textAlign ?: TextAlign.Start
-    val fieldTextStyle = TextStyle(
+    val baseFieldTextStyle = textStyle ?: TextStyle(
         fontFamily = BodyFont,
         fontWeight = SecondaryTextWeight,
         fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
         lineHeight = mockupSp(18f),
-        textAlign = resolvedAlign,
+    )
+    val fieldTextStyle = baseFieldTextStyle.merge(
+        TextStyle(textAlign = resolvedAlign),
     )
     val fieldContentAlignment = when (resolvedAlign) {
         TextAlign.Center -> Alignment.Center
@@ -740,6 +831,7 @@ private fun SweetField(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (singleLine) Modifier.fillMaxHeight() else Modifier)
                 .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
             verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top
         ) {
@@ -898,8 +990,10 @@ private fun RecurrenceCountStepper(
     onDecrement: () -> Unit,
     onIncrement: () -> Unit,
     modifier: Modifier = Modifier,
+    placeholder: String = "∞",
+    textStyle: TextStyle? = null,
 ) {
-    val buttonSize = mockupDp(44)
+    val controlHeight = mockupDp(44)
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
@@ -908,20 +1002,23 @@ private fun RecurrenceCountStepper(
         RecurrenceCountStepButton(
             label = "−",
             onClick = onDecrement,
-            modifier = Modifier.size(buttonSize),
+            modifier = Modifier.size(controlHeight),
         )
         SweetField(
             value = value,
             onValueChange = onValueChange,
-            placeholder = "No limit",
-            modifier = Modifier.weight(1f),
+            placeholder = placeholder,
+            modifier = Modifier
+                .weight(1f)
+                .height(controlHeight),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             textAlign = TextAlign.Center,
+            textStyle = textStyle,
         )
         RecurrenceCountStepButton(
             label = "+",
             onClick = onIncrement,
-            modifier = Modifier.size(buttonSize),
+            modifier = Modifier.size(controlHeight),
         )
     }
 }
@@ -952,6 +1049,32 @@ private fun RecurrenceCountStepButton(
                     lineHeight = mockupSp(22f),
                 ),
                 color = colors.purpleDeep,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RecurrenceWeekdayRow(
+    selected: Set<Int>,
+    weekStartsOn: Int,
+    onToggle: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val ordered = (0..6).map { (weekStartsOn + it) % 7 }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(mockupDp(6)),
+    ) {
+        ordered.forEach { dayIndex ->
+            val label = JalaliDate.WEEKDAY_NAMES_EN_SHORT[dayIndex]
+            RepeatFreqChip(
+                label = label,
+                selected = dayIndex in selected,
+                onClick = { onToggle(dayIndex) },
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = mockupDp(0)),
             )
         }
     }

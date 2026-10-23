@@ -43,6 +43,7 @@ import com.sweetcalendar.recurrence.isVirtualOccurrence
 import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.recurrence.resolveOccurrence
 import com.sweetcalendar.recurrence.sameOccurrenceAs
+import com.sweetcalendar.profile.isBirthdayTask
 import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.addtask.RecurrenceEditScopeDialog
 import com.sweetcalendar.ui.addtask.RecurrenceScopeMode
@@ -161,6 +162,7 @@ fun MainScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf(preferences.userName) }
+    var userBirthDate by remember { mutableStateOf(preferences.userBirthDate()) }
     var showHolidays by remember { mutableStateOf(preferences.showHolidays) }
     var weekStartsOn by remember { mutableStateOf(preferences.weekStartsOn) }
     var calendarSystem by remember { mutableStateOf(preferences.calendarSystem) }
@@ -172,7 +174,16 @@ fun MainScreen(
         viewModel.applyPreferences(showHolidays, weekStartsOn, calendarSystem)
     }
 
+    LaunchedEffect(userBirthDate) {
+        viewModel.setUserBirthDate(userBirthDate)
+    }
+
+    LaunchedEffect(userName) {
+        viewModel.setUserName(userName)
+    }
+
     fun deleteWithRecover(task: TaskEntity) {
+        if (task.isBirthdayTask()) return
         viewModel.deleteTask(task)
         recoverTask = task
         if (overlay is OverlayState.TaskDetail) {
@@ -225,7 +236,9 @@ fun MainScreen(
     }
 
     fun completeTask(task: TaskEntity) {
-        val dayTasks = allTasks.tasksOnDate(task.parsedDate())
+        if (task.isBirthdayTask()) return
+        val dayTasks = allTasks.tasksOnDate(task.parsedDate(), userBirthDate, userName)
+            .filter { !it.isBirthdayTask() }
         if (!task.isDone) {
             val willFillJar = dayTasks.all { it.isDone || it.sameOccurrenceAs(task) }
             viewModel.toggleTaskDone(task)
@@ -383,6 +396,7 @@ fun MainScreen(
                             AppDestination.Today -> TodayScreen(
                                 tasks = allTasks,
                                 userName = userName,
+                                userBirthDate = userBirthDate,
                                 calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
                                 onAddTask = { sheetState = SheetState.Add(JalaliDate.today()) },
@@ -395,6 +409,8 @@ fun MainScreen(
                             AppDestination.Week -> WeekScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 tasks = allTasks,
+                                userBirthDate = userBirthDate,
+                                userName = userName,
                                 weekStartsOn = calendarState.weekStartsOn,
                                 calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
@@ -455,6 +471,13 @@ fun MainScreen(
                                     preferences.userName = name
                                     userName = name
                                 },
+                                userBirthDate = userBirthDate,
+                                eventRepository = eventRepository,
+                                onUserBirthDateChange = { date ->
+                                    preferences.birthDateJalali = date?.formatIso()
+                                    userBirthDate = date
+                                    SweetWidgets.updateAll(context)
+                                },
                                 onOpenStats = { overlay = OverlayState.Stats },
                                 onOpenArchive = { overlay = OverlayState.Archive },
                                 onOpenSearch = { overlay = OverlayState.Search },
@@ -489,6 +512,7 @@ fun MainScreen(
                         }
                         TaskDetailScreen(
                             task = detailTask,
+                            modifiable = !liveTask.isBirthdayTask(),
                             onBack = { overlay = current.returnTo },
                             onEdit = {
                                 if (liveTask.isVirtualOccurrence()) {
@@ -513,7 +537,7 @@ fun MainScreen(
                         LaunchedEffect(current.date) {
                             viewModel.selectDate(current.date)
                         }
-                        val dayTasks = allTasks.tasksOnDate(current.date)
+                        val dayTasks = allTasks.tasksOnDate(current.date, userBirthDate, userName)
                         val dayEvents = if (calendarState.selectedDate == current.date) {
                             calendarState.selectedDayEvents
                         } else {
@@ -602,6 +626,7 @@ fun MainScreen(
                         existingTask = null,
                         calendarSystem = calendarState.calendarSystem,
                         eventRepository = eventRepository,
+                        weekStartsOn = calendarState.weekStartsOn,
                         onDismiss = { sheetState = SheetState.Hidden },
                         onConfirm = { form ->
                             viewModel.addTask(form)
@@ -619,6 +644,7 @@ fun MainScreen(
                         existingTask = task,
                         calendarSystem = calendarState.calendarSystem,
                         eventRepository = eventRepository,
+                        weekStartsOn = calendarState.weekStartsOn,
                         onDismiss = { sheetState = SheetState.Hidden },
                         onConfirm = { form ->
                             if (viewModel.needsRecurrenceScopeForEdit(task)) {

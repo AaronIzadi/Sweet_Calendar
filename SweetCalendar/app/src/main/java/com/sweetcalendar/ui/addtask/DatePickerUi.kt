@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +56,91 @@ internal fun officialHolidayDateKeys(events: List<EventCacheEntity>): Set<String
         .map { normalizeEventDateKey(it.jalaliDate) }
         .toSet()
 
+internal enum class DatePickerPane {
+    Day,
+    Month,
+    Year,
+}
+
+internal const val DATE_PICKER_YEAR_PAGE_SIZE = 12
+
+@Composable
+internal fun DatePickerChoiceCell(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = SweetTheme.colors
+    Box(
+        modifier = modifier
+            .heightIn(min = mockupDp(40))
+            .padding(2.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (isSelected) colors.purple else Color.Transparent)
+            .clickable(onClick = onClick)
+            .padding(vertical = mockupDp(8), horizontal = mockupDp(4)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isSelected) selectedOnAccentTextColor() else colors.ink,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+internal fun DatePickerMonthGrid(
+    monthLabels: List<String>,
+    selectedMonth: Int,
+    onMonthSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    monthLabels.chunked(3).forEachIndexed { rowIndex, rowMonths ->
+        Row(modifier = modifier.fillMaxWidth()) {
+            rowMonths.forEachIndexed { colIndex, label ->
+                val monthIndex = rowIndex * 3 + colIndex + 1
+                DatePickerChoiceCell(
+                    label = label,
+                    isSelected = monthIndex == selectedMonth,
+                    onClick = { onMonthSelected(monthIndex) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            repeat(3 - rowMonths.size) {
+                Box(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+internal fun DatePickerYearGrid(
+    years: List<Int>,
+    selectedYear: Int,
+    onYearSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    years.chunked(4).forEach { rowYears ->
+        Row(modifier = modifier.fillMaxWidth()) {
+            rowYears.forEach { year ->
+                DatePickerChoiceCell(
+                    label = year.toString(),
+                    isSelected = year == selectedYear,
+                    onClick = { onYearSelected(year) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            repeat(4 - rowYears.size) {
+                Box(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
 internal fun datePickerCellBackground(
     colors: SweetColors,
     isSelected: Boolean,
@@ -71,12 +157,19 @@ internal fun datePickerCellBackground(
 
 @Composable
 internal fun DatePickerDialogShell(
-    monthLabel: String,
-    onPrevMonth: () -> Unit,
-    onNextMonth: () -> Unit,
+    pane: DatePickerPane,
+    monthName: String,
+    year: Int,
+    yearPageLabel: String,
+    onMonthClick: () -> Unit,
+    onYearClick: () -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    calendar: @Composable ColumnScope.() -> Unit,
+    dayCalendar: @Composable ColumnScope.() -> Unit,
+    monthPicker: @Composable ColumnScope.() -> Unit,
+    yearPicker: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = SweetTheme.colors
     SweetDialog(onDismissRequest = onDismiss) {
@@ -121,36 +214,80 @@ internal fun DatePickerDialogShell(
                         ) {
                             MonthNavChevron(
                                 pointingLeft = true,
-                                onClick = onPrevMonth,
+                                onClick = onPrev,
                             )
-                            Text(
-                                monthLabel,
-                                style = MaterialTheme.typography.titleSmall,
-                                color = colors.ink
-                            )
+                            when (pane) {
+                                DatePickerPane.Day -> {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(mockupDp(6)),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Text(
+                                            monthName,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = colors.ink,
+                                            modifier = Modifier.clickable(onClick = onMonthClick),
+                                        )
+                                        Text(
+                                            year.toString(),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = colors.ink,
+                                            modifier = Modifier.clickable(onClick = onYearClick),
+                                        )
+                                    }
+                                }
+                                DatePickerPane.Month -> {
+                                    Text(
+                                        year.toString(),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = colors.ink,
+                                        modifier = Modifier.clickable(onClick = onYearClick),
+                                    )
+                                }
+                                DatePickerPane.Year -> {
+                                    Text(
+                                        yearPageLabel,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = colors.ink,
+                                    )
+                                }
+                            }
                             MonthNavChevron(
                                 pointingLeft = false,
-                                onClick = onNextMonth,
+                                onClick = onNext,
                             )
                         }
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 10.dp, bottom = 4.dp)
-                        ) {
-                            JalaliDate.WEEKDAY_NAMES_EN_SHORT.forEach { label ->
-                                Text(
-                                    label.uppercase(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = colors.muted,
-                                    modifier = Modifier.weight(1f),
-                                    textAlign = TextAlign.Center
-                                )
+                        when (pane) {
+                            DatePickerPane.Day -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 10.dp, bottom = 4.dp)
+                                ) {
+                                    JalaliDate.WEEKDAY_NAMES_EN_SHORT.forEach { label ->
+                                        Text(
+                                            label.uppercase(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = colors.muted,
+                                            modifier = Modifier.weight(1f),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                                dayCalendar()
+                            }
+                            DatePickerPane.Month -> {
+                                Column(Modifier.padding(top = mockupDp(10))) {
+                                    monthPicker()
+                                }
+                            }
+                            DatePickerPane.Year -> {
+                                Column(Modifier.padding(top = mockupDp(10))) {
+                                    yearPicker()
+                                }
                             }
                         }
-
-                        calendar()
                     }
 
                     SheetFooterBar(

@@ -2,6 +2,7 @@ package com.sweetcalendar.data.prefs
 
 import android.content.Context
 import com.sweetcalendar.calendar.CalendarSystem
+import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.theme.ThemeFamily
 
 class AppPreferences(context: Context) {
@@ -22,6 +23,18 @@ class AppPreferences(context: Context) {
     var userName: String
         get() = prefs.getString(KEY_USER_NAME, "Friend") ?: "Friend"
         set(value) = prefs.edit().putString(KEY_USER_NAME, value).apply()
+
+    /** Full birth date in Jalali ISO form; used for annual birthday on month/day. */
+    var birthDateJalali: String?
+        get() = prefs.getString(KEY_BIRTH_DATE, null)?.takeIf { it.isNotBlank() }
+        set(value) {
+            prefs.edit().putString(KEY_BIRTH_DATE, value?.takeIf { it.isNotBlank() }).apply()
+        }
+
+    fun userBirthDate(): JalaliDate? {
+        val raw = birthDateJalali ?: return null
+        return runCatching { JalaliDate.parseIso(raw) }.getOrNull()
+    }
 
     var hasSeenNotificationRationale: Boolean
         get() = prefs.getBoolean(KEY_NOTIF_RATIONALE, false)
@@ -62,6 +75,7 @@ class AppPreferences(context: Context) {
         private const val KEY_DARK_MODE = "dark_mode"
         private const val KEY_THEME_FAMILY = "theme_family"
         private const val KEY_USER_NAME = "user_name"
+        private const val KEY_BIRTH_DATE = "birth_date_jalali"
         private const val KEY_NOTIF_RATIONALE = "has_seen_notification_rationale"
         private const val KEY_SHOW_HOLIDAYS = "show_holidays"
         private const val KEY_WEEK_STARTS_ON = "week_starts_on"

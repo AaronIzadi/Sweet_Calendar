@@ -32,7 +32,8 @@ class TaskRepository(private val dao: TaskDao) {
         priority: String = "Medium",
         repeatWeekly: Boolean = false,
         recurrenceFreq: RecurrenceFreq = RecurrenceFreq.fromLegacyRepeatWeekly(repeatWeekly),
-        recurrenceCount: Int? = null,
+        recurrenceInterval: Int = 1,
+        recurrenceWeekdays: Set<Int> = emptySet(),
     ): Long {
         return dao.upsert(
             TaskEntity(
@@ -43,7 +44,12 @@ class TaskRepository(private val dao: TaskDao) {
                 category = category,
                 priority = priority,
                 repeatWeekly = recurrenceFreq == RecurrenceFreq.WEEKLY,
-            ).withRecurrence(recurrenceFreq, count = recurrenceCount)
+            ).withRecurrence(
+                recurrenceFreq,
+                interval = recurrenceInterval.coerceAtLeast(1),
+                count = null,
+                weekdays = recurrenceWeekdays,
+            )
         )
     }
 

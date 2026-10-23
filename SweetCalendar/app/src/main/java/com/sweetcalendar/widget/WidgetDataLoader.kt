@@ -3,7 +3,10 @@ package com.sweetcalendar.widget
 import android.content.Context
 import com.sweetcalendar.data.local.AppDatabase
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.prefs.AppPreferences
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.profile.isBirthdayTask
+import com.sweetcalendar.recurrence.tasksOnDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -22,14 +25,19 @@ object WidgetDataLoader {
         withContext(Dispatchers.IO) {
         try {
             val today = JalaliDate.today()
-            val tasks = AppDatabase.get(context).taskDao().getForDate(today.formatIso())
-            val done = tasks.count { it.isDone }
-            val total = tasks.size
+            val prefs = AppPreferences(context)
+            val birthDate = prefs.userBirthDate()
+            val userName = prefs.userName
+            val allActive = AppDatabase.get(context).taskDao().getAllActive()
+            val tasks = allActive.tasksOnDate(today, birthDate, userName)
+            val actionable = tasks.filter { !it.isBirthdayTask() }
+            val done = actionable.count { it.isDone }
+            val total = actionable.size
             val progress = if (total > 0) (done * 100) / total else 0
             val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[today.weekdayIndex()]
             val month = JalaliDate.MONTH_NAMES_EN[today.month - 1]
             val pending = tasks.filter { !it.isDone }.take(3)
-            val doneTasks = tasks.filter { it.isDone }.take(3 - pending.size)
+            val doneTasks = tasks.filter { it.isDone && !it.isBirthdayTask() }.take(3 - pending.size)
             TodayWidgetData(
                 dateLabel = "$month ${today.day} · $weekday",
                 done = done,

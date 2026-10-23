@@ -26,6 +26,7 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.profile.isBirthdayTask
 import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
 import com.sweetcalendar.ui.components.EmptyStateContent
@@ -81,6 +82,7 @@ fun computeStreak(tasks: List<TaskEntity>): Int {
 fun TodayScreen(
     tasks: List<TaskEntity>,
     userName: String,
+    userBirthDate: JalaliDate? = null,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onEditTask: (TaskEntity) -> Unit,
     onAddTask: () -> Unit = {},
@@ -93,11 +95,12 @@ fun TodayScreen(
 ) {
     val colors = SweetTheme.colors
     val today = remember { JalaliDate.today() }
-    val todayTasks = remember(tasks, today) {
-        tasks.tasksOnDate(today).sortedBy { it.createdAt }
+    val todayTasks = remember(tasks, today, userBirthDate, userName) {
+        tasks.tasksOnDate(today, userBirthDate, userName).sortedBy { it.createdAt }
     }
-    val pending = remember(todayTasks) { todayTasks.filter { !it.isDone } }
-    val done = remember(todayTasks) { todayTasks.filter { it.isDone } }
+    val actionableTasks = remember(todayTasks) { todayTasks.filter { !it.isBirthdayTask() } }
+    val pending = remember(actionableTasks) { actionableTasks.filter { !it.isDone } }
+    val done = remember(actionableTasks) { actionableTasks.filter { it.isDone } }
     val streak = remember(tasks) { computeStreak(tasks) }
     val isNewTask = rememberNewItemTracker(todayTasks.map { it.id })
 
@@ -147,7 +150,7 @@ fun TodayScreen(
             JarProgressCard(
                 label = themeTodayJarLabel(),
                 completed = done.size,
-                total = todayTasks.size,
+                total = actionableTasks.size,
                 modifier = Modifier.padding(top = 16.dp)
             )
         }

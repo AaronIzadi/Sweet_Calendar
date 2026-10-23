@@ -36,20 +36,21 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.BuildConfig
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.export.TaskExportRunner
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.profile.formatUserBirthDateLabel
+import com.sweetcalendar.repository.EventRepository
+import com.sweetcalendar.ui.addtask.JalaliDatePickerDialog
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.ClockMiniIcon
 import com.sweetcalendar.ui.components.PenMiniIcon
 import com.sweetcalendar.ui.components.SettingsBoxUncheckedIcon
 import com.sweetcalendar.ui.components.SheetFooterBar
 import com.sweetcalendar.ui.components.DialogKeyboardInsets
-import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.showKeyboardOnFocus
 import com.sweetcalendar.ui.components.SheetFooterCloseOnly
 import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
@@ -127,6 +128,9 @@ fun SettingsScreen(
     onWeekStartsOnChange: (Int) -> Unit,
     onCalendarSystemChange: (CalendarSystem) -> Unit,
     onUserNameChange: (String) -> Unit,
+    userBirthDate: JalaliDate? = null,
+    eventRepository: EventRepository,
+    onUserBirthDateChange: (JalaliDate?) -> Unit,
     onOpenStats: () -> Unit = {},
     onOpenArchive: () -> Unit = {},
     onOpenSearch: () -> Unit = {},
@@ -391,11 +395,15 @@ fun SettingsScreen(
     }
 
     if (showNameDialog) {
-        NameEditDialog(
+        UserInfoEditDialog(
             initialName = userName,
+            initialBirthDate = userBirthDate,
+            calendarSystem = calendarSystem,
+            eventRepository = eventRepository,
             onDismiss = { showNameDialog = false },
-            onConfirm = { name ->
+            onConfirm = { name, birthDate ->
                 onUserNameChange(name)
+                onUserBirthDateChange(birthDate)
                 showNameDialog = false
             }
         )
@@ -503,19 +511,30 @@ private fun SettingsIconSlot(
 }
 
 @Composable
-private fun NameEditDialog(
+private fun UserInfoEditDialog(
     initialName: String,
+    initialBirthDate: JalaliDate?,
+    calendarSystem: CalendarSystem,
+    eventRepository: EventRepository,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: (String, JalaliDate?) -> Unit,
 ) {
     val colors = SweetTheme.colors
     var name by remember(initialName) { mutableStateOf(initialName) }
+    var birthDate by remember(initialBirthDate) { mutableStateOf(initialBirthDate) }
+    var showBirthPicker by remember { mutableStateOf(false) }
     val fieldShape = RoundedCornerShape(mockupDp(MockupDimens.FORM_FIELD_RADIUS))
+    val fieldTextStyle = TextStyle(
+        fontFamily = BodyFont,
+        fontWeight = SecondaryTextWeight,
+        fontSize = mockupSp(MockupDimens.PROFILE_NAME_INPUT_F),
+        lineHeight = mockupSp(MockupDimens.PROFILE_NAME_INPUT_LINE),
+        color = colors.ink,
+    )
 
-    SweetDialog(onDismissRequest = onDismiss) {
+    SweetModalOverlay(onDismissRequest = onDismiss) {
         DialogKeyboardInsets()
         ProvideMockupScale {
-            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -592,18 +611,63 @@ private fun NameEditDialog(
                             if (name.isEmpty()) {
                                 Text(
                                     "e.g. Aaron",
-                                    style = TextStyle(
-                                        fontFamily = BodyFont,
-                                        fontWeight = SecondaryTextWeight,
-                                        fontSize = mockupSp(MockupDimens.PROFILE_NAME_INPUT_F),
-                                        lineHeight = mockupSp(MockupDimens.PROFILE_NAME_INPUT_LINE),
-                                    ),
-                                    color = settingsFieldPlaceholderColor()
+                                    style = fieldTextStyle.copy(color = settingsFieldPlaceholderColor()),
                                 )
                             }
                             inner()
                         }
                     )
+                }
+
+                Text(
+                    "Date of birth",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.PROFILE_NAME_LABEL_F),
+                        lineHeight = mockupSp(MockupDimens.PROFILE_NAME_LABEL_LINE),
+                    ),
+                    color = colors.ink,
+                    modifier = Modifier.padding(top = mockupDp(16), bottom = mockupDp(8))
+                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .offset(y = mockupDp(MockupDimens.FORM_FIELD_SHADOW))
+                            .clip(fieldShape)
+                            .background(colors.shadow)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(fieldShape)
+                            .border(mockupDp(1), colors.fieldOutline, fieldShape)
+                            .background(colors.paper)
+                            .clickable { showBirthPicker = true }
+                            .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            birthDate?.let { formatUserBirthDateLabel(it, calendarSystem) } ?: "Not set",
+                            style = fieldTextStyle.copy(
+                                color = if (birthDate == null) settingsFieldPlaceholderColor() else colors.ink,
+                            ),
+                        )
+                        if (birthDate != null) {
+                            Text(
+                                "Clear",
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = mockupSp(MockupDimens.PROFILE_NAME_INPUT_F),
+                                ),
+                                color = colors.pinkText,
+                                modifier = Modifier.clickable { birthDate = null },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -612,13 +676,29 @@ private fun NameEditDialog(
                 trailing = {
                     SheetHeaderConfirmAction(
                         label = "SAVE",
-                        onClick = { onConfirm(name.trim().ifBlank { "Friend" }) }
+                        onClick = {
+                            onConfirm(
+                                name.trim().ifBlank { "Friend" },
+                                birthDate,
+                            )
+                        }
                     )
                 }
             )
             }
-            }
         }
+    }
+
+    if (showBirthPicker) {
+        JalaliDatePickerDialog(
+            initialDate = birthDate ?: JalaliDate.today().minusDays(365 * 25),
+            eventRepository = eventRepository,
+            onDismiss = { showBirthPicker = false },
+            onConfirm = {
+                birthDate = it
+                showBirthPicker = false
+            },
+        )
     }
 }
 

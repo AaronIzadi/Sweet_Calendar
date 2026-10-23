@@ -2,14 +2,19 @@ package com.sweetcalendar.recurrence
 
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.profile.birthdayTaskFor
+import com.sweetcalendar.profile.isBirthdayTask
 
 /**
  * Materialized rows plus projected recurring occurrences (weekly / monthly) for calendar lists.
  */
-fun List<TaskEntity>.tasksOnDate(date: JalaliDate): List<TaskEntity> {
-    if (isEmpty()) return emptyList()
-
+fun List<TaskEntity>.tasksOnDate(
+    date: JalaliDate,
+    userBirthDate: JalaliDate? = null,
+    userName: String = "Friend",
+): List<TaskEntity> {
     val materialized = filter { it.parsedDate() == date }
+    if (isEmpty() && userBirthDate == null) return emptyList()
     val virtual = mutableListOf<TaskEntity>()
     val recurring = filter { it.recurrenceFrequency() != RecurrenceFreq.NONE && !it.isRecurrenceException }
     val groups = recurring.groupBy { it.seriesId ?: "solo-${it.id}" }
@@ -35,11 +40,18 @@ fun List<TaskEntity>.tasksOnDate(date: JalaliDate): List<TaskEntity> {
             .mapNotNull { it.seriesUntil?.let(JalaliDate::parseIso) }
             .maxOrNull()
 
-        if (!occursOnDate(anchor, date, freq, interval, seriesEnd)) continue
+        val weekdays = anchorRoot.recurrenceWeekdaySet()
+        if (!occursOnDate(anchor, date, freq, interval, seriesEnd, weekdays)) continue
 
         val maxCount = anchorRoot.recurrenceCount
         if (maxCount != null) {
-            val index = RecurrenceEngine.occurrenceIndex(anchor, date, freq, interval) ?: continue
+            val index = RecurrenceEngine.occurrenceIndex(
+                anchor,
+                date,
+                freq,
+                interval,
+                weekdays,
+            ) ?: continue
             if (index > maxCount) continue
         }
 
@@ -53,18 +65,23 @@ fun List<TaskEntity>.tasksOnDate(date: JalaliDate): List<TaskEntity> {
         )
     }
 
-    return (materialized + virtual).distinctBy { it.occurrenceKey() }
+    val combined = (materialized + virtual).distinctBy { it.occurrenceKey() }
+    val birthday = birthdayTaskFor(date, userBirthDate, userName)
+    if (birthday == null || combined.any { it.isBirthdayTask() }) return combined
+    return combined + birthday
 }
 
 fun List<TaskEntity>.tasksByDateInRange(
     start: JalaliDate,
     end: JalaliDate,
+    userBirthDate: JalaliDate? = null,
+    userName: String = "Friend",
 ): Map<String, List<TaskEntity>> {
     if (start > end) return emptyMap()
     val map = linkedMapOf<String, List<TaskEntity>>()
     var day = start
     while (day <= end) {
-        val onDay = tasksOnDate(day)
+        val onDay = tasksOnDate(day, userBirthDate, userName)
         if (onDay.isNotEmpty()) {
             map[day.formatIso()] = onDay
         }
@@ -79,8 +96,8 @@ private fun occursOnDate(
     freq: RecurrenceFreq,
     interval: Int,
     seriesEnd: JalaliDate?,
+    weekdays: Set<Int>,
 ): Boolean {
-    if (target < anchor) return false
     if (seriesEnd != null && target > seriesEnd) return false
-    return RecurrenceEngine.isOccurrenceInSeries(anchor, target, freq, interval)
+    return RecurrenceEngine.isOccurrenceInSeries(anchor, target, freq, interval, weekdays)
 }

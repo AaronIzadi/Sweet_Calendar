@@ -1,51 +1,109 @@
 package com.sweetcalendar.recurrence
 
 import com.sweetcalendar.jalali.JalaliDate
+import java.util.concurrent.TimeUnit
 
 object RecurrenceEngine {
 
-    fun nextOccurrence(from: JalaliDate, freq: RecurrenceFreq, interval: Int = 1): JalaliDate {
+    fun resolvedWeekdays(anchor: JalaliDate, weekdays: Set<Int>): Set<Int> =
+        weekdays.ifEmpty { setOf(anchor.weekdayIndex()) }
+
+    fun nextOccurrence(
+        from: JalaliDate,
+        anchor: JalaliDate,
+        freq: RecurrenceFreq,
+        interval: Int = 1,
+        weekdays: Set<Int> = emptySet(),
+    ): JalaliDate {
         val step = interval.coerceAtLeast(1)
+        val days = resolvedWeekdays(anchor, weekdays)
+        if (freq == RecurrenceFreq.NONE) return from
+        var cursor = from.plusDays(1)
+        repeat(800) {
+            if (isOccurrenceInSeries(anchor, cursor, freq, step, days)) return cursor
+            cursor = cursor.plusDays(1)
+        }
         return when (freq) {
-            RecurrenceFreq.WEEKLY -> from.plusDays(7 * step)
-            RecurrenceFreq.MONTHLY -> from.addMonths(step)
+            RecurrenceFreq.WEEKLY -> from.addMonths(step)
+            RecurrenceFreq.MONTHLY -> from.plusDays(7 * step)
             RecurrenceFreq.NONE -> from
         }
     }
 
+    /** @param weekdays empty set uses [anchor]'s weekday only */
     fun isOccurrenceInSeries(
         anchor: JalaliDate,
         date: JalaliDate,
         freq: RecurrenceFreq,
         interval: Int = 1,
+        weekdays: Set<Int> = emptySet(),
     ): Boolean {
-        if (freq == RecurrenceFreq.NONE) return date == anchor
-        if (date < anchor) return false
-        var cursor = anchor
-        var guard = 0
-        while (cursor < date && guard < 500) {
-            cursor = nextOccurrence(cursor, freq, interval)
-            guard++
+        val step = interval.coerceAtLeast(1)
+        val days = resolvedWeekdays(anchor, weekdays)
+        return when (freq) {
+            RecurrenceFreq.NONE -> date == anchor
+            RecurrenceFreq.WEEKLY -> isMonthlyWeekdayOccurrence(anchor, date, days, step)
+            RecurrenceFreq.MONTHLY -> isWeeklyOccurrence(anchor, date, days, step)
         }
-        return cursor == date
     }
 
-    /** 1-based index of [date] in the series starting at [anchor], or null if not in the series. */
     fun occurrenceIndex(
         anchor: JalaliDate,
         date: JalaliDate,
         freq: RecurrenceFreq,
         interval: Int = 1,
+        weekdays: Set<Int> = emptySet(),
     ): Int? {
-        if (!isOccurrenceInSeries(anchor, date, freq, interval)) return null
+        if (!isOccurrenceInSeries(anchor, date, freq, interval, weekdays)) return null
+        var index = 0
         var cursor = anchor
-        var index = 1
         var guard = 0
-        while (cursor < date && guard < 500) {
-            cursor = nextOccurrence(cursor, freq, interval)
-            index++
+        while (cursor <= date && guard < 2000) {
+            if (isOccurrenceInSeries(anchor, cursor, freq, interval, weekdays)) {
+                index++
+                if (cursor == date) return index
+            }
+            cursor = cursor.plusDays(1)
             guard++
         }
-        return if (cursor == date) index else null
+        return null
+    }
+
+    private fun weekStartSaturday(date: JalaliDate): JalaliDate =
+        date.minusDays(date.weekdayIndex())
+
+    private fun daysBetween(start: JalaliDate, end: JalaliDate): Int {
+        val startMs = start.toGregorianCalendar().timeInMillis
+        val endMs = end.toGregorianCalendar().timeInMillis
+        return TimeUnit.MILLISECONDS.toDays(endMs - startMs).toInt()
+    }
+
+    private fun isWeeklyOccurrence(
+        anchor: JalaliDate,
+        date: JalaliDate,
+        weekdays: Set<Int>,
+        interval: Int,
+    ): Boolean {
+        if (date < anchor) return false
+        if (date.weekdayIndex() !in weekdays) return false
+        val anchorWeek = weekStartSaturday(anchor)
+        val dateWeek = weekStartSaturday(date)
+        if (dateWeek < anchorWeek) return false
+        val weeksApart = daysBetween(anchorWeek, dateWeek) / 7
+        return weeksApart % interval == 0
+    }
+
+    private fun isMonthlyWeekdayOccurrence(
+        anchor: JalaliDate,
+        date: JalaliDate,
+        weekdays: Set<Int>,
+        interval: Int,
+    ): Boolean {
+        if (date < anchor) return false
+        if (date.weekdayIndex() !in weekdays) return false
+        val monthsApart = (date.year - anchor.year) * 12 + (date.month - anchor.month)
+        if (monthsApart < 0 || monthsApart % interval != 0) return false
+        if (date.year == anchor.year && date.month == anchor.month && date < anchor) return false
+        return true
     }
 }

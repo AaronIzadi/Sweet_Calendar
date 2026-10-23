@@ -67,6 +67,8 @@ private fun weekChipDowColor(selected: Boolean): Color {
 @Composable
 fun WeekScreen(
     tasks: List<TaskEntity>,
+    userBirthDate: JalaliDate? = null,
+    userName: String = "Friend",
     weekStartsOn: Int = 0,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onEditTask: (TaskEntity) -> Unit,
@@ -82,9 +84,9 @@ fun WeekScreen(
 
     val weekStart = weekDays.first()
     val weekEnd = weekDays.last()
-    val tasksByDay = remember(tasks, weekDays) {
+    val tasksByDay = remember(tasks, weekDays, userBirthDate, userName) {
         weekDays.associateWith { day ->
-            tasks.tasksOnDate(day)
+            tasks.tasksOnDate(day, userBirthDate, userName)
                 .sortedWith(compareBy({ it.isDone }, { it.reminderTime.orEmpty() }))
         }
     }

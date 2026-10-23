@@ -58,18 +58,26 @@ class RecurrenceEditor(private val dao: TaskDao) {
     }
 
     suspend fun spawnNextAfterComplete(task: TaskEntity): TaskEntity? {
-        if (!task.canSpawnNextOccurrence()) return null
-        val max = task.recurrenceCount
         val seriesId = task.seriesId
+        val anchor = if (seriesId != null) {
+            dao.getActiveBySeriesId(seriesId).minByOrNull { it.parsedDate() }?.parsedDate()
+                ?: task.parsedDate()
+        } else {
+            task.parsedDate()
+        }
+        if (!task.canSpawnNextOccurrence(anchor)) return null
+        val max = task.recurrenceCount
         if (max != null && seriesId != null) {
             val activeCount = dao.getActiveBySeriesId(seriesId).size
             if (activeCount >= max) return null
         }
         val freq = task.recurrenceFrequency()
         val next = RecurrenceEngine.nextOccurrence(
-            task.parsedDate(),
-            freq,
-            task.recurrenceInterval,
+            from = task.parsedDate(),
+            anchor = anchor,
+            freq = freq,
+            interval = task.recurrenceInterval,
+            weekdays = task.recurrenceWeekdaySet(),
         )
         return task.copy(
             id = 0,
@@ -90,7 +98,8 @@ class RecurrenceEditor(private val dao: TaskDao) {
             category = form.category,
             priority = form.priority,
             freq = form.recurrenceFreq,
-            recurrenceCount = form.recurrenceCount,
+            recurrenceInterval = form.recurrenceInterval,
+            recurrenceWeekdays = form.recurrenceWeekdays,
         )
         dao.update(updated)
         return updated
@@ -106,7 +115,8 @@ class RecurrenceEditor(private val dao: TaskDao) {
             category = form.category,
             priority = form.priority,
             freq = form.recurrenceFreq,
-            recurrenceCount = form.recurrenceCount,
+            recurrenceInterval = form.recurrenceInterval,
+            recurrenceWeekdays = form.recurrenceWeekdays,
         )
         val final = when {
             inSeries && form.recurrenceFreq == RecurrenceFreq.NONE -> base.copy(
@@ -143,8 +153,17 @@ class RecurrenceEditor(private val dao: TaskDao) {
                 priority = form.priority,
                 repeatWeekly = freq == RecurrenceFreq.WEEKLY,
                 recurrenceFreq = freq.name,
-                recurrenceInterval = 1,
-                recurrenceCount = if (freq == RecurrenceFreq.NONE) null else form.recurrenceCount,
+                recurrenceInterval = if (freq == RecurrenceFreq.NONE) {
+                    1
+                } else {
+                    form.recurrenceInterval.coerceAtLeast(1)
+                },
+                recurrenceCount = null,
+                recurrenceWeekdays = if (freq == RecurrenceFreq.NONE) {
+                    ""
+                } else {
+                    RecurrenceWeekdays.encode(form.recurrenceWeekdays)
+                },
                 seriesId = newSeriesId,
                 seriesUntil = if (freq == RecurrenceFreq.NONE) null else sibling.seriesUntil,
                 isRecurrenceException = false,
@@ -182,7 +201,8 @@ class RecurrenceEditor(private val dao: TaskDao) {
                         category = form.category,
                         priority = form.priority,
                         freq = freq,
-                        recurrenceCount = form.recurrenceCount,
+                        recurrenceInterval = form.recurrenceInterval,
+                        recurrenceWeekdays = form.recurrenceWeekdays,
                     ).copy(
                         seriesId = if (freq == RecurrenceFreq.NONE) null else newSeriesId,
                         seriesUntil = null,
