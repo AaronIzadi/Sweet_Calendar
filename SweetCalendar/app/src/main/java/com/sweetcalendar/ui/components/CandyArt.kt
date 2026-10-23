@@ -517,6 +517,28 @@ fun PenMiniIcon(
     )
 }
 
+/** Circular arrow — recurring task meta row. */
+@Composable
+fun RepeatMiniIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 12.dp,
+    color: Color = GrapePurple,
+) {
+    PixelIcon(
+        rows = listOf(
+            "..1111.",
+            ".1....1",
+            "1.....1",
+            "1....11",
+            ".1111.1",
+            "....11.",
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier,
+    )
+}
+
 /** Mini clock from mockup `buildClockIcon` (cell × 2). */
 @Composable
 fun ClockMiniIcon(modifier: Modifier = Modifier, size: Dp = 12.dp, color: Color = GrapePurple) {

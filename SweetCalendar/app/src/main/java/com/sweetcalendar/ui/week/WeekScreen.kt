@@ -39,6 +39,8 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
@@ -82,7 +84,7 @@ fun WeekScreen(
     val weekEnd = weekDays.last()
     val tasksByDay = remember(tasks, weekDays) {
         weekDays.associateWith { day ->
-            tasks.filter { it.jalaliDate == day.formatIso() }
+            tasks.tasksOnDate(day)
                 .sortedWith(compareBy({ it.isDone }, { it.reminderTime.orEmpty() }))
         }
     }
@@ -196,7 +198,7 @@ fun WeekScreen(
                 item(key = "label-${selectedDay.formatIso()}") {
                     WeekDayLabel(selectedDay, calendarSystem)
                 }
-                items(selectedDayTasks, key = { it.id }) { task ->
+                items(selectedDayTasks, key = { it.occurrenceKey() }) { task ->
                     val isNew = remember(task.id) { isNewTask(task.id) }
                     SweetTaskCard(
                         task = task,

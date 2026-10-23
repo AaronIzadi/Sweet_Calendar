@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
 import com.sweetcalendar.ui.components.EmptyStateContent
 import com.sweetcalendar.ui.components.JarProgressCard
@@ -91,11 +93,8 @@ fun TodayScreen(
 ) {
     val colors = SweetTheme.colors
     val today = remember { JalaliDate.today() }
-    val todayIso = today.formatIso()
-    val todayTasks = remember(tasks) {
-        tasks
-            .filter { it.jalaliDate == todayIso }
-            .sortedBy { it.createdAt }
+    val todayTasks = remember(tasks, today) {
+        tasks.tasksOnDate(today).sortedBy { it.createdAt }
     }
     val pending = remember(todayTasks) { todayTasks.filter { !it.isDone } }
     val done = remember(todayTasks) { todayTasks.filter { it.isDone } }
@@ -174,7 +173,7 @@ fun TodayScreen(
                 item { SweetSectionLabel("TODAY") }
                 if (done.isNotEmpty()) {
                     if (pending.isNotEmpty()) {
-                        items(pending, key = { it.id }) { task ->
+                        items(pending, key = { it.occurrenceKey() }) { task ->
                             val isNew = remember(task.id) { isNewTask(task.id) }
                             SweetTaskCard(
                                 task = task,
@@ -192,7 +191,7 @@ fun TodayScreen(
                             onClick = onOpenArchive,
                         )
                     }
-                    items(done, key = { it.id }) { task ->
+                    items(done, key = { it.occurrenceKey() }) { task ->
                         val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,
@@ -204,7 +203,7 @@ fun TodayScreen(
                         )
                     }
                 } else {
-                    items(todayTasks, key = { it.id }) { task ->
+                    items(todayTasks, key = { it.occurrenceKey() }) { task ->
                         val isNew = remember(task.id) { isNewTask(task.id) }
                         SweetTaskCard(
                             task = task,

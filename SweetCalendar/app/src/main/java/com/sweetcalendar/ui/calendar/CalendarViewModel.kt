@@ -18,6 +18,14 @@ import com.sweetcalendar.repository.TaskRepository
 import com.sweetcalendar.repository.gregorianEventStorageKey
 import com.sweetcalendar.repository.jalaliEventStorageKey
 import com.sweetcalendar.repository.normalizeCachedJalaliDateKey
+import com.sweetcalendar.recurrence.RecurrenceEditScope
+import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.recurrenceFrequency
+import com.sweetcalendar.recurrence.parsedDate
+import com.sweetcalendar.recurrence.tasksByDateInRange
+import com.sweetcalendar.recurrence.tasksOnDate
+import com.sweetcalendar.recurrence.isVirtualOccurrence
+import com.sweetcalendar.recurrence.withRecurrence
 import com.sweetcalendar.ui.addtask.TaskFormData
 import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.widget.SweetWidgets
@@ -151,7 +159,22 @@ class CalendarViewModel(
         } else {
             emptyMap()
         }
-        val tasksByDate = allTasks.groupBy { JalaliDate.parseIso(it.jalaliDate).formatIso() }
+        val tasksByDate = when (meta.calendarSystem) {
+            CalendarSystem.PERSIAN -> {
+                val lastDay = pMonth.daysInMonth()
+                val rangeStart = JalaliDate(pMonth.year, pMonth.month, 1)
+                val rangeEnd = JalaliDate(pMonth.year, pMonth.month, lastDay)
+                allTasks.tasksByDateInRange(rangeStart, rangeEnd)
+            }
+            CalendarSystem.GREGORIAN -> {
+                val lastDay = gMonth.daysInMonth()
+                val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
+                val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
+                val start = minOf(rangeStart, rangeEnd)
+                val end = maxOf(rangeStart, rangeEnd)
+                allTasks.tasksByDateInRange(start, end)
+            }
+        }
 
         val cells = when (meta.calendarSystem) {
             CalendarSystem.PERSIAN -> buildPersianMonthCells(pMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
@@ -179,8 +202,8 @@ class CalendarViewModel(
             weekStartsOn = meta.weekStartsOn
         )
     }.let { base ->
-        combine(base, selectedDate.flatMapLatest { taskRepository.observeForDate(it.formatIso()) }) { state, tasks ->
-            state.copy(selectedDayTasks = tasks)
+        combine(base, selectedDate, taskRepository.observeAll()) { state, selected, allTasks ->
+            state.copy(selectedDayTasks = allTasks.tasksOnDate(selected))
         }
     }.let { withTasks ->
         combine(withTasks, showHolidays, calendarSystem) { state, show, system ->
@@ -313,7 +336,8 @@ class CalendarViewModel(
                 reminderTime = form.reminderTime,
                 category = form.category,
                 priority = form.priority,
-                repeatWeekly = form.repeatWeekly
+                recurrenceFreq = form.recurrenceFreq,
+                recurrenceCount = form.recurrenceCount,
             )
             val task = TaskEntity(
                 id = id,
@@ -323,26 +347,29 @@ class CalendarViewModel(
                 reminderTime = form.reminderTime,
                 category = form.category,
                 priority = form.priority,
-                repeatWeekly = form.repeatWeekly
+                repeatWeekly = form.recurrenceFreq == RecurrenceFreq.WEEKLY,
+                recurrenceFreq = form.recurrenceFreq.name,
+                recurrenceCount = form.recurrenceCount,
             )
             scheduleReminderSafely(task)
             refreshWidgets()
         }
     }
 
-    fun updateTask(task: TaskEntity, form: TaskFormData) {
+    fun needsRecurrenceScopeForEdit(task: TaskEntity): Boolean =
+        taskRepository.needsRecurrenceScopeForEdit(task)
+
+    fun needsRecurrenceScopeForDelete(task: TaskEntity): Boolean =
+        taskRepository.needsRecurrenceScopeForDelete(task)
+
+    fun updateTask(
+        task: TaskEntity,
+        form: TaskFormData,
+        scope: RecurrenceEditScope = RecurrenceEditScope.ENTIRE_SERIES,
+    ) {
         if (form.title.isBlank()) return
         viewModelScope.launch {
-            val updated = task.copy(
-                title = form.title,
-                notes = form.notes,
-                jalaliDate = form.jalaliDate.formatIso(),
-                reminderTime = form.reminderTime,
-                category = form.category,
-                priority = form.priority,
-                repeatWeekly = form.repeatWeekly
-            )
-            taskRepository.updateTask(updated)
+            val updated = taskRepository.applyRecurrenceEdit(task, form, scope)
             reminderScheduler.cancel(task.id)
             if (!updated.isDone) {
                 scheduleReminderSafely(updated)
@@ -351,47 +378,70 @@ class CalendarViewModel(
         }
     }
 
+    fun materializeOccurrence(task: TaskEntity, onResult: (TaskEntity) -> Unit) {
+        viewModelScope.launch {
+            onResult(taskRepository.materializeOccurrence(task))
+        }
+    }
+
     fun toggleTaskDone(task: TaskEntity) {
         viewModelScope.launch {
-            val done = !task.isDone
-            taskRepository.setDone(task.id, done)
+            val target = if (task.isVirtualOccurrence()) {
+                taskRepository.materializeOccurrence(task)
+            } else {
+                task
+            }
+            val done = !target.isDone
+            taskRepository.setDone(target.id, done)
             if (done) {
-                reminderScheduler.cancel(task.id)
-                if (task.repeatWeekly) {
-                    val nextDate = JalaliDate.parseIso(task.jalaliDate).plusDays(7)
-                    val newId = taskRepository.addTask(
-                        title = task.title,
-                        notes = task.notes,
-                        jalaliDate = nextDate.formatIso(),
-                        reminderTime = task.reminderTime,
-                        category = task.category,
-                        priority = task.priority,
-                        repeatWeekly = true
-                    )
-                    scheduleReminderSafely(
-                        TaskEntity(
-                            id = newId,
-                            title = task.title,
-                            notes = task.notes,
-                            jalaliDate = nextDate.formatIso(),
-                            reminderTime = task.reminderTime,
-                            category = task.category,
-                            priority = task.priority,
-                            repeatWeekly = true
-                        )
-                    )
+                reminderScheduler.cancel(target.id)
+                val recurring = if (
+                    target.recurrenceFrequency() != RecurrenceFreq.NONE && target.seriesId == null
+                ) {
+                    target.withRecurrence(target.recurrenceFrequency()).also { linked ->
+                        taskRepository.updateTask(linked)
+                    }
+                } else {
+                    target
+                }
+                val toSpawn = recurring.withRecurrence(recurring.recurrenceFrequency())
+                taskRepository.spawnNextAfterComplete(toSpawn)?.let { next ->
+                    val newId = taskRepository.insertTask(next.withRecurrence(next.recurrenceFrequency()))
+                    scheduleReminderSafely(next.copy(id = newId))
                 }
             } else {
-                scheduleReminderSafely(task.copy(isDone = false))
+                scheduleReminderSafely(target.copy(isDone = false))
             }
             refreshWidgets()
         }
     }
 
-    fun deleteTask(task: TaskEntity) {
+    fun deleteTask(
+        task: TaskEntity,
+        scope: RecurrenceEditScope = RecurrenceEditScope.THIS_INSTANCE,
+    ) {
         viewModelScope.launch {
-            reminderScheduler.cancel(task.id)
-            taskRepository.deleteTask(task)
+            val seriesId = task.seriesId
+            if (taskRepository.needsRecurrenceScopeForDelete(task) && seriesId != null) {
+                when (scope) {
+                    RecurrenceEditScope.ENTIRE_SERIES ->
+                        taskRepository.getActiveBySeriesId(seriesId).forEach {
+                            reminderScheduler.cancel(it.id)
+                        }
+                    RecurrenceEditScope.THIS_AND_FOLLOWING -> {
+                        reminderScheduler.cancel(task.id)
+                        taskRepository.getActiveBySeriesId(seriesId)
+                            .filter { it.parsedDate() >= task.parsedDate() }
+                            .forEach { reminderScheduler.cancel(it.id) }
+                    }
+                    RecurrenceEditScope.THIS_INSTANCE ->
+                        reminderScheduler.cancel(task.id)
+                }
+                taskRepository.applyRecurrenceDelete(task, scope)
+            } else {
+                reminderScheduler.cancel(task.id)
+                taskRepository.deleteTask(task)
+            }
             refreshWidgets()
         }
     }

@@ -2,9 +2,18 @@ package com.sweetcalendar.repository
 
 import com.sweetcalendar.data.local.TaskDao
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.RecurrenceEditScope
+import com.sweetcalendar.recurrence.RecurrenceEditor
+import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.isVirtualOccurrence
+import com.sweetcalendar.recurrence.recurrenceFrequency
+import com.sweetcalendar.recurrence.withRecurrence
+import com.sweetcalendar.ui.addtask.TaskFormData
 import kotlinx.coroutines.flow.Flow
 
 class TaskRepository(private val dao: TaskDao) {
+
+    private val recurrenceEditor = RecurrenceEditor(dao)
 
     fun observeAll(): Flow<List<TaskEntity>> = dao.observeAll()
 
@@ -21,7 +30,9 @@ class TaskRepository(private val dao: TaskDao) {
         reminderTime: String? = null,
         category: String = "",
         priority: String = "Medium",
-        repeatWeekly: Boolean = false
+        repeatWeekly: Boolean = false,
+        recurrenceFreq: RecurrenceFreq = RecurrenceFreq.fromLegacyRepeatWeekly(repeatWeekly),
+        recurrenceCount: Int? = null,
     ): Long {
         return dao.upsert(
             TaskEntity(
@@ -31,12 +42,50 @@ class TaskRepository(private val dao: TaskDao) {
                 reminderTime = reminderTime,
                 category = category,
                 priority = priority,
-                repeatWeekly = repeatWeekly
-            )
+                repeatWeekly = recurrenceFreq == RecurrenceFreq.WEEKLY,
+            ).withRecurrence(recurrenceFreq, count = recurrenceCount)
         )
     }
 
+    suspend fun insertTask(task: TaskEntity): Long = dao.upsert(task)
+
+    /** Inserts a projected occurrence so complete/edit apply to the correct day. */
+    suspend fun materializeOccurrence(task: TaskEntity): TaskEntity {
+        if (!task.isVirtualOccurrence()) return task
+        val entity = task.copy(
+            id = 0,
+            isDone = false,
+            completedAt = null,
+            deletedAt = null,
+            isRecurrenceException = false,
+        ).withRecurrence(task.recurrenceFrequency(), count = task.recurrenceCount)
+        val newId = dao.upsert(entity)
+        return entity.copy(id = newId)
+    }
+
     suspend fun updateTask(task: TaskEntity) = dao.update(task.copy(deletedAt = null))
+
+    suspend fun applyRecurrenceEdit(
+        task: TaskEntity,
+        form: TaskFormData,
+        scope: RecurrenceEditScope,
+    ): TaskEntity = recurrenceEditor.applyEdit(task, form, scope)
+
+    fun needsRecurrenceScopeForEdit(task: TaskEntity): Boolean =
+        recurrenceEditor.needsScopeForEdit(task)
+
+    fun needsRecurrenceScopeForDelete(task: TaskEntity): Boolean =
+        recurrenceEditor.needsScopeForDelete(task)
+
+    suspend fun applyRecurrenceDelete(task: TaskEntity, scope: RecurrenceEditScope) {
+        recurrenceEditor.applyDelete(task, scope)
+    }
+
+    suspend fun spawnNextAfterComplete(task: TaskEntity): TaskEntity? =
+        recurrenceEditor.spawnNextAfterComplete(task)
+
+    suspend fun getActiveBySeriesId(seriesId: String): List<TaskEntity> =
+        dao.getActiveBySeriesId(seriesId)
 
     suspend fun getActiveReminders(): List<TaskEntity> = dao.getActiveReminders()
 

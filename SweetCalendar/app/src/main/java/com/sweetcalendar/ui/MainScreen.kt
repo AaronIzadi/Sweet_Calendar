@@ -37,13 +37,21 @@ import com.sweetcalendar.CalendarTodoApp
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.data.prefs.AppPreferences
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.recurrence.RecurrenceEditScope
+import com.sweetcalendar.recurrence.parsedDate
+import com.sweetcalendar.recurrence.isVirtualOccurrence
+import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.recurrence.resolveOccurrence
+import com.sweetcalendar.recurrence.sameOccurrenceAs
+import com.sweetcalendar.recurrence.tasksOnDate
+import com.sweetcalendar.ui.addtask.RecurrenceEditScopeDialog
+import com.sweetcalendar.ui.addtask.RecurrenceScopeMode
 import com.sweetcalendar.ui.addtask.TaskBottomSheet
 import com.sweetcalendar.ui.addtask.TaskFormData
 import com.sweetcalendar.ui.archive.ArchiveScreen
 import com.sweetcalendar.ui.calendar.CalendarViewModel
 import com.sweetcalendar.ui.calendar.DayEvent
 import com.sweetcalendar.ui.calendar.MonthScreen
-import com.sweetcalendar.ui.components.CompleteCelebrationDialog
 import com.sweetcalendar.ui.components.PixelConfirmDialog
 import com.sweetcalendar.ui.components.SweetBottomNav
 import com.sweetcalendar.ui.components.SweetFab
@@ -143,7 +151,10 @@ fun MainScreen(
     var overlay by remember { mutableStateOf<OverlayState>(OverlayState.None) }
     var sheetState by remember { mutableStateOf<SheetState>(SheetState.Hidden) }
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
-    var showCelebration by remember { mutableStateOf(false) }
+    var pendingRecurrenceEdit by remember {
+        mutableStateOf<Pair<TaskEntity, TaskFormData>?>(null)
+    }
+    var pendingRecurrenceDelete by remember { mutableStateOf<TaskEntity?>(null) }
     var showWelcome by remember { mutableStateOf(!preferences.hasSeenWelcome) }
     var pendingNotificationPrompt by remember { mutableStateOf(false) }
     var recoverTask by remember { mutableStateOf<TaskEntity?>(null) }
@@ -214,11 +225,10 @@ fun MainScreen(
     }
 
     fun completeTask(task: TaskEntity) {
-        val dayTasks = allTasks.filter { it.jalaliDate == task.jalaliDate }
+        val dayTasks = allTasks.tasksOnDate(task.parsedDate())
         if (!task.isDone) {
-            val willFillJar = dayTasks.all { it.isDone || it.id == task.id }
+            val willFillJar = dayTasks.all { it.isDone || it.sameOccurrenceAs(task) }
             viewModel.toggleTaskDone(task)
-            if (willFillJar) showCelebration = true
             showSnackbar(if (willFillJar) "Jar full for the day!" else "Task completed!")
         } else {
             viewModel.toggleTaskDone(task)
@@ -354,7 +364,15 @@ fun MainScreen(
                             )
                         }
                     },
-                    contentKey = { if (it.overlay == OverlayState.None) it.destination else it.overlay::class },
+                    contentKey = {
+                        when (val o = it.overlay) {
+                            OverlayState.None -> it.destination
+                            is OverlayState.DayDetail -> "day:${o.date.formatIso()}"
+                            is OverlayState.TaskDetail -> "task:${o.task.occurrenceKey()}"
+                            is OverlayState.HolidayDetail -> "holiday:${o.date.formatIso()}:${o.event.description}"
+                            else -> o::class
+                        }
+                    },
                     modifier = Modifier.fillMaxSize(),
                     label = "screen"
                 ) { key ->
@@ -463,20 +481,39 @@ fun MainScreen(
                         onBack = { overlay = OverlayState.None }
                     )
                     is OverlayState.TaskDetail -> {
-                        val liveTask = allTasks.find { it.id == current.task.id } ?: current.task
+                        val liveTask = allTasks.resolveOccurrence(current.task)
+                        val detailTask = if (current.task.isVirtualOccurrence()) {
+                            current.task
+                        } else {
+                            liveTask
+                        }
                         TaskDetailScreen(
-                            task = liveTask,
+                            task = detailTask,
                             onBack = { overlay = current.returnTo },
-                            onEdit = { sheetState = SheetState.Edit(liveTask) },
+                            onEdit = {
+                                if (liveTask.isVirtualOccurrence()) {
+                                    viewModel.materializeOccurrence(liveTask) { materialized ->
+                                        sheetState = SheetState.Edit(materialized)
+                                    }
+                                } else {
+                                    sheetState = SheetState.Edit(liveTask)
+                                }
+                            },
                             onComplete = { completeTask(liveTask) },
-                            onDelete = { taskToDelete = liveTask }
+                            onDelete = {
+                                if (viewModel.needsRecurrenceScopeForDelete(liveTask)) {
+                                    pendingRecurrenceDelete = liveTask
+                                } else {
+                                    taskToDelete = liveTask
+                                }
+                            }
                         )
                     }
                     is OverlayState.DayDetail -> {
                         LaunchedEffect(current.date) {
                             viewModel.selectDate(current.date)
                         }
-                        val dayTasks = allTasks.filter { it.jalaliDate == current.date.formatIso() }
+                        val dayTasks = allTasks.tasksOnDate(current.date)
                         val dayEvents = if (calendarState.selectedDate == current.date) {
                             calendarState.selectedDayEvents
                         } else {
@@ -584,26 +621,73 @@ fun MainScreen(
                         eventRepository = eventRepository,
                         onDismiss = { sheetState = SheetState.Hidden },
                         onConfirm = { form ->
-                            viewModel.updateTask(task, form)
-                            sheetState = SheetState.Hidden
-                            overlay = OverlayState.TaskDetail(
-                                task.copy(
-                                    title = form.title,
-                                    notes = form.notes,
-                                    jalaliDate = form.jalaliDate.formatIso(),
-                                    reminderTime = form.reminderTime,
-                                    category = form.category,
-                                    priority = form.priority,
-                                    repeatWeekly = form.repeatWeekly
-                                ),
-                                returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                            )
-                            onTaskSaved(form)
-                            showSnackbar("Task updated!")
+                            if (viewModel.needsRecurrenceScopeForEdit(task)) {
+                                pendingRecurrenceEdit = task to form
+                                sheetState = SheetState.Hidden
+                            } else {
+                                viewModel.updateTask(task, form)
+                                sheetState = SheetState.Hidden
+                                overlay = OverlayState.TaskDetail(
+                                    task.copy(
+                                        title = form.title,
+                                        notes = form.notes,
+                                        jalaliDate = form.jalaliDate.formatIso(),
+                                        reminderTime = form.reminderTime,
+                                        category = form.category,
+                                        priority = form.priority,
+                                        repeatWeekly = form.repeatWeekly,
+                                        recurrenceFreq = form.recurrenceFreq.name,
+                                    ),
+                                    returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo
+                                        ?: OverlayState.None
+                                )
+                                onTaskSaved(form)
+                                showSnackbar("Task updated!")
+                            }
                         }
                     )
                 }
             }
+        }
+
+        pendingRecurrenceEdit?.let { (task, form) ->
+            RecurrenceEditScopeDialog(
+                mode = RecurrenceScopeMode.EDIT,
+                onDismiss = { pendingRecurrenceEdit = null },
+                onSelect = { scope ->
+                    viewModel.updateTask(task, form, scope)
+                    pendingRecurrenceEdit = null
+                    overlay = OverlayState.TaskDetail(
+                        task.copy(
+                            title = form.title,
+                            notes = form.notes,
+                            jalaliDate = form.jalaliDate.formatIso(),
+                            reminderTime = form.reminderTime,
+                            category = form.category,
+                            priority = form.priority,
+                            repeatWeekly = form.repeatWeekly,
+                            recurrenceFreq = form.recurrenceFreq.name,
+                        ),
+                        returnTo = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
+                    )
+                    onTaskSaved(form)
+                    showSnackbar("Task updated!")
+                }
+            )
+        }
+
+        pendingRecurrenceDelete?.let { task ->
+            RecurrenceEditScopeDialog(
+                mode = RecurrenceScopeMode.DELETE,
+                onDismiss = { pendingRecurrenceDelete = null },
+                onSelect = { scope ->
+                    viewModel.deleteTask(task, scope)
+                    pendingRecurrenceDelete = null
+                    overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
+                    recoverTask = task
+                    showSnackbar("Task deleted")
+                }
+            )
         }
 
         taskToDelete?.let { task ->
@@ -622,9 +706,6 @@ fun MainScreen(
             )
         }
 
-        if (showCelebration) {
-            CompleteCelebrationDialog(onDismiss = { showCelebration = false })
-        }
         }
             }
         }

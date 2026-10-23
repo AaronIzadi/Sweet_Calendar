@@ -28,6 +28,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.calendar.DayEvent
@@ -84,7 +85,7 @@ fun DayDetailScreen(
     val holidays = events.filter { it.isHoliday && it.description.isNotBlank() }
     val occasions = events.filter { !it.isHoliday && it.description.isNotBlank() }
     val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
-    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
+    val isNewTask = rememberNewItemTracker(tasks.map { it.occurrenceKey().hashCode().toLong() })
 
     Box(modifier = modifier.fillMaxSize().background(colors.cream)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -144,8 +145,10 @@ fun DayDetailScreen(
                 }
                 if (tasks.isNotEmpty()) {
                     item { SweetSectionLabel("TASKS") }
-                    items(tasks, key = { it.id }) { task ->
-                        val isNew = remember(task.id) { isNewTask(task.id) }
+                    items(tasks, key = { it.occurrenceKey() }) { task ->
+                        val isNew = remember(task.occurrenceKey()) {
+                            isNewTask(task.occurrenceKey().hashCode().toLong())
+                        }
                         SweetTaskCard(
                             task = task,
                             modifier = sweetTaskItemMotion().appearOnEnter(isNew),

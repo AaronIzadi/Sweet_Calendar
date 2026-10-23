@@ -12,6 +12,7 @@ import androidx.core.content.res.ResourcesCompat
 import com.sweetcalendar.R
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.repeatSummary
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import java.io.OutputStream
@@ -167,7 +168,7 @@ class TaskPdfExporter(context: Context) {
                 if (task.category.isNotBlank()) add(task.category)
                 if (task.priority.isNotBlank() && task.priority != "Medium") add(task.priority)
                 task.reminderTime?.let { add("Reminder $it") }
-                if (task.repeatWeekly) add("Repeats weekly")
+                task.repeatSummary()?.let { add(it) }
             }
             if (metaParts.isNotEmpty()) {
                 drawParagraph(metaParts.joinToString(" · "), taskMetaPaint)

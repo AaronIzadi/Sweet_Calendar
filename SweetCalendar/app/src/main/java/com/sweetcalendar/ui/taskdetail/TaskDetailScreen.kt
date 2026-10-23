@@ -32,11 +32,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.repeatSummary
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.PenMiniIcon
 import com.sweetcalendar.ui.components.ClockMiniIcon
+import com.sweetcalendar.ui.components.RepeatMiniIcon
 import com.sweetcalendar.ui.components.TrashIcon
 import com.sweetcalendar.ui.components.ThemeSparkleIcon
 import com.sweetcalendar.ui.components.TaskCategory
@@ -176,20 +178,12 @@ fun TaskDetailScreen(
                             text = remaining,
                         )
                     }
-                    if (task.repeatWeekly) {
+                    task.repeatSummary()?.let { repeatLabel ->
                         MetaRow(
                             icon = {
-                                Text(
-                                    "↻",
-                                    style = TextStyle(
-                                        fontFamily = BodyFont,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = mockupSp(MockupDimens.DETAIL_META_F)
-                                    ),
-                                    color = colors.purpleDeep
-                                )
+                                RepeatMiniIcon(size = miniIconSize, color = colors.purpleDeep)
                             },
-                            text = "Repeats weekly"
+                            text = repeatLabel
                         )
                     }
                 }

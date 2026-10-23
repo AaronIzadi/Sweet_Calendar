@@ -1,6 +1,11 @@
 package com.sweetcalendar.ui.addtask
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,13 +55,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.recurrenceFrequency
+import com.sweetcalendar.recurrence.userLabel
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.repository.EventRepository
@@ -95,7 +105,8 @@ private fun formFieldLabelColor(): Color = SweetTheme.colors.muted
 @Composable
 private fun formPlaceholderColor(): Color {
     val colors = SweetTheme.colors
-    return if (colors.isDark) colors.navInactive else colors.muted
+    val base = if (colors.isDark) colors.navInactive else colors.muted
+    return base.copy(alpha = if (colors.isDark) 0.55f else 0.45f)
 }
 
 @Composable
@@ -108,8 +119,18 @@ data class TaskFormData(
     val reminderTime: String?,
     val category: String,
     val priority: String,
-    val repeatWeekly: Boolean
-)
+    val recurrenceFreq: RecurrenceFreq,
+    /** Total times the task should occur; null = no limit. */
+    val recurrenceCount: Int? = null,
+) {
+    val repeatWeekly: Boolean get() = recurrenceFreq == RecurrenceFreq.WEEKLY
+}
+
+internal fun parseRecurrenceCountInput(text: String): Int? =
+    text.trim().takeIf { it.isNotEmpty() }?.toIntOrNull()?.coerceIn(1, 999)
+
+internal fun filterRecurrenceCountInput(text: String): String =
+    text.filter { it.isDigit() }.take(3)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -137,8 +158,11 @@ fun TaskBottomSheet(
     var priority by remember(existingTask) {
         mutableStateOf(TaskPriority.fromString(existingTask?.priority.orEmpty()))
     }
-    var repeatWeekly by remember(existingTask) {
-        mutableStateOf(existingTask?.repeatWeekly ?: false)
+    var recurrenceFreq by remember(existingTask) {
+        mutableStateOf(existingTask?.recurrenceFrequency() ?: RecurrenceFreq.NONE)
+    }
+    var recurrenceCountText by remember(existingTask) {
+        mutableStateOf(existingTask?.recurrenceCount?.toString() ?: "")
     }
     var reminderEnabled by remember(existingTask) {
         mutableStateOf(existingTask?.reminderTime != null)
@@ -164,7 +188,12 @@ fun TaskBottomSheet(
                 reminderTime = reminderTime.takeIf { reminderEnabled },
                 category = category.label,
                 priority = priority.label,
-                repeatWeekly = repeatWeekly
+                recurrenceFreq = recurrenceFreq,
+                recurrenceCount = if (recurrenceFreq == RecurrenceFreq.NONE) {
+                    null
+                } else {
+                    parseRecurrenceCountInput(recurrenceCountText)
+                },
             )
         )
     }
@@ -251,7 +280,7 @@ fun TaskBottomSheet(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(scrollState, enabled = !titleFieldFocused)
+                    .verticalScroll(scrollState)
                     .padding(
                         start = mockupDp(18),
                         end = mockupDp(18),
@@ -266,7 +295,7 @@ fun TaskBottomSheet(
                         title = it
                         if (it.isNotBlank()) showTitleError = false
                     },
-                    placeholder = "e.g. Call mom about Nowruz trip",
+                    placeholder = "e.g. Do laundry",
                     singleLine = true,
                     isError = showTitleError,
                     textFieldModifier = formTextFieldModifier(
@@ -370,28 +399,61 @@ fun TaskBottomSheet(
                 }
 
                 FieldLabel("REPEAT")
-                PaperSurface(
-                    shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
-                    cornerRadius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = mockupDp(14), vertical = mockupDp(12)),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    RecurrenceFreq.entries.forEach { freq ->
+                        RepeatFreqChip(
+                            label = freq.userLabel(),
+                            selected = recurrenceFreq == freq,
+                            onClick = {
+                                recurrenceFreq = freq
+                                if (freq == RecurrenceFreq.NONE) {
+                                    recurrenceCountText = ""
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .widthIn(min = mockupDp(0))
+                        )
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = recurrenceFreq != RecurrenceFreq.NONE,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    Column(modifier = Modifier.padding(top = mockupDp(10))) {
+                        FieldLabel("HOW MANY TIMES")
                         Text(
-                            "Repeat weekly",
+                            "Including this task. Leave empty for no limit.",
                             style = TextStyle(
                                 fontFamily = BodyFont,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = mockupSp(MockupDimens.SWITCH_LABEL_F),
-                                lineHeight = mockupSp(17f)
+                                fontWeight = SecondaryTextWeight,
+                                fontSize = mockupSp(12f),
+                                lineHeight = mockupSp(16f),
                             ),
-                            color = colors.ink
+                            color = formMetaMutedColor(),
+                            modifier = Modifier.padding(bottom = mockupDp(8)),
                         )
-                        SweetSwitch(checked = repeatWeekly, onCheckedChange = { repeatWeekly = it })
+                        RecurrenceCountStepper(
+                            value = recurrenceCountText,
+                            onValueChange = { recurrenceCountText = filterRecurrenceCountInput(it) },
+                            onDecrement = {
+                                val current = parseRecurrenceCountInput(recurrenceCountText)
+                                recurrenceCountText = when {
+                                    current == null -> ""
+                                    current <= 1 -> ""
+                                    else -> (current - 1).toString()
+                                }
+                            },
+                            onIncrement = {
+                                val current = parseRecurrenceCountInput(recurrenceCountText) ?: 0
+                                recurrenceCountText = (current + 1).coerceAtMost(999).toString()
+                            },
+                        )
                     }
                 }
 
@@ -649,16 +711,25 @@ private fun SweetField(
     readOnly: Boolean = false,
     textFieldModifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null
+    trailing: (@Composable () -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    textAlign: TextAlign? = null,
 ) {
     val colors = SweetTheme.colors
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    val resolvedAlign = textAlign ?: TextAlign.Start
     val fieldTextStyle = TextStyle(
         fontFamily = BodyFont,
         fontWeight = SecondaryTextWeight,
         fontSize = mockupSp(MockupDimens.FIELD_TEXT_F),
-        lineHeight = mockupSp(18f)
+        lineHeight = mockupSp(18f),
+        textAlign = resolvedAlign,
     )
+    val fieldContentAlignment = when (resolvedAlign) {
+        TextAlign.Center -> Alignment.Center
+        TextAlign.End, TextAlign.Right -> Alignment.CenterEnd
+        else -> if (singleLine) Alignment.CenterStart else Alignment.TopStart
+    }
     PaperSurface(
         shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
         cornerRadius = radius,
@@ -681,7 +752,10 @@ private fun SweetField(
                     value,
                     style = fieldTextStyle,
                     color = colors.ink,
-                    modifier = Modifier.weight(1f)
+                    textAlign = resolvedAlign,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
                 )
             } else {
                 val multilineMinHeight = mockupDp(MockupDimens.FIELD_TEXT_F * minLines + 6f)
@@ -691,6 +765,7 @@ private fun SweetField(
                     singleLine = singleLine,
                     minLines = minLines,
                     maxLines = if (singleLine) 1 else maxLines,
+                    keyboardOptions = keyboardOptions,
                     textStyle = fieldTextStyle.copy(color = colors.ink),
                     cursorBrush = SolidColor(colors.pinkText),
                     modifier = Modifier
@@ -714,16 +789,23 @@ private fun SweetField(
                                 .then(
                                     if (!singleLine) Modifier.heightIn(min = multilineMinHeight) else Modifier
                                 ),
-                            contentAlignment = Alignment.TopStart,
+                            contentAlignment = fieldContentAlignment,
                         ) {
                             if (value.isEmpty() && placeholder.isNotEmpty()) {
                                 Text(
                                     placeholder,
                                     style = fieldTextStyle,
                                     color = formPlaceholderColor(),
+                                    textAlign = resolvedAlign,
+                                    modifier = Modifier.fillMaxWidth(),
                                 )
                             }
-                            inner()
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = fieldContentAlignment,
+                            ) {
+                                inner()
+                            }
                         }
                     }
                 )
@@ -806,6 +888,114 @@ private fun PrioritySparkleRow(priority: TaskPriority) {
         repeat(count) {
             ThemeSparkleIcon(size = sparkleSize)
         }
+    }
+}
+
+@Composable
+private fun RecurrenceCountStepper(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onDecrement: () -> Unit,
+    onIncrement: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val buttonSize = mockupDp(44)
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RecurrenceCountStepButton(
+            label = "−",
+            onClick = onDecrement,
+            modifier = Modifier.size(buttonSize),
+        )
+        SweetField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = "No limit",
+            modifier = Modifier.weight(1f),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            textAlign = TextAlign.Center,
+        )
+        RecurrenceCountStepButton(
+            label = "+",
+            onClick = onIncrement,
+            modifier = Modifier.size(buttonSize),
+        )
+    }
+}
+
+@Composable
+private fun RecurrenceCountStepButton(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = SweetTheme.colors
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    PaperSurface(
+        shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
+        cornerRadius = radius,
+        modifier = modifier.clickable(onClick = onClick),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                label,
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(20f),
+                    lineHeight = mockupSp(22f),
+                ),
+                color = colors.purpleDeep,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RepeatFreqChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .offset(
+                    y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
+                )
+                .clip(RoundedCornerShape(radius))
+                .background(formChipShadowColor(selected))
+        )
+        Text(
+            label,
+            style = TextStyle(
+                fontFamily = BodyFont,
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
+            ),
+            color = if (selected) formChipTextColor(selected) else formMetaMutedColor(),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(radius))
+                .background(formChipFillColor(selected))
+                .padding(vertical = mockupDp(12), horizontal = mockupDp(6))
+        )
     }
 }
 

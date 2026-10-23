@@ -21,6 +21,7 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
 
     fun firstOfMonth(): JalaliDate = JalaliDate(year, month, 1)
 
+    /** First day of the target month (month grid navigation). */
     fun plusMonths(delta: Int): JalaliDate {
         var m = month - 1 + delta
         var y = year + m / 12
@@ -30,6 +31,20 @@ data class JalaliDate(val year: Int, val month: Int, val day: Int) : Comparable<
             y -= 1
         }
         return JalaliDate(y, m + 1, 1)
+    }
+
+    /** Same day-of-month when possible; clamps to the last day of the target month. */
+    fun addMonths(delta: Int): JalaliDate {
+        var m = month - 1 + delta
+        var y = year + m / 12
+        m %= 12
+        if (m < 0) {
+            m += 12
+            y -= 1
+        }
+        val targetMonth = m + 1
+        val maxDay = JalaliDate(y, targetMonth, 1).daysInMonth()
+        return JalaliDate(y, targetMonth, minOf(day, maxDay))
     }
 
     fun toGregorianCalendar(): Calendar {

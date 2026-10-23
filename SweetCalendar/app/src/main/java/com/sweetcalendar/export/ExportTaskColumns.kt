@@ -1,6 +1,7 @@
 package com.sweetcalendar.export
 
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.recurrence.repeatSummary
 
 internal object ExportTaskColumns {
 
@@ -12,7 +13,7 @@ internal object ExportTaskColumns {
         "Priority",
         "Status",
         "Reminder",
-        "Repeat weekly",
+        "Repeat",
         "Created at",
         "Deleted at"
     )
@@ -25,7 +26,7 @@ internal object ExportTaskColumns {
         task.priority,
         ExportFormatting.taskStatus(task),
         task.reminderTime.orEmpty(),
-        if (task.repeatWeekly) "Yes" else "No",
+        task.repeatSummary() ?: "No",
         ExportFormatting.formatCreatedAt(task.createdAt),
         task.deletedAt?.let(ExportFormatting::formatCreatedAt).orEmpty()
     )

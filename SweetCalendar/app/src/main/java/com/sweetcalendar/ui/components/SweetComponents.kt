@@ -253,12 +253,6 @@ fun JarProgressCard(
                         .clip(RoundedCornerShape(6.dp))
                         .background(com.sweetcalendar.ui.theme.ambientJarFillColor())
                 )
-                JarCandyDropOverlay(
-                    completed = completed,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(mockupDp(MockupDimens.JAR_TRACK_H)),
-                )
             }
         }
     }

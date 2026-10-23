@@ -17,6 +17,16 @@ data class TaskEntity(
     val category: String = "",
     val priority: String = "Medium",
     val repeatWeekly: Boolean = false,
+    /** Shared id for recurring instances spawned from the same rule. */
+    val seriesId: String? = null,
+    val recurrenceFreq: String = "NONE",
+    val recurrenceInterval: Int = 1,
+    /** Total occurrences in the series (including the first); null = no limit. */
+    val recurrenceCount: Int? = null,
+    /** Last Jalali date (inclusive) for this segment of a split series. */
+    val seriesUntil: String? = null,
+    /** When true, completing this row does not spawn the next occurrence. */
+    val isRecurrenceException: Boolean = false,
     val isDone: Boolean = false,
     /** Local millis when the task was marked complete; cleared when marked incomplete. */
     val completedAt: Long? = null,

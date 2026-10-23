@@ -59,4 +59,10 @@ interface TaskDao {
 
     @Query("SELECT * FROM tasks ORDER BY jalaliDate DESC, createdAt ASC")
     suspend fun getAllIncludingDeleted(): List<TaskEntity>
+
+    @Query(
+        "SELECT * FROM tasks WHERE seriesId = :seriesId AND deletedAt IS NULL " +
+            "ORDER BY jalaliDate ASC, createdAt ASC"
+    )
+    suspend fun getActiveBySeriesId(seriesId: String): List<TaskEntity>
 }
