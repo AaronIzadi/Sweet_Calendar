@@ -59,6 +59,7 @@ import androidx.compose.ui.zIndex
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.repository.EventRepository
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.NotesFormatToolbar
 import com.sweetcalendar.ui.components.RichNotesText
@@ -81,10 +82,12 @@ import com.sweetcalendar.ui.components.formatTime12h
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.formChipFillColor
+import com.sweetcalendar.ui.theme.formChipShadowColor
+import com.sweetcalendar.ui.theme.formChipTextColor
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import kotlinx.coroutines.launch
-private val SelectedChipTextColor = Color.Black
 
 @Composable
 private fun formFieldLabelColor(): Color = SweetTheme.colors.muted
@@ -97,25 +100,6 @@ private fun formPlaceholderColor(): Color {
 
 @Composable
 private fun formMetaMutedColor(): Color = SweetTheme.colors.muted
-
-@Composable
-private fun priorityChipFillColor(selected: Boolean): Color {
-    if (!selected) return SweetTheme.colors.paper
-    val colors = SweetTheme.colors
-    return if (colors.isDark) PriorityChipFillDark else PriorityChipFillLight
-}
-
-@Composable
-private fun priorityChipShadowColor(selected: Boolean): Color {
-    if (!selected) return SweetTheme.colors.shadow
-    val colors = SweetTheme.colors
-    return if (colors.isDark) PriorityChipShadowDark else PriorityChipShadowLight
-}
-
-private val PriorityChipFillLight = Color(0xFFFFF0B0)
-private val PriorityChipFillDark = Color(0xFFFFF0B8)
-private val PriorityChipShadowLight = Color(0xFFFFD966)
-private val PriorityChipShadowDark = Color(0xFFFFD966)
 
 data class TaskFormData(
     val title: String,
@@ -133,6 +117,7 @@ fun TaskBottomSheet(
     date: JalaliDate,
     existingTask: TaskEntity?,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
+    eventRepository: EventRepository,
     onDismiss: () -> Unit,
     onConfirm: (TaskFormData) -> Unit,
     modifier: Modifier = Modifier
@@ -469,6 +454,7 @@ fun TaskBottomSheet(
         when (calendarSystem) {
             CalendarSystem.PERSIAN -> JalaliDatePickerDialog(
                 initialDate = selectedDate,
+                eventRepository = eventRepository,
                 onDismiss = { showDatePicker = false },
                 onConfirm = { picked ->
                     selectedDate = picked
@@ -477,6 +463,7 @@ fun TaskBottomSheet(
             )
             CalendarSystem.GREGORIAN -> GregorianDatePickerDialog(
                 initialDate = selectedDate,
+                eventRepository = eventRepository,
                 onDismiss = { showDatePicker = false },
                 onConfirm = { picked ->
                     selectedDate = picked
@@ -767,13 +754,13 @@ private fun CategorySwatch(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
                 .clip(RoundedCornerShape(radius))
-                .background(priorityChipShadowColor(selected))
+                .background(formChipShadowColor(selected))
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
-                .background(priorityChipFillColor(selected))
+                .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(mockupDp(6))
@@ -793,7 +780,7 @@ private fun CategorySwatch(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
                 ),
-                color = if (selected) SelectedChipTextColor else formMetaMutedColor(),
+                color = if (selected) formChipTextColor(selected) else formMetaMutedColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -843,13 +830,13 @@ private fun PriorityChip(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
                 .clip(RoundedCornerShape(radius))
-                .background(priorityChipShadowColor(selected))
+                .background(formChipShadowColor(selected))
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
-                .background(priorityChipFillColor(selected))
+                .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(mockupDp(6))
@@ -864,7 +851,7 @@ private fun PriorityChip(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
                 ),
-                color = if (selected) SelectedChipTextColor else formMetaMutedColor(),
+                color = if (selected) formChipTextColor(selected) else formMetaMutedColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,

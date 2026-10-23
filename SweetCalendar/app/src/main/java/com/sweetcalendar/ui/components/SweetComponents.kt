@@ -1165,6 +1165,13 @@ fun SweetBigSaveButton(
     }
 }
 
+/** Track fill when a [SweetSwitch] is on — primary purple per theme/mode (not mint success green). */
+@Composable
+private fun sweetSwitchTrackOnColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.purple else colors.purpleDeep
+}
+
 /** Mockup `.switch` toggle used on settings and add-task rows. */
 @Composable
 fun SweetSwitch(
@@ -1173,11 +1180,12 @@ fun SweetSwitch(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val trackOn = sweetSwitchTrackOnColor()
     Box(
         modifier = modifier
             .size(width = mockupDp(36), height = mockupDp(20))
             .clip(RoundedCornerShape(mockupDp(10)))
-            .background(if (checked) colors.mintDeep else colors.line)
+            .background(if (checked) trackOn else colors.line)
             .clickable { onCheckedChange(!checked) }
             .padding(mockupDp(2))
     ) {

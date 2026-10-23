@@ -36,10 +36,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.BuildConfig
 import com.sweetcalendar.ui.components.SheetFooterCloseOnly
-import com.sweetcalendar.ui.components.SweetDialogSurface
+import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.LocalMockupScale
@@ -94,15 +93,14 @@ fun AboutDialog(onDismiss: () -> Unit) {
         color = colors.ink
     )
 
-    SweetDialog(onDismissRequest = onDismiss) {
+    SweetModalOverlay(onDismissRequest = onDismiss) {
         ProvideMockupScale {
-            SweetDialogSurface {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(mockupDp(16)))
-                        .background(colors.cream)
-                ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.cream)
+            ) {
                     Text(
                         "About Sweet Calendar",
                         style = TextStyle(
@@ -235,8 +233,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                         }
                     }
 
-                    SheetFooterCloseOnly(onClose = onDismiss)
-                }
+                SheetFooterCloseOnly(onClose = onDismiss)
             }
         }
     }

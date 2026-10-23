@@ -136,7 +136,7 @@ fun OfflineScreen(
             )
             Spacer(Modifier.height(mockupDp(8)))
             Text(
-                "time.ir isn't responding, so this month's occasions may be out of date. Your own tasks are saved locally and unaffected.",
+                "Holiday data isn't loading right now, so this month's occasions may be out of date. Your tasks are still saved on this device.",
                 style = TextStyle(
                     fontFamily = BodyFont,
                     fontWeight = SecondaryTextWeight,

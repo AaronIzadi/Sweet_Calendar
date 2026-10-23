@@ -12,8 +12,12 @@ import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.export.TaskExportRepository
 import com.sweetcalendar.export.TaskExportRunner
 import com.sweetcalendar.reminder.TaskReminderScheduler
+import com.sweetcalendar.data.local.EventCacheEntity
 import com.sweetcalendar.repository.EventRepository
 import com.sweetcalendar.repository.TaskRepository
+import com.sweetcalendar.repository.gregorianEventStorageKey
+import com.sweetcalendar.repository.jalaliEventStorageKey
+import com.sweetcalendar.repository.normalizeCachedJalaliDateKey
 import com.sweetcalendar.ui.addtask.TaskFormData
 import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.widget.SweetWidgets
@@ -23,6 +27,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -140,22 +146,19 @@ class CalendarViewModel(
         val gMonth = context.gregorianMonth
         val selected = context.selected
         val meta = context.meta
-        val eventDatesInfo = if (meta.showHolidays) {
-            monthEvents
-                .filter { it.description.isNotEmpty() }
-                .groupBy { normalizeEventDateKey(it.jalaliDate) }
+        val eventsByDayKey = if (meta.showHolidays) {
+            groupMonthEventsByDayKey(monthEvents, meta.calendarSystem)
         } else {
             emptyMap()
         }
         val tasksByDate = allTasks.groupBy { JalaliDate.parseIso(it.jalaliDate).formatIso() }
 
         val cells = when (meta.calendarSystem) {
-            CalendarSystem.PERSIAN -> buildPersianMonthCells(pMonth, meta.weekStartsOn, eventDatesInfo, tasksByDate)
-            CalendarSystem.GREGORIAN -> buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventDatesInfo, tasksByDate)
+            CalendarSystem.PERSIAN -> buildPersianMonthCells(pMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
+            CalendarSystem.GREGORIAN -> buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
         }
 
-        val selectedIso = selected.formatIso()
-        val selectedEvents = eventDatesInfo[normalizeEventDateKey(selectedIso)].orEmpty().map {
+        val selectedEvents = eventsForSelectedDay(eventsByDayKey, selected, meta.calendarSystem).map {
             DayEvent(
                 description = it.description,
                 additionalDescription = it.additionalDescription,
@@ -180,21 +183,35 @@ class CalendarViewModel(
             state.copy(selectedDayTasks = tasks)
         }
     }.let { withTasks ->
-        combine(withTasks, showHolidays, eventRepository.observeForDate(JalaliDate.today().formatIso())) { state, show, rawToday ->
-            val todayEvents = if (show) {
-                rawToday
-                    .filter { it.description.isNotBlank() }
-                    .map {
-                        DayEvent(
-                            description = it.description,
-                            additionalDescription = it.additionalDescription,
-                            isHoliday = it.isHoliday
-                        )
-                    }
-            } else {
-                emptyList()
+        combine(withTasks, showHolidays, calendarSystem) { state, show, system ->
+            Triple(state, show, system)
+        }.flatMapLatest { (state, show, system) ->
+            if (!show) {
+                return@flatMapLatest flowOf(state.copy(todayEvents = emptyList()))
             }
-            state.copy(todayEvents = todayEvents)
+            val todayFlow = when (system) {
+                CalendarSystem.PERSIAN -> {
+                    val key = jalaliEventStorageKey(JalaliDate.today())
+                    eventRepository.observeForDate(key, EventCacheEntity.SOURCE_TIME_IR)
+                }
+                CalendarSystem.GREGORIAN -> {
+                    val key = gregorianEventStorageKey(GregorianDate.fromJalali(JalaliDate.today()))
+                    eventRepository.observeForGregorianDate(key)
+                }
+            }
+            todayFlow.map { rawToday ->
+                state.copy(
+                    todayEvents = rawToday
+                        .filter { it.description.isNotBlank() }
+                        .map {
+                            DayEvent(
+                                description = it.description,
+                                additionalDescription = it.additionalDescription,
+                                isHoliday = it.isHoliday
+                            )
+                        }
+                )
+            }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), CalendarUiState())
 
@@ -407,14 +424,16 @@ class CalendarViewModel(
                     CalendarSystem.PERSIAN -> {
                         val month = visiblePersianMonth.value
                         eventRepository.ensureMonthCached(month.year, month.month, forceRefresh)
+                        val today = JalaliDate.today()
+                        eventRepository.ensureMonthCached(today.year, today.month, forceRefresh)
                     }
                     CalendarSystem.GREGORIAN -> {
                         val month = visibleGregorianMonth.value
                         eventRepository.ensureGregorianMonthCached(month.year, month.month, forceRefresh)
+                        val gToday = GregorianDate.fromJalali(JalaliDate.today())
+                        eventRepository.ensureGregorianMonthCached(gToday.year, gToday.month, forceRefresh)
                     }
                 }
-                val today = JalaliDate.today()
-                eventRepository.ensureMonthCached(today.year, today.month, forceRefresh)
             }
             eventsLoadFailed.value = result.isFailure
             isLoadingEvents.value = false
@@ -424,7 +443,7 @@ class CalendarViewModel(
     private fun buildPersianMonthCells(
         month: JalaliDate,
         weekStartsOn: Int,
-        eventDatesInfo: Map<String, List<com.sweetcalendar.data.local.EventCacheEntity>>,
+        eventsByDayKey: Map<String, List<EventCacheEntity>>,
         tasksByDate: Map<String, List<TaskEntity>>
     ): List<DayCellInfo?> {
         val daysInMonth = month.daysInMonth()
@@ -433,7 +452,8 @@ class CalendarViewModel(
         repeat(leadingBlanks) { cells.add(null) }
         for (d in 1..daysInMonth) {
             val date = JalaliDate(month.year, month.month, d)
-            cells.add(buildDayCell(date, d, eventDatesInfo, tasksByDate))
+            val dayEvents = eventsByDayKey[jalaliEventStorageKey(date)].orEmpty()
+            cells.add(buildDayCell(date, d, dayEvents, tasksByDate))
         }
         return cells
     }
@@ -441,7 +461,7 @@ class CalendarViewModel(
     private fun buildGregorianMonthCells(
         month: GregorianDate,
         weekStartsOn: Int,
-        eventDatesInfo: Map<String, List<com.sweetcalendar.data.local.EventCacheEntity>>,
+        eventsByDayKey: Map<String, List<EventCacheEntity>>,
         tasksByDate: Map<String, List<TaskEntity>>
     ): List<DayCellInfo?> {
         val daysInMonth = month.daysInMonth()
@@ -451,7 +471,8 @@ class CalendarViewModel(
         for (d in 1..daysInMonth) {
             val gregorian = GregorianDate(month.year, month.month, d)
             val jalali = gregorian.toJalali()
-            cells.add(buildDayCell(jalali, d, eventDatesInfo, tasksByDate))
+            val dayEvents = eventsByDayKey[gregorianEventStorageKey(gregorian)].orEmpty()
+            cells.add(buildDayCell(jalali, d, dayEvents, tasksByDate))
         }
         return cells
     }
@@ -459,11 +480,10 @@ class CalendarViewModel(
     private fun buildDayCell(
         date: JalaliDate,
         displayDay: Int,
-        eventDatesInfo: Map<String, List<com.sweetcalendar.data.local.EventCacheEntity>>,
+        dayEvents: List<EventCacheEntity>,
         tasksByDate: Map<String, List<TaskEntity>>
     ): DayCellInfo {
         val iso = date.formatIso()
-        val dayEvents = eventDatesInfo[normalizeEventDateKey(iso)].orEmpty()
         val dayTasks = tasksByDate[iso].orEmpty()
         val categories = dayTasks
             .map { TaskCategory.fromString(it.category) }
@@ -479,9 +499,38 @@ class CalendarViewModel(
         )
     }
 
-    private fun normalizeEventDateKey(raw: String): String {
-        val parsed = JalaliDate.parseIso(raw)
-        return "%04d-%02d-%02d".format(parsed.year, parsed.month, parsed.day)
+    private fun groupMonthEventsByDayKey(
+        monthEvents: List<EventCacheEntity>,
+        calendarSystem: CalendarSystem,
+    ): Map<String, List<EventCacheEntity>> {
+        val source = when (calendarSystem) {
+            CalendarSystem.PERSIAN -> EventCacheEntity.SOURCE_TIME_IR
+            CalendarSystem.GREGORIAN -> EventCacheEntity.SOURCE_NAGER
+        }
+        return monthEvents
+            .asSequence()
+            .filter { it.source == source && it.description.isNotBlank() }
+            .mapNotNull { event ->
+                val key = when (calendarSystem) {
+                    CalendarSystem.PERSIAN -> normalizeCachedJalaliDateKey(event.jalaliDate)
+                    CalendarSystem.GREGORIAN -> event.gregorianDate.takeIf { it.isNotBlank() }
+                }
+                key?.let { it to event }
+            }
+            .groupBy({ it.first }, { it.second })
+    }
+
+    private fun eventsForSelectedDay(
+        eventsByDayKey: Map<String, List<EventCacheEntity>>,
+        selected: JalaliDate,
+        calendarSystem: CalendarSystem,
+    ): List<EventCacheEntity> = when (calendarSystem) {
+        CalendarSystem.PERSIAN ->
+            eventsByDayKey[jalaliEventStorageKey(selected)].orEmpty()
+        CalendarSystem.GREGORIAN -> {
+            val gregorian = GregorianDate.fromJalali(selected)
+            eventsByDayKey[gregorianEventStorageKey(gregorian)].orEmpty()
+        }
     }
 
     class Factory(

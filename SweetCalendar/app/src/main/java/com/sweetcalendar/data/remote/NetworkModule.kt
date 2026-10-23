@@ -50,4 +50,26 @@ object NetworkModule {
     val timeIrCalendarClient: TimeIrCalendarClient by lazy {
         TimeIrCalendarClient(timeIrApi)
     }
+
+    private val nagerApi: NagerApiService by lazy {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BASIC
+        }
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+
+        Retrofit.Builder()
+            .baseUrl(NagerApiService.BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(NagerApiService::class.java)
+    }
+
+    val nagerHolidaysClient: NagerHolidaysClient by lazy {
+        NagerHolidaysClient(nagerApi)
+    }
 }

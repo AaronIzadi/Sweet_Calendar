@@ -47,7 +47,9 @@ import com.sweetcalendar.ui.theme.ProvideMockupScale
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-import com.sweetcalendar.ui.theme.selectedOnAccentTextColor
+import com.sweetcalendar.ui.theme.formChipFillColor
+import com.sweetcalendar.ui.theme.formChipShadowColor
+import com.sweetcalendar.ui.theme.formChipTextColor
 
 @Composable
 fun SweetTimePickerDialog(
@@ -327,7 +329,6 @@ private fun PeriodChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = SweetTheme.colors
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
     Box(
         modifier = modifier.clickable(onClick = onClick)
@@ -339,13 +340,13 @@ private fun PeriodChip(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
                 .clip(RoundedCornerShape(radius))
-                .background(if (selected) colors.shadowDeep else colors.shadow)
+                .background(formChipShadowColor(selected))
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
-                .background(if (selected) colors.purple else colors.paper)
+                .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12)),
             contentAlignment = Alignment.Center
         ) {
@@ -356,7 +357,7 @@ private fun PeriodChip(
                     fontWeight = FontWeight.Bold,
                     fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
                 ),
-                color = if (selected) selectedOnAccentTextColor() else colors.muted
+                color = formChipTextColor(selected)
             )
         }
     }

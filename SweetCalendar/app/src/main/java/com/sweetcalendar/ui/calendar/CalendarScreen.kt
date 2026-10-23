@@ -57,6 +57,7 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.ui.components.MonthNavChevron
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
@@ -159,9 +160,9 @@ fun MonthScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            MonthChevron("‹", onClick = viewModel::goToPreviousMonth)
+            MonthNavChevron(pointingLeft = true, onClick = viewModel::goToPreviousMonth)
             AnimatedMonthTitle(page = state.toMonthPage())
-            MonthChevron("›", onClick = viewModel::goToNextMonth)
+            MonthNavChevron(pointingLeft = false, onClick = viewModel::goToNextMonth)
         }
 
         Row(
@@ -223,7 +224,7 @@ fun MonthScreen(
                 occasions.forEach { event ->
                     DayEventCard(
                         title = event.description,
-                        meta = "Calendar occasion · time.ir",
+                        meta = "Calendar occasion",
                         accentColor = colors.purpleDeep,
                         icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                         onClick = { onEventClick(event) }
@@ -232,7 +233,7 @@ fun MonthScreen(
                 holidays.forEach { event ->
                     DayEventCard(
                         title = event.description,
-                        meta = "Official occasion · time.ir",
+                        meta = "Official holiday",
                         accentColor = colors.mintDeep,
                         icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                         onClick = { onEventClick(event) }
@@ -380,38 +381,6 @@ private fun AnimatedMonthGrid(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun MonthChevron(label: String, onClick: () -> Unit) {
-    val colors = SweetTheme.colors
-    val shape = RoundedCornerShape(8.dp)
-    Box {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(y = 2.dp)
-                .clip(shape)
-                .background(colors.shadow)
-        )
-        Box(
-            modifier = Modifier
-                .size(mockupDp(MockupDimens.CHEVRON_SIZE))
-                .clip(shape)
-                .background(colors.paper)
-                .clickable(onClick = onClick),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.CHEVRON_FONT)
-                ),
-                color = colors.purpleDeep
-            )
         }
     }
 }

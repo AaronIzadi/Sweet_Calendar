@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.sweetcalendar.CalendarTodoApp
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.data.prefs.AppPreferences
 import com.sweetcalendar.jalali.JalaliDate
@@ -131,6 +132,10 @@ fun MainScreen(
     onThemeFamilyChange: (ThemeFamily) -> Unit,
     onRequestNotificationPermission: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val eventRepository = remember(context) {
+        (context.applicationContext as CalendarTodoApp).eventRepository
+    }
     val calendarState by viewModel.uiState.collectAsState()
     val allTasks by viewModel.allTasks.collectAsState()
     val deletedTasks by viewModel.deletedTasks.collectAsState()
@@ -144,7 +149,6 @@ fun MainScreen(
     var recoverTask by remember { mutableStateOf<TaskEntity?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     var userName by remember { mutableStateOf(preferences.userName) }
     var showHolidays by remember { mutableStateOf(preferences.showHolidays) }
     var weekStartsOn by remember { mutableStateOf(preferences.weekStartsOn) }
@@ -560,6 +564,7 @@ fun MainScreen(
                         date = sheet.date,
                         existingTask = null,
                         calendarSystem = calendarState.calendarSystem,
+                        eventRepository = eventRepository,
                         onDismiss = { sheetState = SheetState.Hidden },
                         onConfirm = { form ->
                             viewModel.addTask(form)
@@ -576,6 +581,7 @@ fun MainScreen(
                         date = d,
                         existingTask = task,
                         calendarSystem = calendarState.calendarSystem,
+                        eventRepository = eventRepository,
                         onDismiss = { sheetState = SheetState.Hidden },
                         onConfirm = { form ->
                             viewModel.updateTask(task, form)

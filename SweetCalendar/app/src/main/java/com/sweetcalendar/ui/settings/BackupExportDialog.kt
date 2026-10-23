@@ -25,15 +25,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import com.sweetcalendar.ui.components.SweetDialog
 import com.sweetcalendar.calendar.CalendarSystem
+import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.export.ExportCacheResult
 import com.sweetcalendar.export.ExportFormat
 import com.sweetcalendar.export.PdfExportRequest
 import com.sweetcalendar.export.PdfExportScope
 import com.sweetcalendar.export.TaskExportRunner
 import com.sweetcalendar.ui.components.SheetFooterCloseOnly
-import com.sweetcalendar.ui.components.SweetDialogSurface
 import com.sweetcalendar.ui.components.SweetPixelButton
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.theme.BodyFont
@@ -88,9 +87,8 @@ fun BackupExportDialog(
         }
     }
 
-    SweetDialog(onDismissRequest = onDismiss) {
+    SweetModalOverlay(onDismissRequest = onDismiss) {
         ProvideMockupScale {
-            SweetDialogSurface {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -177,7 +175,6 @@ fun BackupExportDialog(
                     onClose = onDismiss,
                     closeEnabled = !isWorking
                 )
-            }
             }
         }
     }

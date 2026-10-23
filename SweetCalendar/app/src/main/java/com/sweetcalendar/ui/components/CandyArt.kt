@@ -469,6 +469,27 @@ fun BackArrowMiniIcon(
     )
 }
 
+/** Pixel chevron pointing right — month forward affordance. */
+@Composable
+fun ForwardArrowMiniIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 12.dp,
+    color: Color = GrapePurple,
+) {
+    PixelIcon(
+        rows = listOf(
+            "....1..",
+            "....11.",
+            ".111111",
+            "....11.",
+            "....1..",
+        ),
+        palette = mapOf('1' to color),
+        size = size,
+        modifier = modifier
+    )
+}
+
 /** Small pixel pencil — edit / rename affordance (eraser, body, tip). */
 @Composable
 fun PenMiniIcon(

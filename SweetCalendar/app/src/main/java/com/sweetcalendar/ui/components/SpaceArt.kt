@@ -110,6 +110,18 @@ private val StarRows = listOf(
     "...1...",
 )
 
+private val FivePointStarRows = listOf(
+    "....1....",
+    "...111...",
+    "..11111..",
+    ".11.1.11.",
+    "111111111",
+    "...111...",
+    "..1...1..",
+    ".1.....1.",
+    ".1.....1.",
+)
+
 private val CometRows = listOf(
     "..11....",
     ".1111...",
@@ -179,6 +191,20 @@ fun StarIcon(
 ) {
     PixelIcon(
         rows = StarRows,
+        palette = mapOf('1' to palette.star),
+        size = size,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun FivePointStarIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    palette: SpaceIconPalette = spaceIconPalette()
+) {
+    PixelIcon(
+        rows = FivePointStarRows,
         palette = mapOf('1' to palette.star),
         size = size,
         modifier = modifier

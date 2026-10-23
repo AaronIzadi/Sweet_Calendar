@@ -254,7 +254,7 @@ fun ThemeHolidayHeroIcon(modifier: Modifier = Modifier, size: Dp = 36.dp) {
 @Composable
 fun ThemeSettingsHolidayIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     if (SweetTheme.isSpace) {
-        StarIcon(modifier = modifier, size = size)
+        FivePointStarIcon(modifier = modifier, size = size)
     } else {
         NavPeppermintIcon(modifier = modifier, size = size)
     }
@@ -263,7 +263,7 @@ fun ThemeSettingsHolidayIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
 @Composable
 fun ThemeSettingsDarkModeIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
     if (SweetTheme.isSpace) {
-        MoonIcon(modifier = modifier, size = size)
+        RingPlanetIcon(modifier = modifier, size = size)
     } else {
         SettingsChocolateIcon(modifier = modifier, size = size)
     }

@@ -75,7 +75,8 @@ object MockupDimens {
     const val MONTH_LEGEND_DOT = 9
     const val MONTH_LEGEND_TEXT = 11
     const val MONTH_LEGEND_TEXT_F = 12f
-    const val CHEVRON_SIZE = 26
+    const val CHEVRON_SIZE = 22
+    const val CHEVRON_ICON = 12
     const val CHEVRON_FONT = 14
 
     // Chrome

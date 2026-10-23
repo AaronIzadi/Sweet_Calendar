@@ -81,7 +81,7 @@ fun HolidayDetailScreen(
         isHoliday -> {
             "A local holiday synced from the Iranian calendar. Keep your to-do list light and enjoy the day."
         }
-        else -> "A calendar occasion synced from time.ir."
+        else -> "A day on the local calendar worth remembering."
     }
 
     Column(
@@ -168,7 +168,7 @@ fun HolidayDetailScreen(
                     color = colors.purpleDeep
                 )
                 Text(
-                    "Synced from time.ir",
+                    "Local calendar",
                     style = TextStyle(
                         fontFamily = BodyFont,
                         fontWeight = FontWeight.Bold,

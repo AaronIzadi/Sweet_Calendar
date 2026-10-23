@@ -8,6 +8,7 @@ import com.sweetcalendar.reminder.NotificationHelper
 import com.sweetcalendar.repository.EventRepository
 import com.sweetcalendar.repository.TaskRepository
 import com.sweetcalendar.widget.WidgetPreviews
+import java.util.Locale
 
 class CalendarTodoApp : Application() {
 
@@ -23,7 +24,15 @@ class CalendarTodoApp : Application() {
 
     val eventRepository: EventRepository by lazy {
         val db = AppDatabase.get(this)
-        EventRepository(db.eventCacheDao(), db.eventMonthCacheDao(), NetworkModule.timeIrCalendarClient)
+        EventRepository(
+            dao = db.eventCacheDao(),
+            monthCacheDao = db.eventMonthCacheDao(),
+            timeIrClient = NetworkModule.timeIrCalendarClient,
+            nagerClient = NetworkModule.nagerHolidaysClient,
+            holidayCountryCode = {
+                Locale.getDefault().country.takeIf { it.length == 2 } ?: "US"
+            },
+        )
     }
 
     val taskExportRepository: TaskExportRepository by lazy {

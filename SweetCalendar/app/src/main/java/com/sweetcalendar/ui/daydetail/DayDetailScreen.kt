@@ -161,7 +161,7 @@ fun DayDetailScreen(
                         val event = occasions[index]
                         DayEventCard(
                             title = event.description,
-                            meta = "Calendar occasion · time.ir",
+                            meta = "Calendar occasion",
                             accentColor = colors.purpleDeep,
                             icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                             onClick = { onHolidayClick(event) }
@@ -174,7 +174,7 @@ fun DayDetailScreen(
                         val event = holidays[index]
                         DayEventCard(
                             title = event.description,
-                            meta = "Official occasion · time.ir",
+                            meta = "Official holiday",
                             accentColor = colors.mintDeep,
                             icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                             onClick = { onHolidayClick(event) }
