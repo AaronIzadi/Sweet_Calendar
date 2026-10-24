@@ -68,8 +68,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.RecurrenceMonthDay
 import com.sweetcalendar.recurrence.recurrenceIntervalInlineTextStyle
+import com.sweetcalendar.recurrence.parsedDate
 import com.sweetcalendar.recurrence.recurrenceFrequency
+import com.sweetcalendar.recurrence.monthlyTaskAnchorDate
+import com.sweetcalendar.recurrence.recurrenceMonthDayRule
 import com.sweetcalendar.recurrence.recurrenceWeekdaySet
 import com.sweetcalendar.recurrence.userLabel
 import com.sweetcalendar.calendar.CalendarSystem
@@ -125,28 +129,65 @@ data class TaskFormData(
     val category: String,
     val priority: String,
     val recurrenceFreq: RecurrenceFreq,
-    /** Every N weeks or months, depending on [recurrenceFreq]. */
-    val recurrenceInterval: Int = 1,
+    /** Total occurrences stored (first + N following); null = no limit. */
+    val recurrenceCount: Int? = null,
     val recurrenceWeekdays: Set<Int> = emptySet(),
+    val recurrenceMonthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
 ) {
     val repeatWeekly: Boolean get() = recurrenceFreq == RecurrenceFreq.WEEKLY
 }
 
-/** Empty field = every week/month (stored as interval 1). UI skips 1 and starts at 2. */
-internal fun parseRecurrenceIntervalInput(text: String): Int {
+private const val RECURRENCE_COUNT_INFINITE_LABEL = "∞"
+
+/** Empty / ∞ = no limit. Otherwise N = weeks/months after the first occurrence. */
+internal fun parseRecurrenceFollowingInput(text: String): Int? {
     val trimmed = text.trim()
-    if (trimmed.isEmpty()) return 1
-    val parsed = trimmed.toIntOrNull() ?: return 1
-    return if (parsed < 2) 1 else parsed.coerceAtMost(999)
+    if (trimmed.isEmpty() ||
+        trimmed == RECURRENCE_COUNT_INFINITE_LABEL ||
+        trimmed.equals("infinite", ignoreCase = true)
+    ) {
+        return null
+    }
+    return trimmed.toIntOrNull()?.coerceIn(0, 999)
 }
 
-internal fun filterRecurrenceIntervalInput(text: String): String {
-    val digits = text.filter { it.isDigit() }.take(3)
-    return if (digits == "1") "" else digits
+/** Monthly: stored total = first month + N following months. */
+internal fun parseMonthlyRecurrenceCountFromField(text: String): Int? {
+    val following = parseRecurrenceFollowingInput(text) ?: return null
+    return com.sweetcalendar.recurrence.recurrenceFollowingToTotalPeriods(following)
 }
 
-internal fun filterRecurrenceCountInput(text: String): String =
-    text.filter { it.isDigit() }.take(3)
+internal fun recurrenceCountFieldText(stored: String): String =
+    if (stored.isEmpty()) RECURRENCE_COUNT_INFINITE_LABEL else stored
+
+internal fun normalizeRecurrenceCountFieldInput(input: String): String {
+    val trimmed = input.trim()
+    if (trimmed.isEmpty() ||
+        trimmed == RECURRENCE_COUNT_INFINITE_LABEL ||
+        trimmed.equals("infinite", ignoreCase = true)
+    ) {
+        return ""
+    }
+    return trimmed.filter { it.isDigit() }.take(3)
+}
+
+/** Stepper cycle: ∞ → 1 → 2 → … */
+internal fun stepRecurrenceCountIncrement(stored: String): String {
+    val following = parseRecurrenceFollowingInput(stored)
+    return when (following) {
+        null -> "1"
+        else -> (following + 1).coerceAtMost(999).toString()
+    }
+}
+
+internal fun stepRecurrenceCountDecrement(stored: String): String {
+    val following = parseRecurrenceFollowingInput(stored)
+    return when {
+        following == null -> ""
+        following <= 1 -> ""
+        else -> (following - 1).toString()
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -178,12 +219,16 @@ fun TaskBottomSheet(
     var recurrenceFreq by remember(existingTask) {
         mutableStateOf(existingTask?.recurrenceFrequency() ?: RecurrenceFreq.NONE)
     }
-    var recurrenceIntervalText by remember(existingTask) {
+    var recurrenceCountText by remember(existingTask) {
         mutableStateOf(
             when {
                 existingTask == null -> ""
-                existingTask.recurrenceInterval <= 1 -> ""
-                else -> existingTask.recurrenceInterval.toString()
+                existingTask.recurrenceCount == null -> ""
+                else -> com.sweetcalendar.recurrence.recurrenceFollowingFromStored(
+                    existingTask.recurrenceFrequency(),
+                    existingTask.recurrenceCount,
+                    existingTask.recurrenceWeekdaySet(),
+                ).toString()
             }
         )
     }
@@ -193,13 +238,24 @@ fun TaskBottomSheet(
                 ?: setOf(date.weekdayIndex())
         )
     }
+    var recurrenceMonthDay by remember(existingTask, date) {
+        mutableStateOf(
+            existingTask?.recurrenceMonthDayRule() ?: RecurrenceMonthDay.OnThisDay
+        )
+    }
     var reminderEnabled by remember(existingTask) {
         mutableStateOf(existingTask?.reminderTime != null)
     }
     var reminderTime by remember(existingTask) {
         mutableStateOf(existingTask?.reminderTime ?: "14:30")
     }
-    var selectedDate by remember(existingTask, date) { mutableStateOf(date) }
+    val initialSettingDate = remember(existingTask, date) {
+        existingTask?.parsedDate() ?: date
+    }
+    val initialMonthDayRule = remember(existingTask) {
+        existingTask?.recurrenceMonthDayRule() ?: RecurrenceMonthDay.OnThisDay
+    }
+    var selectedDate by remember(existingTask, date) { mutableStateOf(initialSettingDate) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showTitleError by remember { mutableStateOf(false) }
@@ -209,24 +265,43 @@ fun TaskBottomSheet(
             showTitleError = true
             return
         }
+        val taskDate = when {
+            recurrenceFreq != RecurrenceFreq.MONTHLY -> selectedDate
+            existingTask == null -> monthlyTaskAnchorDate(selectedDate, recurrenceMonthDay)
+            existingTask.recurrenceFrequency() != RecurrenceFreq.MONTHLY ||
+                selectedDate != initialSettingDate ||
+                recurrenceMonthDay != initialMonthDayRule -> {
+                monthlyTaskAnchorDate(selectedDate, recurrenceMonthDay)
+            }
+            else -> existingTask.parsedDate()
+        }
         onConfirm(
             TaskFormData(
                 title = title.trim(),
                 notes = notesField.text.trim(),
-                jalaliDate = selectedDate,
+                jalaliDate = taskDate,
                 reminderTime = reminderTime.takeIf { reminderEnabled },
                 category = category.label,
                 priority = priority.label,
                 recurrenceFreq = recurrenceFreq,
-                recurrenceInterval = if (recurrenceFreq == RecurrenceFreq.NONE) {
-                    1
+                recurrenceCount = if (recurrenceFreq == RecurrenceFreq.NONE) {
+                    null
                 } else {
-                    parseRecurrenceIntervalInput(recurrenceIntervalText)
+                    com.sweetcalendar.recurrence.recurrenceStoredCountFromFollowing(
+                        recurrenceFreq,
+                        parseRecurrenceFollowingInput(recurrenceCountText),
+                        recurrenceWeekdays,
+                    )
                 },
-                recurrenceWeekdays = if (recurrenceFreq == RecurrenceFreq.NONE) {
-                    emptySet()
-                } else {
+                recurrenceWeekdays = if (recurrenceFreq == RecurrenceFreq.WEEKLY) {
                     recurrenceWeekdays
+                } else {
+                    emptySet()
+                },
+                recurrenceMonthDay = if (recurrenceFreq == RecurrenceFreq.MONTHLY) {
+                    recurrenceMonthDay
+                } else {
+                    RecurrenceMonthDay.OnThisDay
                 },
             )
         )
@@ -444,10 +519,15 @@ fun TaskBottomSheet(
                             onClick = {
                                 recurrenceFreq = freq
                                 if (freq == RecurrenceFreq.NONE) {
-                                    recurrenceIntervalText = ""
+                                    recurrenceCountText = ""
                                     recurrenceWeekdays = emptySet()
-                                } else if (recurrenceWeekdays.isEmpty()) {
-                                    recurrenceWeekdays = setOf(selectedDate.weekdayIndex())
+                                    recurrenceMonthDay = RecurrenceMonthDay.OnThisDay
+                                } else if (freq == RecurrenceFreq.WEEKLY) {
+                                    if (recurrenceWeekdays.isEmpty()) {
+                                        recurrenceWeekdays = setOf(selectedDate.weekdayIndex())
+                                    }
+                                } else if (freq == RecurrenceFreq.MONTHLY) {
+                                    recurrenceMonthDay = RecurrenceMonthDay.OnThisDay
                                 }
                             },
                             modifier = Modifier
@@ -463,20 +543,30 @@ fun TaskBottomSheet(
                     exit = fadeOut() + shrinkVertically(),
                 ) {
                     Column(modifier = Modifier.padding(top = mockupDp(10))) {
-                        FieldLabel("ON THESE DAYS")
-                        RecurrenceWeekdayRow(
-                            selected = recurrenceWeekdays,
-                            weekStartsOn = weekStartsOn,
-                            onToggle = { day ->
-                                recurrenceWeekdays = if (day in recurrenceWeekdays) {
-                                    val next = recurrenceWeekdays - day
-                                    if (next.isEmpty()) recurrenceWeekdays else next
-                                } else {
-                                    recurrenceWeekdays + day
-                                }
-                            },
-                            modifier = Modifier.padding(bottom = mockupDp(12)),
-                        )
+                        if (recurrenceFreq == RecurrenceFreq.WEEKLY) {
+                            FieldLabel("ON THESE DAYS")
+                            RecurrenceWeekdayRow(
+                                selected = recurrenceWeekdays,
+                                weekStartsOn = weekStartsOn,
+                                onToggle = { day ->
+                                    recurrenceWeekdays = if (day in recurrenceWeekdays) {
+                                        val next = recurrenceWeekdays - day
+                                        if (next.isEmpty()) recurrenceWeekdays else next
+                                    } else {
+                                        recurrenceWeekdays + day
+                                    }
+                                },
+                                modifier = Modifier.padding(bottom = mockupDp(12)),
+                            )
+                        } else {
+                            FieldLabel("ON DAY")
+                            RecurrenceMonthDaySelector(
+                                selectedDate = selectedDate,
+                                value = recurrenceMonthDay,
+                                onChange = { recurrenceMonthDay = it },
+                                modifier = Modifier.padding(bottom = mockupDp(12)),
+                            )
+                        }
                         val intervalUnit = if (recurrenceFreq == RecurrenceFreq.WEEKLY) {
                             "weeks."
                         } else {
@@ -502,26 +592,17 @@ fun TaskBottomSheet(
                                 )
                             }
                             RecurrenceCountStepper(
-                                value = recurrenceIntervalText,
+                                value = recurrenceCountFieldText(recurrenceCountText),
                                 onValueChange = {
-                                    recurrenceIntervalText = filterRecurrenceIntervalInput(it)
+                                    recurrenceCountText = normalizeRecurrenceCountFieldInput(it)
                                 },
                                 onDecrement = {
-                                    val current = recurrenceIntervalText.trim().toIntOrNull()
-                                    recurrenceIntervalText = when {
-                                        current == null || current <= 2 -> ""
-                                        else -> (current - 1).toString()
-                                    }
+                                    recurrenceCountText = stepRecurrenceCountDecrement(recurrenceCountText)
                                 },
                                 onIncrement = {
-                                    val current = recurrenceIntervalText.trim().toIntOrNull()
-                                    recurrenceIntervalText = when {
-                                        current == null -> "2"
-                                        current < 2 -> "2"
-                                        else -> (current + 1).coerceAtMost(999).toString()
-                                    }
+                                    recurrenceCountText = stepRecurrenceCountIncrement(recurrenceCountText)
                                 },
-                                placeholder = "∞",
+                                placeholder = RECURRENCE_COUNT_INFINITE_LABEL,
                                 textStyle = intervalInlineStyle,
                                 modifier = Modifier
                                     .weight(1f)
@@ -1050,6 +1131,93 @@ private fun RecurrenceCountStepButton(
                 ),
                 color = colors.purpleDeep,
             )
+        }
+    }
+}
+
+@Composable
+private fun RecurrenceMonthDaySelector(
+    selectedDate: JalaliDate,
+    value: RecurrenceMonthDay,
+    onChange: (RecurrenceMonthDay) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fixedDay = (value as? RecurrenceMonthDay.Fixed)?.day ?: selectedDate.day
+    var dayText by remember(value, selectedDate) {
+        mutableStateOf(fixedDay.coerceIn(1, 31).toString())
+    }
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(6)),
+        ) {
+            RepeatFreqChip(
+                label = "on this day",
+                selected = value is RecurrenceMonthDay.OnThisDay,
+                onClick = { onChange(RecurrenceMonthDay.OnThisDay) },
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = mockupDp(0)),
+            )
+            RepeatFreqChip(
+                label = "Last",
+                selected = value is RecurrenceMonthDay.Last,
+                onClick = { onChange(RecurrenceMonthDay.Last) },
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = mockupDp(0)),
+            )
+            RepeatFreqChip(
+                label = "Select a day",
+                selected = value is RecurrenceMonthDay.Fixed,
+                onClick = {
+                    val day = dayText.toIntOrNull()?.coerceIn(1, 31) ?: selectedDate.day
+                    dayText = day.toString()
+                    onChange(RecurrenceMonthDay.Fixed(day))
+                },
+                modifier = Modifier
+                    .weight(1.15f)
+                    .widthIn(min = mockupDp(0)),
+            )
+        }
+        AnimatedVisibility(
+            visible = value is RecurrenceMonthDay.Fixed,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = mockupDp(10)),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RecurrenceCountStepper(
+                    value = dayText,
+                    onValueChange = { raw ->
+                        val digits = raw.filter { it.isDigit() }.take(2)
+                        dayText = digits
+                        val parsed = digits.toIntOrNull()?.coerceIn(1, 31)
+                        if (parsed != null) {
+                            onChange(RecurrenceMonthDay.Fixed(parsed))
+                        }
+                    },
+                    onDecrement = {
+                        val current = dayText.toIntOrNull()?.coerceIn(1, 31) ?: selectedDate.day
+                        val next = (current - 1).coerceAtLeast(1)
+                        dayText = next.toString()
+                        onChange(RecurrenceMonthDay.Fixed(next))
+                    },
+                    onIncrement = {
+                        val current = dayText.toIntOrNull()?.coerceIn(1, 31) ?: selectedDate.day
+                        val next = (current + 1).coerceAtMost(31)
+                        dayText = next.toString()
+                        onChange(RecurrenceMonthDay.Fixed(next))
+                    },
+                    placeholder = selectedDate.day.toString(),
+                    textStyle = recurrenceIntervalInlineTextStyle(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

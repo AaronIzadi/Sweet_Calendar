@@ -5,6 +5,7 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.recurrence.RecurrenceEditScope
 import com.sweetcalendar.recurrence.RecurrenceEditor
 import com.sweetcalendar.recurrence.RecurrenceFreq
+import com.sweetcalendar.recurrence.RecurrenceMonthDay
 import com.sweetcalendar.recurrence.isVirtualOccurrence
 import com.sweetcalendar.recurrence.recurrenceFrequency
 import com.sweetcalendar.recurrence.withRecurrence
@@ -32,8 +33,9 @@ class TaskRepository(private val dao: TaskDao) {
         priority: String = "Medium",
         repeatWeekly: Boolean = false,
         recurrenceFreq: RecurrenceFreq = RecurrenceFreq.fromLegacyRepeatWeekly(repeatWeekly),
-        recurrenceInterval: Int = 1,
+        recurrenceCount: Int? = null,
         recurrenceWeekdays: Set<Int> = emptySet(),
+        recurrenceMonthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
     ): Long {
         return dao.upsert(
             TaskEntity(
@@ -46,9 +48,10 @@ class TaskRepository(private val dao: TaskDao) {
                 repeatWeekly = recurrenceFreq == RecurrenceFreq.WEEKLY,
             ).withRecurrence(
                 recurrenceFreq,
-                interval = recurrenceInterval.coerceAtLeast(1),
-                count = null,
+                interval = 1,
+                count = recurrenceCount,
                 weekdays = recurrenceWeekdays,
+                monthDay = recurrenceMonthDay,
             )
         )
     }

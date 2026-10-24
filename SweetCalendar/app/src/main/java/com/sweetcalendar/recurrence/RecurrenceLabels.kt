@@ -25,13 +25,28 @@ fun RecurrenceFreq.userLabel(): String = when (this) {
 fun TaskEntity.repeatSummary(weekStartsOn: Int = 0): String? {
     val freq = recurrenceFrequency()
     if (freq == RecurrenceFreq.NONE) return null
-    val days = recurrenceWeekdaySet()
-    val dayLabel = RecurrenceWeekdays.label(days, weekStartsOn)
-    val step = recurrenceInterval.coerceAtLeast(1)
-    val unit = when (freq) {
-        RecurrenceFreq.WEEKLY -> if (step == 1) "each week" else "$step weeks"
-        RecurrenceFreq.MONTHLY -> if (step == 1) "each month" else "$step months"
+    val dayLabel = when (freq) {
+        RecurrenceFreq.WEEKLY -> RecurrenceWeekdays.label(recurrenceWeekdaySet(), weekStartsOn)
+        RecurrenceFreq.MONTHLY -> RecurrenceMonthDays.label(recurrenceMonthDayRule(), parsedDate())
         RecurrenceFreq.NONE -> return null
     }
-    return "Repeat for $unit on $dayLabel."
+    val pluralUnit = when (freq) {
+        RecurrenceFreq.WEEKLY -> "weeks"
+        RecurrenceFreq.MONTHLY -> "months"
+        RecurrenceFreq.NONE -> return null
+    }
+    val total = recurrenceCount
+    val cadence = when (freq) {
+        RecurrenceFreq.WEEKLY -> "each week"
+        RecurrenceFreq.MONTHLY -> "each month"
+        RecurrenceFreq.NONE -> return null
+    }
+    return when {
+        total == null -> "Repeats $cadence on $dayLabel."
+        total == 1 -> "Repeats once on $dayLabel."
+        else -> {
+            val following = recurrenceFollowingFromStored(freq, total, recurrenceWeekdaySet())
+            "Repeats for $following more $pluralUnit on $dayLabel."
+        }
+    }
 }

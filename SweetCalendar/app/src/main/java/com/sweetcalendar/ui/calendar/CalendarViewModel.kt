@@ -349,8 +349,9 @@ class CalendarViewModel(
                 category = form.category,
                 priority = form.priority,
                 recurrenceFreq = form.recurrenceFreq,
-                recurrenceInterval = form.recurrenceInterval,
+                recurrenceCount = form.recurrenceCount,
                 recurrenceWeekdays = form.recurrenceWeekdays,
+                recurrenceMonthDay = form.recurrenceMonthDay,
             )
             val task = TaskEntity(
                 id = id,
@@ -362,9 +363,13 @@ class CalendarViewModel(
                 priority = form.priority,
                 repeatWeekly = form.recurrenceFreq == RecurrenceFreq.WEEKLY,
                 recurrenceFreq = form.recurrenceFreq.name,
-                recurrenceInterval = form.recurrenceInterval,
-                recurrenceWeekdays = com.sweetcalendar.recurrence.RecurrenceWeekdays.encode(
-                    form.recurrenceWeekdays
+                recurrenceInterval = 1,
+                recurrenceCount = form.recurrenceCount,
+                recurrenceWeekdays = com.sweetcalendar.recurrence.recurrenceWeekdaysStorage(
+                    form.recurrenceFreq,
+                    form.jalaliDate,
+                    form.recurrenceWeekdays,
+                    form.recurrenceMonthDay,
                 ),
             )
             scheduleReminderSafely(task)

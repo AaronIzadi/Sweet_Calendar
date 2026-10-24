@@ -52,18 +52,16 @@ fun TaskEntity.withRecurrence(
     interval: Int = recurrenceInterval.coerceAtLeast(1),
     count: Int? = this.recurrenceCount,
     weekdays: Set<Int> = recurrenceWeekdaySet(),
+    monthDay: RecurrenceMonthDay = recurrenceMonthDayRule(),
 ): TaskEntity {
+    val anchor = parsedDate()
     val id = if (freq == RecurrenceFreq.NONE) null else (seriesId ?: UUID.randomUUID().toString())
     return copy(
         seriesId = id,
         recurrenceFreq = freq.name,
         recurrenceInterval = interval,
         recurrenceCount = if (freq == RecurrenceFreq.NONE) null else count,
-        recurrenceWeekdays = if (freq == RecurrenceFreq.NONE) {
-            ""
-        } else {
-            RecurrenceWeekdays.encode(weekdays)
-        },
+        recurrenceWeekdays = recurrenceWeekdaysStorage(freq, anchor, weekdays, monthDay),
         repeatWeekly = freq == RecurrenceFreq.WEEKLY,
         isRecurrenceException = if (freq == RecurrenceFreq.NONE) isRecurrenceException else false,
     )
@@ -77,28 +75,23 @@ fun TaskEntity.applyFormFields(
     category: String,
     priority: String,
     freq: RecurrenceFreq,
-    recurrenceInterval: Int = 1,
+    recurrenceCount: Int? = null,
     recurrenceWeekdays: Set<Int> = emptySet(),
+    recurrenceMonthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
 ): TaskEntity {
-    val anchor = JalaliDate.parseIso(jalaliDate)
-    val weekdayStr = if (freq == RecurrenceFreq.NONE) {
-        ""
-    } else {
-        RecurrenceWeekdays.encode(
-            recurrenceWeekdays.ifEmpty { setOf(anchor.weekdayIndex()) }
-        )
-    }
+    val storedDate = JalaliDate.parseIso(jalaliDate)
+    val weekdayStr = recurrenceWeekdaysStorage(freq, storedDate, recurrenceWeekdays, recurrenceMonthDay)
     val base = copy(
         title = title,
         notes = notes,
-        jalaliDate = jalaliDate,
+        jalaliDate = storedDate.formatIso(),
         reminderTime = reminderTime,
         category = category,
         priority = priority,
         repeatWeekly = freq == RecurrenceFreq.WEEKLY,
         recurrenceFreq = freq.name,
-        recurrenceInterval = if (freq == RecurrenceFreq.NONE) 1 else recurrenceInterval.coerceAtLeast(1),
-        recurrenceCount = null,
+        recurrenceInterval = 1,
+        recurrenceCount = if (freq == RecurrenceFreq.NONE) null else recurrenceCount,
         recurrenceWeekdays = weekdayStr,
     )
     return when {
@@ -111,9 +104,10 @@ fun TaskEntity.applyFormFields(
         )
         seriesId == null -> base.withRecurrence(
             freq,
-            interval = recurrenceInterval.coerceAtLeast(1),
-            count = null,
-            weekdays = recurrenceWeekdays.ifEmpty { setOf(anchor.weekdayIndex()) },
+            interval = 1,
+            count = recurrenceCount,
+            weekdays = recurrenceWeekdays.ifEmpty { setOf(storedDate.weekdayIndex()) },
+            monthDay = recurrenceMonthDay,
         )
         else -> base
     }
@@ -127,10 +121,24 @@ fun TaskEntity.canSpawnNextOccurrence(anchor: JalaliDate = parsedDate()): Boolea
         from = parsedDate(),
         anchor = anchor,
         freq = freq,
-        interval = recurrenceInterval,
+        interval = 1,
         weekdays = recurrenceWeekdaySet(),
+        monthDay = recurrenceMonthDayRule(),
     )
     val until = seriesUntil?.let { JalaliDate.parseIso(it) }
     if (until != null && next > until) return false
+    val max = recurrenceCount
+    if (max != null) {
+        val seriesAnchor = anchor
+        val completedIndex = RecurrenceEngine.occurrenceIndex(
+            seriesAnchor,
+            parsedDate(),
+            freq,
+            interval = 1,
+            weekdays = recurrenceWeekdaySet(),
+            monthDay = recurrenceMonthDayRule(),
+        ) ?: return false
+        if (completedIndex >= max) return false
+    }
     return true
 }

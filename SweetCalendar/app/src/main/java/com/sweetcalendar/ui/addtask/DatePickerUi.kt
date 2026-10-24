@@ -28,8 +28,7 @@ import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.MonthNavChevron
 import com.sweetcalendar.ui.components.SheetFooterBar
 import com.sweetcalendar.ui.components.SheetHeaderConfirmAction
-import com.sweetcalendar.ui.components.SweetDialog
-import com.sweetcalendar.ui.components.SweetDialogSurface
+import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
@@ -172,17 +171,14 @@ internal fun DatePickerDialogShell(
     yearPicker: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = SweetTheme.colors
-    SweetDialog(onDismissRequest = onDismiss) {
+    SweetModalOverlay(onDismissRequest = onDismiss) {
         ProvideMockupScale {
-            SweetDialogSurface(
-                modifier = Modifier.padding(horizontal = 24.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(mockupDp(16)))
+                    .background(colors.paper)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(mockupDp(16)))
-                        .background(colors.paper)
-                ) {
                     Text(
                         "Pick a date",
                         style = TextStyle(
@@ -301,7 +297,6 @@ internal fun DatePickerDialogShell(
                         },
                     )
                 }
-            }
         }
     }
 }

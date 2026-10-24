@@ -2,6 +2,7 @@ package com.sweetcalendar.recurrence
 
 import com.sweetcalendar.data.local.TaskDao
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.addtask.TaskFormData
 import java.util.UUID
 
@@ -67,17 +68,25 @@ class RecurrenceEditor(private val dao: TaskDao) {
         }
         if (!task.canSpawnNextOccurrence(anchor)) return null
         val max = task.recurrenceCount
-        if (max != null && seriesId != null) {
-            val activeCount = dao.getActiveBySeriesId(seriesId).size
-            if (activeCount >= max) return null
+        if (max != null) {
+            val completedIndex = RecurrenceEngine.occurrenceIndex(
+                anchor,
+                task.parsedDate(),
+                task.recurrenceFrequency(),
+                interval = 1,
+                weekdays = task.recurrenceWeekdaySet(),
+                monthDay = task.recurrenceMonthDayRule(),
+            ) ?: return null
+            if (completedIndex >= max) return null
         }
         val freq = task.recurrenceFrequency()
         val next = RecurrenceEngine.nextOccurrence(
             from = task.parsedDate(),
             anchor = anchor,
             freq = freq,
-            interval = task.recurrenceInterval,
+            interval = 1,
             weekdays = task.recurrenceWeekdaySet(),
+            monthDay = task.recurrenceMonthDayRule(),
         )
         return task.copy(
             id = 0,
@@ -98,8 +107,9 @@ class RecurrenceEditor(private val dao: TaskDao) {
             category = form.category,
             priority = form.priority,
             freq = form.recurrenceFreq,
-            recurrenceInterval = form.recurrenceInterval,
+            recurrenceCount = form.recurrenceCount,
             recurrenceWeekdays = form.recurrenceWeekdays,
+            recurrenceMonthDay = form.recurrenceMonthDay,
         )
         dao.update(updated)
         return updated
@@ -115,8 +125,9 @@ class RecurrenceEditor(private val dao: TaskDao) {
             category = form.category,
             priority = form.priority,
             freq = form.recurrenceFreq,
-            recurrenceInterval = form.recurrenceInterval,
+            recurrenceCount = form.recurrenceCount,
             recurrenceWeekdays = form.recurrenceWeekdays,
+            recurrenceMonthDay = form.recurrenceMonthDay,
         )
         val final = when {
             inSeries && form.recurrenceFreq == RecurrenceFreq.NONE -> base.copy(
@@ -153,17 +164,14 @@ class RecurrenceEditor(private val dao: TaskDao) {
                 priority = form.priority,
                 repeatWeekly = freq == RecurrenceFreq.WEEKLY,
                 recurrenceFreq = freq.name,
-                recurrenceInterval = if (freq == RecurrenceFreq.NONE) {
-                    1
-                } else {
-                    form.recurrenceInterval.coerceAtLeast(1)
-                },
-                recurrenceCount = null,
-                recurrenceWeekdays = if (freq == RecurrenceFreq.NONE) {
-                    ""
-                } else {
-                    RecurrenceWeekdays.encode(form.recurrenceWeekdays)
-                },
+                recurrenceInterval = 1,
+                recurrenceCount = if (freq == RecurrenceFreq.NONE) null else form.recurrenceCount,
+                recurrenceWeekdays = recurrenceWeekdaysStorage(
+                    freq,
+                    JalaliDate.parseIso(dateStr),
+                    form.recurrenceWeekdays,
+                    form.recurrenceMonthDay,
+                ),
                 seriesId = newSeriesId,
                 seriesUntil = if (freq == RecurrenceFreq.NONE) null else sibling.seriesUntil,
                 isRecurrenceException = false,
@@ -201,8 +209,9 @@ class RecurrenceEditor(private val dao: TaskDao) {
                         category = form.category,
                         priority = form.priority,
                         freq = freq,
-                        recurrenceInterval = form.recurrenceInterval,
+                        recurrenceCount = form.recurrenceCount,
                         recurrenceWeekdays = form.recurrenceWeekdays,
+                        recurrenceMonthDay = form.recurrenceMonthDay,
                     ).copy(
                         seriesId = if (freq == RecurrenceFreq.NONE) null else newSeriesId,
                         seriesUntil = null,

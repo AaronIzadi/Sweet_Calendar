@@ -20,10 +20,11 @@ data class TaskEntity(
     /** Shared id for recurring instances spawned from the same rule. */
     val seriesId: String? = null,
     val recurrenceFreq: String = "NONE",
+    /** Always 1 (every week/month); spacing is not user-configurable. */
     val recurrenceInterval: Int = 1,
-    /** Total occurrences in the series (including the first); null = no limit. */
+    /** Total occurrences (first + N following weeks/months); null = no limit. */
     val recurrenceCount: Int? = null,
-    /** Comma-separated weekday indices (0=Sat … 6=Fri). Empty = task date's weekday. */
+    /** Weekly: comma-separated weekday indices (0=Sat … 6=Fri). Monthly: "", "LAST", or "D1"…"D31". */
     val recurrenceWeekdays: String = "",
     /** Last Jalali date (inclusive) for this segment of a split series. */
     val seriesUntil: String? = null,

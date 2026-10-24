@@ -13,7 +13,7 @@ fun List<TaskEntity>.tasksOnDate(
     userBirthDate: JalaliDate? = null,
     userName: String = "Friend",
 ): List<TaskEntity> {
-    val materialized = filter { it.parsedDate() == date }
+    val materialized = filter { it.parsedDate() == date && it.isDisplayedMaterializedOccurrence(date, this) }
     if (isEmpty() && userBirthDate == null) return emptyList()
     val virtual = mutableListOf<TaskEntity>()
     val recurring = filter { it.recurrenceFrequency() != RecurrenceFreq.NONE && !it.isRecurrenceException }
@@ -35,13 +35,14 @@ fun List<TaskEntity>.tasksOnDate(
         val anchorRoot = ruleMembers.minBy { it.parsedDate() }
         val anchor = anchorRoot.parsedDate()
         val freq = anchorRoot.recurrenceFrequency()
-        val interval = anchorRoot.recurrenceInterval.coerceAtLeast(1)
+        val interval = 1
         val seriesEnd = ruleMembers
             .mapNotNull { it.seriesUntil?.let(JalaliDate::parseIso) }
             .maxOrNull()
 
         val weekdays = anchorRoot.recurrenceWeekdaySet()
-        if (!occursOnDate(anchor, date, freq, interval, seriesEnd, weekdays)) continue
+        val monthDay = anchorRoot.recurrenceMonthDayRule()
+        if (!occursOnDate(anchor, date, freq, interval, seriesEnd, weekdays, monthDay)) continue
 
         val maxCount = anchorRoot.recurrenceCount
         if (maxCount != null) {
@@ -51,6 +52,7 @@ fun List<TaskEntity>.tasksOnDate(
                 freq,
                 interval,
                 weekdays,
+                monthDay,
             ) ?: continue
             if (index > maxCount) continue
         }
@@ -90,6 +92,32 @@ fun List<TaskEntity>.tasksByDateInRange(
     return map
 }
 
+private fun TaskEntity.isDisplayedMaterializedOccurrence(
+    date: JalaliDate,
+    allTasks: List<TaskEntity>,
+): Boolean {
+    if (isRecurrenceException) return true
+    val freq = recurrenceFrequency()
+    if (freq == RecurrenceFreq.NONE) return true
+    val anchor = seriesAnchor(allTasks) ?: parsedDate()
+    return RecurrenceEngine.isOccurrenceInSeries(
+        anchor = anchor,
+        date = date,
+        freq = freq,
+        interval = 1,
+        weekdays = recurrenceWeekdaySet(),
+        monthDay = recurrenceMonthDayRule(),
+    )
+}
+
+private fun TaskEntity.seriesAnchor(allTasks: List<TaskEntity>): JalaliDate? {
+    val sid = seriesId ?: return parsedDate()
+    return allTasks
+        .filter { it.seriesId == sid && !it.isRecurrenceException }
+        .minByOrNull { it.parsedDate() }
+        ?.parsedDate()
+}
+
 private fun occursOnDate(
     anchor: JalaliDate,
     target: JalaliDate,
@@ -97,7 +125,8 @@ private fun occursOnDate(
     interval: Int,
     seriesEnd: JalaliDate?,
     weekdays: Set<Int>,
+    monthDay: RecurrenceMonthDay,
 ): Boolean {
     if (seriesEnd != null && target > seriesEnd) return false
-    return RecurrenceEngine.isOccurrenceInSeries(anchor, target, freq, interval, weekdays)
+    return RecurrenceEngine.isOccurrenceInSeries(anchor, target, freq, interval, weekdays, monthDay)
 }

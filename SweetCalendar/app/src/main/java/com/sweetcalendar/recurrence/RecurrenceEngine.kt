@@ -14,18 +14,19 @@ object RecurrenceEngine {
         freq: RecurrenceFreq,
         interval: Int = 1,
         weekdays: Set<Int> = emptySet(),
+        monthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
     ): JalaliDate {
         val step = interval.coerceAtLeast(1)
         val days = resolvedWeekdays(anchor, weekdays)
         if (freq == RecurrenceFreq.NONE) return from
         var cursor = from.plusDays(1)
         repeat(800) {
-            if (isOccurrenceInSeries(anchor, cursor, freq, step, days)) return cursor
+            if (isOccurrenceInSeries(anchor, cursor, freq, step, days, monthDay)) return cursor
             cursor = cursor.plusDays(1)
         }
         return when (freq) {
-            RecurrenceFreq.WEEKLY -> from.addMonths(step)
-            RecurrenceFreq.MONTHLY -> from.plusDays(7 * step)
+            RecurrenceFreq.WEEKLY -> from.plusDays(7 * step)
+            RecurrenceFreq.MONTHLY -> from.addMonths(step)
             RecurrenceFreq.NONE -> from
         }
     }
@@ -37,13 +38,14 @@ object RecurrenceEngine {
         freq: RecurrenceFreq,
         interval: Int = 1,
         weekdays: Set<Int> = emptySet(),
+        monthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
     ): Boolean {
         val step = interval.coerceAtLeast(1)
         val days = resolvedWeekdays(anchor, weekdays)
         return when (freq) {
             RecurrenceFreq.NONE -> date == anchor
-            RecurrenceFreq.WEEKLY -> isMonthlyWeekdayOccurrence(anchor, date, days, step)
-            RecurrenceFreq.MONTHLY -> isWeeklyOccurrence(anchor, date, days, step)
+            RecurrenceFreq.WEEKLY -> isWeeklyOccurrence(anchor, date, days, step)
+            RecurrenceFreq.MONTHLY -> isMonthlyDayOccurrence(anchor, date, monthDay, step)
         }
     }
 
@@ -53,13 +55,14 @@ object RecurrenceEngine {
         freq: RecurrenceFreq,
         interval: Int = 1,
         weekdays: Set<Int> = emptySet(),
+        monthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
     ): Int? {
-        if (!isOccurrenceInSeries(anchor, date, freq, interval, weekdays)) return null
+        if (!isOccurrenceInSeries(anchor, date, freq, interval, weekdays, monthDay)) return null
         var index = 0
         var cursor = anchor
         var guard = 0
         while (cursor <= date && guard < 2000) {
-            if (isOccurrenceInSeries(anchor, cursor, freq, interval, weekdays)) {
+            if (isOccurrenceInSeries(anchor, cursor, freq, interval, weekdays, monthDay)) {
                 index++
                 if (cursor == date) return index
             }
@@ -93,17 +96,29 @@ object RecurrenceEngine {
         return weeksApart % interval == 0
     }
 
-    private fun isMonthlyWeekdayOccurrence(
+    private fun isMonthlyDayOccurrence(
         anchor: JalaliDate,
         date: JalaliDate,
-        weekdays: Set<Int>,
+        monthDay: RecurrenceMonthDay,
         interval: Int,
     ): Boolean {
         if (date < anchor) return false
-        if (date.weekdayIndex() !in weekdays) return false
         val monthsApart = (date.year - anchor.year) * 12 + (date.month - anchor.month)
         if (monthsApart < 0 || monthsApart % interval != 0) return false
         if (date.year == anchor.year && date.month == anchor.month && date < anchor) return false
-        return true
+        return when (monthDay) {
+            RecurrenceMonthDay.OnThisDay -> {
+                val targetDay = RecurrenceMonthDays.dayInMonth(date, anchor, monthDay)
+                date.day == targetDay
+            }
+            RecurrenceMonthDay.Last, is RecurrenceMonthDay.Fixed -> {
+                if (date.year == anchor.year && date.month == anchor.month) {
+                    date == anchor
+                } else {
+                    val targetDay = RecurrenceMonthDays.dayInMonth(date, anchor, monthDay)
+                    date.day == targetDay
+                }
+            }
+        }
     }
 }
