@@ -1,5 +1,6 @@
 package com.sweetcalendar.data.local
 
+import com.sweetcalendar.data.TaskScheduleKind
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -12,7 +13,9 @@ data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,
     val notes: String = "",
-    val jalaliDate: String, // e.g. "1403-05-12"
+    val jalaliDate: String, // e.g. "1403-05-12" (scheduled day, or deadline for TODO)
+    /** [com.sweetcalendar.data.TaskScheduleKind] name; default TASK for existing rows. */
+    val scheduleKind: String = TaskScheduleKind.TASK.name,
     val reminderTime: String? = null, // "HH:mm" in 24h format, null = no reminder
     val category: String = "",
     val priority: String = "Medium",

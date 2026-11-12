@@ -1,11 +1,15 @@
 package com.sweetcalendar.ui.addtask
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -66,7 +70,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
+import com.sweetcalendar.data.TaskScheduleKind
+import com.sweetcalendar.data.coercedFor
+import com.sweetcalendar.data.taskCategoriesFor
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.scheduleKind
 import com.sweetcalendar.recurrence.RecurrenceFreq
 import com.sweetcalendar.recurrence.RecurrenceMonthDay
 import com.sweetcalendar.recurrence.recurrenceIntervalInlineTextStyle
@@ -92,7 +100,7 @@ import com.sweetcalendar.ui.components.ClosePixelIcon
 import com.sweetcalendar.ui.components.SheetFooterBar
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.components.SweetBigSaveButton
-import com.sweetcalendar.ui.components.SweetSwitch
+import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
 import com.sweetcalendar.ui.components.TaskPriority
@@ -100,9 +108,13 @@ import com.sweetcalendar.ui.components.formatDisplayShort
 import com.sweetcalendar.ui.components.formatTime12h
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
+import com.sweetcalendar.ui.theme.SweetMotion
 import com.sweetcalendar.ui.theme.SweetTheme
+import com.sweetcalendar.ui.theme.rememberReducedMotion
 import com.sweetcalendar.ui.theme.formChipFillColor
+import com.sweetcalendar.ui.theme.formPlaceholderColor
 import com.sweetcalendar.ui.theme.formChipShadowColor
+import com.sweetcalendar.ui.theme.formChipShadowLayer
 import com.sweetcalendar.ui.theme.formChipTextColor
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
@@ -110,13 +122,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 private fun formFieldLabelColor(): Color = SweetTheme.colors.muted
-
-@Composable
-private fun formPlaceholderColor(): Color {
-    val colors = SweetTheme.colors
-    val base = if (colors.isDark) colors.navInactive else colors.muted
-    return base.copy(alpha = if (colors.isDark) 0.55f else 0.45f)
-}
 
 @Composable
 private fun formMetaMutedColor(): Color = SweetTheme.colors.muted
@@ -128,6 +133,9 @@ data class TaskFormData(
     val reminderTime: String?,
     val category: String,
     val priority: String,
+    val scheduleKind: TaskScheduleKind = TaskScheduleKind.TASK,
+    val subtasks: List<SubtaskFormItem> = emptyList(),
+    val alerts: List<TaskAlertFormItem> = emptyList(),
     val recurrenceFreq: RecurrenceFreq,
     /** Total occurrences stored (first + N following); null = no limit. */
     val recurrenceCount: Int? = null,
@@ -189,11 +197,24 @@ internal fun stepRecurrenceCountDecrement(stored: String): String {
     }
 }
 
+private sealed interface DatePickerTarget {
+    data object Deadline : DatePickerTarget
+    data class Alert(val stableKey: Long) : DatePickerTarget
+    data class SubtaskDeadline(val index: Int) : DatePickerTarget
+}
+
+private sealed interface TimePickerTarget {
+    data object TaskReminder : TimePickerTarget
+    data class Alert(val stableKey: Long) : TimePickerTarget
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskBottomSheet(
     date: JalaliDate,
     existingTask: TaskEntity?,
+    existingAlerts: List<TaskAlertEntity> = emptyList(),
+    existingSubtasks: List<SubtaskFormItem> = emptyList(),
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     eventRepository: EventRepository,
     weekStartsOn: Int = 0,
@@ -210,8 +231,12 @@ fun TaskBottomSheet(
     var notesFormatSelection by remember(existingTask) {
         mutableStateOf<TextRange?>(null)
     }
+    var scheduleKind by remember(existingTask) {
+        mutableStateOf(existingTask?.scheduleKind() ?: TaskScheduleKind.TASK)
+    }
     var category by remember(existingTask) {
-        mutableStateOf(TaskCategory.fromString(existingTask?.category.orEmpty()))
+        val kind = existingTask?.scheduleKind() ?: TaskScheduleKind.TASK
+        mutableStateOf(TaskCategory.fromString(existingTask?.category.orEmpty()).coercedFor(kind))
     }
     var priority by remember(existingTask) {
         mutableStateOf(TaskPriority.fromString(existingTask?.priority.orEmpty()))
@@ -256,8 +281,17 @@ fun TaskBottomSheet(
         existingTask?.recurrenceMonthDayRule() ?: RecurrenceMonthDay.OnThisDay
     }
     var selectedDate by remember(existingTask, date) { mutableStateOf(initialSettingDate) }
+    var todoAlerts by remember(existingTask, existingAlerts) {
+        mutableStateOf(existingAlerts.map { TaskAlertFormItem.fromEntity(it) })
+    }
+    var subtasks by remember(existingTask, existingSubtasks) {
+        mutableStateOf(existingSubtasks)
+    }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var datePickerTarget by remember { mutableStateOf<DatePickerTarget?>(null) }
+    var timePickerTarget by remember { mutableStateOf<TimePickerTarget?>(null) }
+    var timePickerSeed by remember { mutableStateOf("14:30") }
     var showTitleError by remember { mutableStateOf(false) }
 
     fun submit() {
@@ -265,8 +299,14 @@ fun TaskBottomSheet(
             showTitleError = true
             return
         }
+        val effectiveRecurrence = if (scheduleKind == TaskScheduleKind.TODO) {
+            RecurrenceFreq.NONE
+        } else {
+            recurrenceFreq
+        }
         val taskDate = when {
-            recurrenceFreq != RecurrenceFreq.MONTHLY -> selectedDate
+            scheduleKind == TaskScheduleKind.TODO -> selectedDate
+            effectiveRecurrence != RecurrenceFreq.MONTHLY -> selectedDate
             existingTask == null -> monthlyTaskAnchorDate(selectedDate, recurrenceMonthDay)
             existingTask.recurrenceFrequency() != RecurrenceFreq.MONTHLY ||
                 selectedDate != initialSettingDate ||
@@ -280,25 +320,32 @@ fun TaskBottomSheet(
                 title = title.trim(),
                 notes = notesField.text.trim(),
                 jalaliDate = taskDate,
-                reminderTime = reminderTime.takeIf { reminderEnabled },
+                reminderTime = if (scheduleKind == TaskScheduleKind.TODO) {
+                    null
+                } else {
+                    reminderTime.takeIf { reminderEnabled }
+                },
                 category = category.label,
                 priority = priority.label,
-                recurrenceFreq = recurrenceFreq,
-                recurrenceCount = if (recurrenceFreq == RecurrenceFreq.NONE) {
+                scheduleKind = scheduleKind,
+                subtasks = subtasks.filter { it.title.isNotBlank() },
+                alerts = if (scheduleKind == TaskScheduleKind.TODO) todoAlerts else emptyList(),
+                recurrenceFreq = effectiveRecurrence,
+                recurrenceCount = if (effectiveRecurrence == RecurrenceFreq.NONE) {
                     null
                 } else {
                     com.sweetcalendar.recurrence.recurrenceStoredCountFromFollowing(
-                        recurrenceFreq,
+                        effectiveRecurrence,
                         parseRecurrenceFollowingInput(recurrenceCountText),
                         recurrenceWeekdays,
                     )
                 },
-                recurrenceWeekdays = if (recurrenceFreq == RecurrenceFreq.WEEKLY) {
+                recurrenceWeekdays = if (effectiveRecurrence == RecurrenceFreq.WEEKLY) {
                     recurrenceWeekdays
                 } else {
                     emptySet()
                 },
-                recurrenceMonthDay = if (recurrenceFreq == RecurrenceFreq.MONTHLY) {
+                recurrenceMonthDay = if (effectiveRecurrence == RecurrenceFreq.MONTHLY) {
                     recurrenceMonthDay
                 } else {
                     RecurrenceMonthDay.OnThisDay
@@ -371,20 +418,76 @@ fun TaskBottomSheet(
                 .navigationBarsPadding()
                 .imePadding()
         ) {
-            Text(
-                if (isEdit) "Edit task" else "New task",
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.SHEET_TITLE),
-                    lineHeight = mockupSp(22f)
-                ),
-                color = colors.ink,
-                textAlign = TextAlign.Center,
+            val reducedMotion = rememberReducedMotion()
+            AnimatedContent(
+                targetState = scheduleKind,
+                transitionSpec = {
+                    if (reducedMotion) {
+                        fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
+                    } else {
+                        fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
+                    }
+                },
+                label = "sheetTitleKind",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(sheetDialogTitlePaddingModifier())
-            )
+                    .then(sheetDialogTitlePaddingModifier()),
+            ) { kind ->
+                Text(
+                    when {
+                        kind == TaskScheduleKind.TODO && isEdit -> "Edit to-do"
+                        kind == TaskScheduleKind.TODO -> "New to-do"
+                        isEdit -> "Edit task"
+                        else -> "New task"
+                    },
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.SHEET_TITLE),
+                        lineHeight = mockupSp(22f),
+                    ),
+                    color = colors.ink,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = mockupDp(18), vertical = mockupDp(8)),
+                horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
+            ) {
+                RepeatFreqChip(
+                    label = "Task",
+                    selected = scheduleKind == TaskScheduleKind.TASK,
+                    onClick = {
+                        if (scheduleKind != TaskScheduleKind.TASK) {
+                            subtasks = subtasks.filter { it.title.isNotBlank() }
+                            category = category.coercedFor(TaskScheduleKind.TASK)
+                            scheduleKind = TaskScheduleKind.TASK
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = mockupDp(0)),
+                )
+                RepeatFreqChip(
+                    label = "To Do",
+                    selected = scheduleKind == TaskScheduleKind.TODO,
+                    onClick = {
+                        if (scheduleKind != TaskScheduleKind.TODO) {
+                            subtasks = subtasks.filter { it.title.isNotBlank() }
+                            category = category.coercedFor(TaskScheduleKind.TODO)
+                            scheduleKind = TaskScheduleKind.TODO
+                            recurrenceFreq = RecurrenceFreq.NONE
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = mockupDp(0)),
+                )
+            }
 
             Column(
                 modifier = Modifier
@@ -425,18 +528,39 @@ fun TaskBottomSheet(
                     )
                 }
 
-                FieldLabel("DATE & TIME")
-                Row(
+                AnimatedContent(
+                    targetState = scheduleKind,
+                    transitionSpec = {
+                        if (reducedMotion) {
+                            fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
+                        } else if (targetState.ordinal > initialState.ordinal) {
+                            fadeIn(SweetMotion.mediumTween()) +
+                                slideInVertically(SweetMotion.mediumTween()) { h -> h / 10 } togetherWith
+                                fadeOut(SweetMotion.shortTween()) +
+                                slideOutVertically(SweetMotion.shortTween()) { h -> -h / 10 }
+                        } else {
+                            fadeIn(SweetMotion.mediumTween()) +
+                                slideInVertically(SweetMotion.mediumTween()) { h -> -h / 10 } togetherWith
+                                fadeOut(SweetMotion.shortTween()) +
+                                slideOutVertically(SweetMotion.shortTween()) { h -> h / 10 }
+                        }
+                    },
+                    label = "scheduleKindFields",
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
-                ) {
+                ) { kind ->
+                if (kind == TaskScheduleKind.TODO) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                    FieldLabel("DEADLINE")
                     SweetField(
                         value = selectedDate.formatDisplayShort(calendarSystem),
                         onValueChange = {},
                         readOnly = true,
                         modifier = Modifier
-                            .weight(1f)
-                            .clickable { showDatePicker = true },
+                            .fillMaxWidth()
+                            .clickable {
+                                datePickerTarget = DatePickerTarget.Deadline
+                                showDatePicker = true
+                            },
                         leading = {
                             CalMiniIcon(
                                 size = mockupDp(MockupDimens.MINI_FIELD_ICON),
@@ -444,29 +568,138 @@ fun TaskBottomSheet(
                             )
                         }
                     )
-                    SweetField(
-                        value = if (reminderEnabled) formatTime12h(reminderTime) else "No time",
-                        onValueChange = {},
-                        readOnly = true,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showTimePicker = true },
-                        leading = {
-                            ClockMiniIcon(
-                                size = mockupDp(MockupDimens.MINI_FIELD_ICON),
-                                color = colors.purpleDeep
+
+                    FieldLabel("ALERTS")
+                    if (todoAlerts.isEmpty()) {
+                        Text(
+                            "No alerts yet — add one below",
+                            style = TextStyle(
+                                fontFamily = BodyFont,
+                                fontWeight = SecondaryTextWeight,
+                                fontSize = mockupSp(12f),
+                            ),
+                            color = formMetaMutedColor(),
+                            modifier = Modifier.padding(bottom = mockupDp(8)),
+                        )
+                    }
+                    todoAlerts.forEach { alert ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = mockupDp(8)),
+                            horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            SweetField(
+                                value = alert.date.formatDisplayShort(calendarSystem),
+                                onValueChange = {},
+                                readOnly = true,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        datePickerTarget = DatePickerTarget.Alert(alert.stableKey)
+                                        showDatePicker = true
+                                    },
+                                leading = {
+                                    CalMiniIcon(
+                                        size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                        color = colors.purpleDeep
+                                    )
+                                }
+                            )
+                            SweetField(
+                                value = formatTime12h(alert.time),
+                                onValueChange = {},
+                                readOnly = true,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        timePickerSeed = alert.time
+                                        timePickerTarget = TimePickerTarget.Alert(alert.stableKey)
+                                        showTimePicker = true
+                                    },
+                                leading = {
+                                    ClockMiniIcon(
+                                        size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                        color = colors.purpleDeep
+                                    )
+                                }
+                            )
+                            ClosePixelIcon(
+                                size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
+                                color = colors.muted,
+                                modifier = Modifier.clickable {
+                                    todoAlerts = todoAlerts.filter { it.stableKey != alert.stableKey }
+                                },
+                            )
+                        }
+                    }
+                    RepeatFreqChip(
+                        label = "+ Add alert",
+                        selected = false,
+                        onClick = {
+                            todoAlerts = todoAlerts + TaskAlertFormItem(
+                                date = JalaliDate.today(),
+                                time = "09:00",
                             )
                         },
-                        trailing = if (reminderEnabled) {
-                            {
-                                ClosePixelIcon(
-                                    size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
-                                    color = colors.muted,
-                                    modifier = Modifier.clickable { reminderEnabled = false }
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    }
+                } else {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                    FieldLabel("DATE & TIME")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
+                    ) {
+                        SweetField(
+                            value = selectedDate.formatDisplayShort(calendarSystem),
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    datePickerTarget = DatePickerTarget.Deadline
+                                    showDatePicker = true
+                                },
+                            leading = {
+                                CalMiniIcon(
+                                    size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                    color = colors.purpleDeep
                                 )
                             }
-                        } else null
-                    )
+                        )
+                        SweetField(
+                            value = if (reminderEnabled) formatTime12h(reminderTime) else "No time",
+                            onValueChange = {},
+                            readOnly = true,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    timePickerSeed = reminderTime
+                                    timePickerTarget = TimePickerTarget.TaskReminder
+                                    showTimePicker = true
+                                },
+                            leading = {
+                                ClockMiniIcon(
+                                    size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                    color = colors.purpleDeep
+                                )
+                            },
+                            trailing = if (reminderEnabled) {
+                                {
+                                    ClosePixelIcon(
+                                        size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
+                                        color = colors.muted,
+                                        modifier = Modifier.clickable { reminderEnabled = false }
+                                    )
+                                }
+                            } else null
+                        )
+                    }
+                    }
+                }
                 }
 
                 FieldLabel("CATEGORY")
@@ -474,7 +707,7 @@ fun TaskBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
                 ) {
-                    TaskCategory.entries.forEach { cat ->
+                    taskCategoriesFor(scheduleKind).forEach { cat ->
                         Box(
                             modifier = Modifier
                                 .weight(1f)
@@ -483,6 +716,7 @@ fun TaskBottomSheet(
                             CategorySwatch(
                                 category = cat,
                                 selected = category == cat,
+                                forTodo = scheduleKind == TaskScheduleKind.TODO,
                                 onClick = { category = cat },
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -496,7 +730,7 @@ fun TaskBottomSheet(
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
                 ) {
                     TaskPriority.entries.forEach { p ->
-                        PriorityChip(
+                        TaskPriorityChip(
                             priority = p,
                             selected = priority == p,
                             onClick = { priority = p },
@@ -507,6 +741,12 @@ fun TaskBottomSheet(
                     }
                 }
 
+                AnimatedVisibility(
+                    visible = scheduleKind == TaskScheduleKind.TASK,
+                    enter = fadeIn(SweetMotion.mediumTween()) + expandVertically(SweetMotion.mediumTween()),
+                    exit = fadeOut(SweetMotion.shortTween()) + shrinkVertically(SweetMotion.shortTween()),
+                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                 FieldLabel("REPEAT")
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -625,6 +865,8 @@ fun TaskBottomSheet(
                         }
                     }
                 }
+                }
+                }
 
                 FieldLabel("NOTES")
                 NotesFormatToolbar(
@@ -667,6 +909,18 @@ fun TaskBottomSheet(
                     ).focusRequester(notesFocusRequester),
                 )
 
+                SubtaskEditorSection(
+                    subtasks = subtasks,
+                    onChange = { subtasks = it },
+                    todoSubtaskDeadlines = scheduleKind == TaskScheduleKind.TODO,
+                    parentDeadline = selectedDate,
+                    calendarSystem = calendarSystem,
+                    onPickSubtaskDeadline = { index ->
+                        datePickerTarget = DatePickerTarget.SubtaskDeadline(index)
+                        showDatePicker = true
+                    },
+                )
+
                 Spacer(Modifier.height(mockupDp(22)))
                 SweetBigSaveButton(
                     text = themeAddTaskButtonText(isEdit),
@@ -681,24 +935,68 @@ fun TaskBottomSheet(
         }
     }
 
+    val datePickerInitial = when (val target = datePickerTarget) {
+        is DatePickerTarget.Alert -> {
+            todoAlerts.firstOrNull { it.stableKey == target.stableKey }?.date ?: selectedDate
+        }
+        is DatePickerTarget.SubtaskDeadline -> {
+            subtasks.getOrNull(target.index)?.displayDeadline(selectedDate) ?: selectedDate
+        }
+        DatePickerTarget.Deadline, null -> selectedDate
+    }
+
     if (showDatePicker) {
         when (calendarSystem) {
             CalendarSystem.PERSIAN -> JalaliDatePickerDialog(
-                initialDate = selectedDate,
+                initialDate = datePickerInitial,
                 eventRepository = eventRepository,
-                onDismiss = { showDatePicker = false },
-                onConfirm = { picked ->
-                    selectedDate = picked
+                onDismiss = {
                     showDatePicker = false
+                    datePickerTarget = null
+                },
+                onConfirm = { picked ->
+                    when (val target = datePickerTarget) {
+                        is DatePickerTarget.Alert -> {
+                            todoAlerts = todoAlerts.map {
+                                if (it.stableKey == target.stableKey) it.copy(date = picked) else it
+                            }
+                        }
+                        is DatePickerTarget.SubtaskDeadline -> {
+                            val next = subtasks.toMutableList()
+                            val item = next.getOrNull(target.index) ?: return@JalaliDatePickerDialog
+                            next[target.index] = item.copy(jalaliDate = picked.formatIso())
+                            subtasks = next
+                        }
+                        DatePickerTarget.Deadline, null -> selectedDate = picked
+                    }
+                    showDatePicker = false
+                    datePickerTarget = null
                 }
             )
             CalendarSystem.GREGORIAN -> GregorianDatePickerDialog(
-                initialDate = selectedDate,
+                initialDate = datePickerInitial,
                 eventRepository = eventRepository,
-                onDismiss = { showDatePicker = false },
-                onConfirm = { picked ->
-                    selectedDate = picked
+                onDismiss = {
                     showDatePicker = false
+                    datePickerTarget = null
+                },
+                onConfirm = { picked ->
+                    when (val target = datePickerTarget) {
+                        is DatePickerTarget.Alert -> {
+                            todoAlerts = todoAlerts.map {
+                                if (it.stableKey == target.stableKey) it.copy(date = picked) else it
+                            }
+                        }
+                        is DatePickerTarget.SubtaskDeadline -> {
+                            val next = subtasks.toMutableList()
+                            val item = next.getOrNull(target.index) ?: return@GregorianDatePickerDialog
+                            next[target.index] = item.copy(jalaliDate = picked.formatIso())
+                            subtasks = next
+                        }
+                        DatePickerTarget.Deadline, null -> selectedDate = picked
+                    }
+                    showDatePicker = false
+                    datePickerTarget = null
                 }
             )
         }
@@ -706,12 +1004,25 @@ fun TaskBottomSheet(
 
     if (showTimePicker) {
         SweetTimePickerDialog(
-            reminderTime = reminderTime,
-            onDismiss = { showTimePicker = false },
-            onConfirm = { time ->
-                reminderTime = time
-                reminderEnabled = true
+            reminderTime = timePickerSeed,
+            onDismiss = {
                 showTimePicker = false
+                timePickerTarget = null
+            },
+            onConfirm = { time ->
+                when (val target = timePickerTarget) {
+                    is TimePickerTarget.Alert -> {
+                        todoAlerts = todoAlerts.map {
+                            if (it.stableKey == target.stableKey) it.copy(time = time) else it
+                        }
+                    }
+                    TimePickerTarget.TaskReminder, null -> {
+                        reminderTime = time
+                        reminderEnabled = true
+                    }
+                }
+                showTimePicker = false
+                timePickerTarget = null
             }
         )
     }
@@ -722,21 +1033,28 @@ private fun PaperSurface(
     shadowDepth: Dp,
     cornerRadius: Dp,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
 ) {
     val colors = SweetTheme.colors
+    val shape = RoundedCornerShape(cornerRadius)
     Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(y = shadowDepth)
-                .clip(RoundedCornerShape(cornerRadius))
-                .background(colors.shadow)
+                .formChipShadowLayer(colors.shadow, cornerRadius)
         )
+        val faceModifier = if (onClick != null) {
+            Modifier.matchParentSize()
+        } else {
+            Modifier
+        }
         Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(cornerRadius))
-                .border(mockupDp(1), colors.fieldOutline, RoundedCornerShape(cornerRadius))
+            modifier = faceModifier
+                .clip(shape)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .border(mockupDp(1), colors.fieldOutline, shape)
                 .background(colors.paper)
         ) {
             content()
@@ -992,29 +1310,26 @@ private fun SweetField(
 private fun CategorySwatch(
     category: TaskCategory,
     selected: Boolean,
+    forTodo: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val iconSize = mockupDp(MockupDimens.SWATCH_ICON)
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
+    Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
-                .clip(RoundedCornerShape(radius))
-                .background(formChipShadowColor(selected))
+                .formChipShadowLayer(formChipShadowColor(selected), radius)
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
+                .clickable(onClick = onClick)
                 .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1026,7 +1341,11 @@ private fun CategorySwatch(
                     .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center
             ) {
-                ThemeCategoryTaskIcon(category = category, size = iconSize)
+                ThemeCategoryTaskIcon(
+                    category = category,
+                    size = iconSize,
+                    forTodo = forTodo,
+                )
             }
             Text(
                 category.label,
@@ -1041,25 +1360,6 @@ private fun CategorySwatch(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
-        }
-    }
-}
-
-@Composable
-private fun PrioritySparkleRow(priority: TaskPriority) {
-    val count = priority.sparkleCount
-    val sparkleSize = when (count) {
-        1 -> mockupDp(MockupDimens.PRIORITY_SPARKLE_SLOT)
-        2 -> mockupDp(8)
-        else -> mockupDp(6)
-    }
-    val gap = if (count == 1) mockupDp(0) else mockupDp(1)
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        repeat(count) {
-            ThemeSparkleIcon(size = sparkleSize)
         }
     }
 }
@@ -1115,7 +1415,8 @@ private fun RecurrenceCountStepButton(
     PaperSurface(
         shadowDepth = mockupDp(MockupDimens.FORM_FIELD_SHADOW),
         cornerRadius = radius,
-        modifier = modifier.clickable(onClick = onClick),
+        modifier = modifier,
+        onClick = onClick,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -1256,19 +1557,14 @@ private fun RepeatFreqChip(
     modifier: Modifier = Modifier,
 ) {
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
+    Box(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
-                .clip(RoundedCornerShape(radius))
-                .background(formChipShadowColor(selected))
+                .formChipShadowLayer(formChipShadowColor(selected), radius)
         )
         Text(
             label,
@@ -1284,60 +1580,10 @@ private fun RepeatFreqChip(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
+                .clickable(onClick = onClick)
                 .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12), horizontal = mockupDp(6))
         )
     }
 }
 
-@Composable
-private fun PriorityChip(
-    priority: TaskPriority,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val iconSize = mockupDp(MockupDimens.SWATCH_ICON)
-    val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .offset(
-                    y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
-                )
-                .clip(RoundedCornerShape(radius))
-                .background(formChipShadowColor(selected))
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(radius))
-                .background(formChipFillColor(selected))
-                .padding(vertical = mockupDp(12), horizontal = mockupDp(6)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(mockupDp(6))
-        ) {
-            FormIconSlot(iconSize) {
-                PrioritySparkleRow(priority = priority)
-            }
-            Text(
-                priority.label,
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.SWATCH_TEXT_F)
-                ),
-                color = if (selected) formChipTextColor(selected) else formMetaMutedColor(),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}

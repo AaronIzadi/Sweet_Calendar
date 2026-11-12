@@ -57,6 +57,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE deletedAt IS NULL ORDER BY jalaliDate ASC, createdAt ASC")
     suspend fun getAllActive(): List<TaskEntity>
 
+    @Query("SELECT * FROM tasks WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): TaskEntity?
+
     @Query("SELECT * FROM tasks ORDER BY jalaliDate DESC, createdAt ASC")
     suspend fun getAllIncludingDeleted(): List<TaskEntity>
 

@@ -168,7 +168,12 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val category = TaskCategory.fromString(task.category)
             views.setImageViewBitmap(
                 iconId,
-                WidgetPixelIcons.categoryBitmap(category, iconPx, theme)
+                WidgetPixelIcons.categoryBitmap(
+                    category,
+                    iconPx,
+                    theme,
+                    forTodo = task.scheduleKind == "TODO",
+                )
             )
             views.setImageViewResource(
                 checkboxId,

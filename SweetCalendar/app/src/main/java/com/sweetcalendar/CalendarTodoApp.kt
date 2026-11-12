@@ -19,7 +19,8 @@ class CalendarTodoApp : Application() {
     }
 
     val taskRepository: TaskRepository by lazy {
-        TaskRepository(AppDatabase.get(this).taskDao())
+        val db = AppDatabase.get(this)
+        TaskRepository(db.taskDao(), db.taskAlertDao(), db.subtaskDao())
     }
 
     val eventRepository: EventRepository by lazy {

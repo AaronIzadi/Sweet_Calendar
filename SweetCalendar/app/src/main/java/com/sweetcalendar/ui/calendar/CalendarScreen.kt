@@ -46,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -57,10 +59,11 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.ui.components.CompletedSectionLink
 import com.sweetcalendar.ui.components.MonthNavChevron
 import com.sweetcalendar.ui.components.SweetSectionLabel
-import com.sweetcalendar.ui.components.TaskCategory
-import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
+import com.sweetcalendar.ui.components.SweetTaskCard
+import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
 import com.sweetcalendar.ui.daydetail.DayEventCard
 import com.sweetcalendar.ui.theme.MockupDimens
@@ -109,6 +112,8 @@ fun MonthScreen(
     onDayClick: (JalaliDate) -> Unit,
     onOfflineClick: () -> Unit = {},
     onEventClick: (DayEvent) -> Unit = {},
+    onEditTask: (TaskEntity) -> Unit = {},
+    onCompleteTask: (TaskEntity) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -197,19 +202,12 @@ fun MonthScreen(
             },
         )
 
-        Row(
+        CalendarActivityLegend(
+            showHoliday = state.showHolidays,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 18.dp, end = 18.dp, top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            CategoryLegendItem(TaskCategory.Personal, "Personal")
-            CategoryLegendItem(TaskCategory.Work, "Work")
-            CategoryLegendItem(TaskCategory.Home, "Home")
-            if (state.showHolidays) {
-                LegendItem(color = colors.mintDeep, shape = DotShape.Ring, label = "Holiday")
-            }
-        }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        )
 
         if (state.showHolidays && state.todayEvents.isNotEmpty()) {
             val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
@@ -238,6 +236,43 @@ fun MonthScreen(
                         icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
                         onClick = { onEventClick(event) }
                     )
+                }
+            }
+        }
+
+        if (state.monthTodos.isNotEmpty()) {
+            val pendingTodos = state.monthTodos.filter { !it.isDone }
+            val completedTodos = state.monthTodos.filter { it.isDone }
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 18.dp, vertical = 12.dp)
+            ) {
+                if (pendingTodos.isNotEmpty()) {
+                    SweetSectionLabel("TO DO")
+                    pendingTodos.forEach { task ->
+                        SweetTaskCard(
+                            task = task,
+                            onClick = { onEditTask(task) },
+                            onToggleComplete = { onCompleteTask(task) },
+                            style = TaskCardStyle.Mockup,
+                        )
+                    }
+                }
+                if (completedTodos.isNotEmpty()) {
+                    CompletedSectionLink(
+                        count = completedTodos.size,
+                        suffix = "this month",
+                        modifier = Modifier.padding(top = if (pendingTodos.isNotEmpty()) 10.dp else 0.dp),
+                    )
+                    completedTodos.forEach { task ->
+                        SweetTaskCard(
+                            task = task,
+                            onClick = { onEditTask(task) },
+                            onToggleComplete = { onCompleteTask(task) },
+                            style = TaskCardStyle.Mockup,
+                        )
+                    }
                 }
             }
         }
@@ -495,7 +530,7 @@ private fun MonthDayCell(
                 ),
                 color = textColor
             )
-            val hasMarkers = cell.hasTask || cell.isHoliday || cell.hasOccasion
+            val hasMarkers = cell.hasScheduledTask || cell.hasTodo || cell.isHoliday
             if (hasMarkers) {
                 Row(
                     modifier = Modifier
@@ -503,20 +538,14 @@ private fun MonthDayCell(
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    val monthTaskIcon = mockupDp(MockupDimens.MONTH_CELL_TASK_ICON)
-                    cell.taskCategories.forEach { category ->
-                        Box(
-                            modifier = Modifier.alpha(if (isToday) 0.9f else 1f),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            ThemeCategoryTaskIcon(category = category, size = monthTaskIcon)
-                        }
+                    if (cell.hasScheduledTask) {
+                        CategoryDot(colors.purpleDeep, DotShape.Circle, isToday)
                     }
-                    if (cell.hasOccasion) {
-                        CategoryDot(colors.lemonDeep, DotShape.Square, isToday)
+                    if (cell.hasTodo) {
+                        CategoryDot(colors.pinkDeep, DotShape.Circle, isToday)
                     }
                     if (cell.isHoliday) {
-                        CategoryDot(colors.mintDeep, DotShape.Ring, isToday)
+                        CategoryDot(colors.mintDeep, DotShape.Circle, isToday)
                     }
                 }
             }
@@ -525,30 +554,82 @@ private fun MonthDayCell(
 }
 
 @Composable
-private fun CategoryLegendItem(category: TaskCategory, label: String) {
-    val legendIcon = mockupDp(MockupDimens.MONTH_LEGEND_DOT)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(mockupDp(5))
-    ) {
-        ThemeCategoryTaskIcon(category = category, size = legendIcon)
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontWeight = SecondaryTextWeight,
-                fontSize = mockupSp(MockupDimens.MONTH_LEGEND_TEXT_F)
-            ),
-            color = monthLegendTextColor()
-        )
+private fun CalendarAlignedDot(
+    color: Color,
+    size: Dp,
+    hollow: Boolean,
+    holeColor: Color,
+) {
+    val stroke = mockupDp(1.5f)
+    val holeScale = with(LocalDensity.current) {
+        1f - (stroke.toPx() * 2f / size.toPx()).coerceIn(0.15f, 0.75f)
+    }
+    Box(Modifier.size(size), contentAlignment = Alignment.Center) {
+        if (hollow) {
+            Box(Modifier.fillMaxSize().clip(CircleShape).background(color))
+            Box(
+                Modifier
+                    .fillMaxSize(holeScale)
+                    .clip(CircleShape)
+                    .background(holeColor),
+            )
+        } else {
+            Box(Modifier.fillMaxSize().clip(CircleShape).background(color))
+        }
     }
 }
 
 @Composable
-private fun CategoryDot(color: Color, shape: DotShape, onToday: Boolean) {
+private fun CalendarActivityLegend(showHoliday: Boolean, modifier: Modifier = Modifier) {
+    val colors = SweetTheme.colors
+    val legendDot = mockupDp(MockupDimens.MONTH_LEGEND_DOT)
+    val entries = buildList {
+        add(colors.purpleDeep to "Task")
+        add(colors.pinkDeep to "To-do")
+        if (showHoliday) add(colors.mintDeep to "Holiday")
+    }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        entries.forEach { (color, label) ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(mockupDp(5)),
+            ) {
+                CalendarAlignedDot(
+                    color = color,
+                    size = legendDot,
+                    hollow = false,
+                    holeColor = colors.cream,
+                )
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.MONTH_LEGEND_TEXT_F),
+                        lineHeight = mockupSp(13f),
+                    ),
+                    color = monthLegendTextColor(),
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryDot(
+    color: Color,
+    shape: DotShape,
+    onToday: Boolean,
+    holeColor: Color = SweetTheme.colors.paper,
+) {
     val dotColor = if (onToday) Color.White.copy(alpha = 0.9f) else color
     val cellDot = mockupDp(MockupDimens.MONTH_CELL_DOT)
     when (shape) {
-        DotShape.Circle -> Box(Modifier.size(cellDot).clip(CircleShape).background(dotColor))
+        DotShape.Circle -> CalendarAlignedDot(dotColor, cellDot, hollow = false, holeColor = holeColor)
         DotShape.Diamond -> Box(
             Modifier
                 .size(cellDot)
@@ -570,53 +651,7 @@ private fun CategoryDot(color: Color, shape: DotShape, onToday: Boolean) {
                 .background(dotColor)
         )
         DotShape.Square -> Box(Modifier.size(cellDot).clip(RoundedCornerShape(mockupDp(1))).background(dotColor))
-        DotShape.Ring -> Box(Modifier.size(cellDot).border(mockupDp(1.5f), dotColor, CircleShape))
-    }
-}
-
-@Composable
-private fun LegendItem(color: Color, shape: DotShape, label: String) {
-    val legendDot = mockupDp(MockupDimens.MONTH_LEGEND_DOT)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(mockupDp(5))
-    ) {
-        Box(Modifier.size(legendDot), contentAlignment = Alignment.Center) {
-            when (shape) {
-                DotShape.Circle -> Box(Modifier.size(legendDot).clip(CircleShape).background(color))
-                DotShape.Diamond -> Box(
-                    Modifier
-                        .size(mockupDp(MockupDimens.MONTH_LEGEND_DOT - 2))
-                        .graphicsLayer { rotationZ = 45f }
-                        .clip(RoundedCornerShape(1.dp))
-                        .background(color)
-                )
-                DotShape.Leaf -> Box(
-                    Modifier
-                        .size(legendDot)
-                        .clip(
-                            RoundedCornerShape(
-                                topStartPercent = 0,
-                                topEndPercent = 50,
-                                bottomEndPercent = 0,
-                                bottomStartPercent = 50
-                            )
-                        )
-                        .background(color)
-                )
-                DotShape.Ring -> Box(Modifier.size(legendDot).border(mockupDp(1.5f), color, CircleShape))
-                DotShape.Square -> Box(Modifier.size(legendDot).clip(RoundedCornerShape(mockupDp(1))).background(color))
-            }
-        }
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = mockupSp(MockupDimens.MONTH_LEGEND_TEXT_F),
-                lineHeight = mockupSp(13f)
-            ),
-            color = monthLegendTextColor()
-        )
+        DotShape.Ring -> CalendarAlignedDot(dotColor, cellDot, hollow = true, holeColor = holeColor)
     }
 }
 

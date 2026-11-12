@@ -1,7 +1,11 @@
 package com.sweetcalendar.ui.theme
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 
 private val SelectedOnAccentCandyDark = Color(0xFF1B1424)
 private val SelectedOnAccentSpaceDark = Color(0xFF0B0E24)
@@ -37,3 +41,14 @@ fun formChipShadowColor(selected: Boolean): Color {
 @Composable
 fun formChipTextColor(selected: Boolean): Color =
     if (selected) FormChipTextSelected else SweetTheme.colors.muted
+
+@Composable
+fun formPlaceholderColor(): Color {
+    val colors = SweetTheme.colors
+    val base = if (colors.isDark) colors.navInactive else colors.muted
+    return base.copy(alpha = if (colors.isDark) 0.55f else 0.45f)
+}
+
+/** Drop-shadow layer under form chips — shaped fill so corners match the button face. */
+fun Modifier.formChipShadowLayer(color: Color, cornerRadius: Dp): Modifier =
+    background(color, RoundedCornerShape(cornerRadius))

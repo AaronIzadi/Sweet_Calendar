@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -111,7 +112,8 @@ private val welcomeSlides = listOf(
 @Composable
 fun WelcomeScreen(
     onStart: () -> Unit,
-    onSkip: () -> Unit
+    onSkip: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = SweetTheme.colors
     val pagerState = rememberPagerState(pageCount = { welcomeSlides.size })
@@ -158,7 +160,7 @@ fun WelcomeScreen(
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(colors.cream),
     ) {
@@ -167,6 +169,7 @@ fun WelcomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .safeDrawingPadding()
                 .padding(horizontal = mockupDp(26), vertical = mockupDp(28)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

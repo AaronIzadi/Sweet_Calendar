@@ -24,7 +24,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.sweetcalendar.data.TaskListScope
+import com.sweetcalendar.data.activityScopeForPicker
+import com.sweetcalendar.data.filterTasks
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.recoverEmptyMessage
+import com.sweetcalendar.ui.components.ActivityTypeFilterRow
 import com.sweetcalendar.ui.archive.ArchiveDayLabel
 import com.sweetcalendar.ui.archive.ArchiveFilterChip
 import com.sweetcalendar.ui.archive.ArchiveStatCard
@@ -53,15 +58,23 @@ fun RecoverSnackbarScreen(
     onBack: () -> Unit,
     onRestore: (TaskEntity) -> Unit,
     onPermanentDelete: (TaskEntity) -> Unit,
+    initialActivityScope: TaskListScope = TaskListScope.Scheduled,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    var activityScope by remember {
+        mutableStateOf(activityScopeForPicker(initialActivityScope))
+    }
+    val scopedDeleted = remember(deletedTasks, activityScope) {
+        activityScope.filterTasks(deletedTasks)
+    }
+    val emptyMessage = activityScope.recoverEmptyMessage()
     var filter by remember { mutableStateOf(ArchiveFilter.ThisWeek) }
     var pendingRecover by remember { mutableStateOf<PendingRecover?>(null) }
-    val filtered = remember(deletedTasks, filter) { filterDeletedTasks(deletedTasks, filter) }
+    val filtered = remember(scopedDeleted, filter) { filterDeletedTasks(scopedDeleted, filter) }
     val grouped = remember(filtered) { groupDeletedTasksByDay(filtered) }
-    val deletedThisWeek = remember(deletedTasks) { countDeletedThisWeek(deletedTasks) }
-    val expiringSoon = remember(deletedTasks) { countExpiringDeletedTasks(deletedTasks) }
+    val deletedThisWeek = remember(scopedDeleted) { countDeletedThisWeek(scopedDeleted) }
+    val expiringSoon = remember(scopedDeleted) { countExpiringDeletedTasks(scopedDeleted) }
     val isNewTask = rememberNewItemTracker(deletedTasks.map { it.id })
 
     BackHandler(onBack = onBack)
@@ -72,21 +85,14 @@ fun RecoverSnackbarScreen(
             .background(colors.cream)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                "Recover snackbar",
-                style = TextStyle(
-                    fontFamily = BodyFont,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = mockupSp(MockupDimens.ARCHIVE_TITLE),
-                    lineHeight = mockupSp(20f)
-                ),
-                color = colors.ink,
+            ActivityTypeFilterRow(
+                selected = activityScope,
+                onSelect = { activityScope = it },
                 modifier = Modifier.padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
                     top = mockupDp(16),
-                    bottom = mockupDp(4)
-                )
+                ),
             )
 
             Row(
@@ -95,12 +101,12 @@ fun RecoverSnackbarScreen(
                     .padding(
                         start = mockupDp(18),
                         end = mockupDp(18),
-                        top = mockupDp(14),
+                        top = mockupDp(10),
                         bottom = mockupDp(4)
                     ),
                 horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
             ) {
-                ArchiveStatCard("${deletedTasks.size}", "IN TRASH", modifier = Modifier.weight(1f))
+                ArchiveStatCard("${scopedDeleted.size}", "IN TRASH", modifier = Modifier.weight(1f))
                 ArchiveStatCard("$deletedThisWeek", "THIS WEEK", modifier = Modifier.weight(1f))
                 ArchiveStatCard("$expiringSoon", "EXPIRING", modifier = Modifier.weight(1f))
             }
@@ -133,7 +139,7 @@ fun RecoverSnackbarScreen(
                 if (grouped.isEmpty()) {
                     item {
                         Text(
-                            "No deleted tasks in this period",
+                            emptyMessage,
                             style = TextStyle(
                                 fontFamily = BodyFont,
                                 fontWeight = SecondaryTextWeight,

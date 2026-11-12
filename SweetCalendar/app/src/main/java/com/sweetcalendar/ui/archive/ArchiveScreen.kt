@@ -29,7 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.sweetcalendar.data.TaskListScope
+import com.sweetcalendar.data.activityScopeForPicker
+import com.sweetcalendar.data.archiveEmptyMessage
+import com.sweetcalendar.data.filterTasks
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.ui.components.ActivityTypeFilterRow
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
@@ -75,16 +80,22 @@ fun ArchiveScreen(
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
     onDeleteTask: (TaskEntity) -> Unit = {},
+    initialActivityScope: TaskListScope = TaskListScope.Scheduled,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    var activityScope by remember {
+        mutableStateOf(activityScopeForPicker(initialActivityScope))
+    }
+    val scopedTasks = remember(tasks, activityScope) { activityScope.filterTasks(tasks) }
+    val emptyMessage = activityScope.archiveEmptyMessage()
     var filter by remember { mutableStateOf(ArchiveFilter.ThisWeek) }
-    val completed = remember(tasks, filter) { filterCompletedTasks(tasks, filter) }
+    val completed = remember(scopedTasks, filter) { filterCompletedTasks(scopedTasks, filter) }
     val grouped = remember(completed) { groupTasksByDay(completed) }
-    val totalDone = tasks.count { it.isDone }
-    val streak = remember(tasks) { computeStreak(tasks) }
-    val monthPct = remember(tasks) { computeMonthCompletionPercent(tasks) }
-    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
+    val totalDone = scopedTasks.count { it.isDone }
+    val streak = remember(scopedTasks) { computeStreak(scopedTasks) }
+    val monthPct = remember(scopedTasks) { computeMonthCompletionPercent(scopedTasks) }
+    val isNewTask = rememberNewItemTracker(scopedTasks.map { it.id })
 
     BackHandler(onBack = onBack)
 
@@ -93,21 +104,14 @@ fun ArchiveScreen(
             .fillMaxSize()
             .background(colors.cream)
     ) {
-        Text(
-            "Completed",
-            style = TextStyle(
-                fontFamily = BodyFont,
-                fontWeight = FontWeight.Bold,
-                fontSize = mockupSp(MockupDimens.ARCHIVE_TITLE),
-                lineHeight = mockupSp(20f)
-            ),
-            color = colors.ink,
+        ActivityTypeFilterRow(
+            selected = activityScope,
+            onSelect = { activityScope = it },
             modifier = Modifier.padding(
                 start = mockupDp(18),
                 end = mockupDp(18),
                 top = mockupDp(16),
-                bottom = mockupDp(4)
-            )
+            ),
         )
 
         Row(
@@ -116,7 +120,7 @@ fun ArchiveScreen(
                 .padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
-                    top = mockupDp(14),
+                    top = mockupDp(10),
                     bottom = mockupDp(4)
                 ),
             horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
@@ -154,7 +158,7 @@ fun ArchiveScreen(
             if (grouped.isEmpty()) {
                 item {
                     Text(
-                        "No completed tasks in this period",
+                        emptyMessage,
                         style = MaterialTheme.typography.bodySmall.copy(
                             fontWeight = SecondaryTextWeight,
                             fontSize = mockupSp(12f)

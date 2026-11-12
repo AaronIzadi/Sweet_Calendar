@@ -332,7 +332,7 @@ fun SettingsScreen(
             value = "Pin from launcher"
         )
 
-        SettingsGroupLabel("TASKS")
+        SettingsGroupLabel("ACTIVITIES")
         SettingsRow(
             icon = {
                 SettingsIconSlot(rowIconSlot) {
@@ -342,7 +342,7 @@ fun SettingsScreen(
                     )
                 }
             },
-            label = "Completed tasks",
+            label = "Completed",
             onClick = onOpenArchive
         )
         SettingsRow(
@@ -351,7 +351,7 @@ fun SettingsScreen(
                     CalMiniIcon(size = miniIcon, color = colors.purpleDeep)
                 }
             },
-            label = "Search tasks",
+            label = "Search",
             onClick = onOpenSearch
         )
         SettingsRow(
@@ -363,7 +363,7 @@ fun SettingsScreen(
                     )
                 }
             },
-            label = "Recover snackbar",
+            label = "Recover deleted",
             onClick = onOpenRecoverSnackbar
         )
 

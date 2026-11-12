@@ -6,6 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sweetcalendar.calendar.CalendarSystem
+import com.sweetcalendar.data.TaskScheduleKind
+import com.sweetcalendar.data.todosWithDeadlineInRange
+import com.sweetcalendar.data.isToDo
+import com.sweetcalendar.data.local.SubtaskEntity
+import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
@@ -27,7 +32,6 @@ import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.recurrence.isVirtualOccurrence
 import com.sweetcalendar.recurrence.withRecurrence
 import com.sweetcalendar.ui.addtask.TaskFormData
-import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.widget.SweetWidgets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,10 +53,10 @@ data class DayEvent(
 data class DayCellInfo(
     val date: JalaliDate,
     val displayDay: Int,
-    val hasTask: Boolean,
+    val hasScheduledTask: Boolean,
+    val hasTodo: Boolean,
     val hasOccasion: Boolean,
     val isHoliday: Boolean,
-    val taskCategories: List<TaskCategory> = emptyList()
 )
 
 data class CalendarUiState(
@@ -64,6 +68,7 @@ data class CalendarUiState(
     val selectedDayTasks: List<TaskEntity> = emptyList(),
     val selectedDayEvents: List<DayEvent> = emptyList(),
     val todayEvents: List<DayEvent> = emptyList(),
+    val monthTodos: List<TaskEntity> = emptyList(),
     val isLoadingEvents: Boolean = false,
     val eventsLoadFailed: Boolean = false,
     val showHolidays: Boolean = true,
@@ -141,6 +146,9 @@ class CalendarViewModel(
     val deletedTasks: StateFlow<List<TaskEntity>> = taskRepository.observeDeleted()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allSubtasks: StateFlow<List<SubtaskEntity>> = taskRepository.observeSubtasks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
         viewModelScope.launch {
             taskRepository.purgeExpiredDeleted()
@@ -185,6 +193,20 @@ class CalendarViewModel(
             CalendarSystem.GREGORIAN -> buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
         }
 
+        val monthRange = when (meta.calendarSystem) {
+            CalendarSystem.PERSIAN -> {
+                val lastDay = pMonth.daysInMonth()
+                JalaliDate(pMonth.year, pMonth.month, 1) to JalaliDate(pMonth.year, pMonth.month, lastDay)
+            }
+            CalendarSystem.GREGORIAN -> {
+                val lastDay = gMonth.daysInMonth()
+                val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
+                val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
+                minOf(rangeStart, rangeEnd) to maxOf(rangeStart, rangeEnd)
+            }
+        }
+        val monthTodos = allTasks.todosWithDeadlineInRange(monthRange.first, monthRange.second)
+
         val selectedEvents = eventsForSelectedDay(eventsByDayKey, selected, meta.calendarSystem).map {
             DayEvent(
                 description = it.description,
@@ -203,7 +225,8 @@ class CalendarViewModel(
             isLoadingEvents = meta.loading,
             eventsLoadFailed = meta.failed,
             showHolidays = meta.showHolidays,
-            weekStartsOn = meta.weekStartsOn
+            weekStartsOn = meta.weekStartsOn,
+            monthTodos = monthTodos,
         )
     }.let { base ->
         combine(base, selectedDate, taskRepository.observeAll(), userBirthDate, userName) { state, selected, allTasks, birthDate, name ->
@@ -244,7 +267,13 @@ class CalendarViewModel(
 
     fun rescheduleAllActive() {
         viewModelScope.launch {
-            taskRepository.getActiveReminders().forEach { scheduleReminderSafely(it) }
+            taskRepository.getActiveReminders()
+                .filter { !it.isToDo() }
+                .forEach { scheduleReminderSafely(it) }
+            val todos = taskRepository.getAllActiveTodosWithAlerts()
+            todos.forEach { (task, alerts) ->
+                scheduleTodoAlertsSafely(task, alerts)
+            }
         }
     }
 
@@ -253,6 +282,35 @@ class CalendarViewModel(
             reminderScheduler.schedule(task)
         } catch (_: Exception) {
             // Keep the app usable even when the OS rejects alarm scheduling.
+        }
+    }
+
+    private fun scheduleTodoAlertsSafely(task: TaskEntity, alerts: List<TaskAlertEntity>) {
+        try {
+            reminderScheduler.scheduleTodoAlerts(task, alerts)
+        } catch (_: Exception) {
+            // Keep the app usable even when the OS rejects alarm scheduling.
+        }
+    }
+
+    private suspend fun cancelAllRemindersFor(task: TaskEntity) {
+        reminderScheduler.cancel(task.id)
+        if (task.isToDo()) {
+            val alerts = taskRepository.getAlertsForTask(task.id)
+            reminderScheduler.cancelTodoAlerts(alerts.map { it.id })
+        }
+    }
+
+    suspend fun getAlertsForTask(taskId: Long): List<TaskAlertEntity> =
+        taskRepository.getAlertsForTask(taskId)
+
+    suspend fun getSubtasksForTask(taskId: Long): List<SubtaskEntity> =
+        taskRepository.getSubtasksForParent(taskId)
+
+    fun toggleSubtask(subtask: SubtaskEntity) {
+        viewModelScope.launch {
+            taskRepository.toggleSubtaskDone(subtask)
+            refreshWidgets()
         }
     }
 
@@ -341,26 +399,33 @@ class CalendarViewModel(
         if (form.title.isBlank()) return
         viewModelScope.launch {
             val jalaliDate = form.jalaliDate.formatIso()
+            val isTodo = form.scheduleKind == TaskScheduleKind.TODO
             val id = taskRepository.addTask(
                 title = form.title,
                 notes = form.notes,
                 jalaliDate = jalaliDate,
-                reminderTime = form.reminderTime,
+                reminderTime = if (isTodo) null else form.reminderTime,
                 category = form.category,
                 priority = form.priority,
                 recurrenceFreq = form.recurrenceFreq,
                 recurrenceCount = form.recurrenceCount,
                 recurrenceWeekdays = form.recurrenceWeekdays,
                 recurrenceMonthDay = form.recurrenceMonthDay,
+                scheduleKind = form.scheduleKind,
             )
+            if (isTodo) {
+                taskRepository.replaceAlerts(id, form.alerts)
+            }
+            taskRepository.replaceSubtasks(id, form.subtasks)
             val task = TaskEntity(
                 id = id,
                 title = form.title,
                 notes = form.notes,
                 jalaliDate = jalaliDate,
-                reminderTime = form.reminderTime,
+                reminderTime = if (isTodo) null else form.reminderTime,
                 category = form.category,
                 priority = form.priority,
+                scheduleKind = form.scheduleKind.name,
                 repeatWeekly = form.recurrenceFreq == RecurrenceFreq.WEEKLY,
                 recurrenceFreq = form.recurrenceFreq.name,
                 recurrenceInterval = 1,
@@ -372,7 +437,11 @@ class CalendarViewModel(
                     form.recurrenceMonthDay,
                 ),
             )
-            scheduleReminderSafely(task)
+            if (isTodo) {
+                scheduleTodoAlertsSafely(task, taskRepository.getAlertsForTask(id))
+            } else {
+                scheduleReminderSafely(task)
+            }
             refreshWidgets()
         }
     }
@@ -390,9 +459,20 @@ class CalendarViewModel(
     ) {
         if (form.title.isBlank()) return
         viewModelScope.launch {
+            val oldAlerts = if (task.isToDo()) taskRepository.getAlertsForTask(task.id) else emptyList()
             val updated = taskRepository.applyRecurrenceEdit(task, form, scope)
+            taskRepository.replaceSubtasks(updated.id, form.subtasks)
             reminderScheduler.cancel(task.id)
-            if (!updated.isDone) {
+            reminderScheduler.cancelTodoAlerts(oldAlerts.map { it.id })
+            if (updated.isToDo()) {
+                taskRepository.replaceAlerts(updated.id, form.alerts)
+                if (!updated.isDone) {
+                    scheduleTodoAlertsSafely(
+                        updated,
+                        taskRepository.getAlertsForTask(updated.id),
+                    )
+                }
+            } else if (!updated.isDone) {
                 scheduleReminderSafely(updated)
             }
             refreshWidgets()
@@ -416,6 +496,10 @@ class CalendarViewModel(
             taskRepository.setDone(target.id, done)
             if (done) {
                 reminderScheduler.cancel(target.id)
+                if (target.isToDo()) {
+                    val alerts = taskRepository.getAlertsForTask(target.id)
+                    reminderScheduler.cancelTodoAlerts(alerts.map { it.id })
+                }
                 val recurring = if (
                     target.recurrenceFrequency() != RecurrenceFreq.NONE && target.seriesId == null
                 ) {
@@ -431,7 +515,15 @@ class CalendarViewModel(
                     scheduleReminderSafely(next.copy(id = newId))
                 }
             } else {
-                scheduleReminderSafely(target.copy(isDone = false))
+                val restored = target.copy(isDone = false)
+                if (restored.isToDo()) {
+                    scheduleTodoAlertsSafely(
+                        restored,
+                        taskRepository.getAlertsForTask(restored.id),
+                    )
+                } else {
+                    scheduleReminderSafely(restored)
+                }
             }
             refreshWidgets()
         }
@@ -447,20 +539,20 @@ class CalendarViewModel(
                 when (scope) {
                     RecurrenceEditScope.ENTIRE_SERIES ->
                         taskRepository.getActiveBySeriesId(seriesId).forEach {
-                            reminderScheduler.cancel(it.id)
+                            cancelAllRemindersFor(it)
                         }
                     RecurrenceEditScope.THIS_AND_FOLLOWING -> {
-                        reminderScheduler.cancel(task.id)
+                        cancelAllRemindersFor(task)
                         taskRepository.getActiveBySeriesId(seriesId)
                             .filter { it.parsedDate() >= task.parsedDate() }
-                            .forEach { reminderScheduler.cancel(it.id) }
+                            .forEach { cancelAllRemindersFor(it) }
                     }
                     RecurrenceEditScope.THIS_INSTANCE ->
-                        reminderScheduler.cancel(task.id)
+                        cancelAllRemindersFor(task)
                 }
                 taskRepository.applyRecurrenceDelete(task, scope)
             } else {
-                reminderScheduler.cancel(task.id)
+                cancelAllRemindersFor(task)
                 taskRepository.deleteTask(task)
             }
             refreshWidgets()
@@ -470,8 +562,12 @@ class CalendarViewModel(
     fun restoreTask(task: TaskEntity) {
         viewModelScope.launch {
             taskRepository.restoreTask(task)
-            if (!task.isDone && task.reminderTime != null) {
-                scheduleReminderSafely(task)
+            if (!task.isDone) {
+                if (task.isToDo()) {
+                    scheduleTodoAlertsSafely(task, taskRepository.getAlertsForTask(task.id))
+                } else if (task.reminderTime != null) {
+                    scheduleReminderSafely(task)
+                }
             }
             refreshWidgets()
         }
@@ -479,7 +575,7 @@ class CalendarViewModel(
 
     fun permanentlyDeleteTask(task: TaskEntity) {
         viewModelScope.launch {
-            reminderScheduler.cancel(task.id)
+            cancelAllRemindersFor(task)
             taskRepository.permanentlyDeleteTask(task)
             refreshWidgets()
         }
@@ -556,17 +652,13 @@ class CalendarViewModel(
     ): DayCellInfo {
         val iso = date.formatIso()
         val dayTasks = tasksByDate[iso].orEmpty()
-        val categories = dayTasks
-            .map { TaskCategory.fromString(it.category) }
-            .distinct()
-            .take(3)
         return DayCellInfo(
             date = date,
             displayDay = displayDay,
-            hasTask = dayTasks.isNotEmpty(),
+            hasScheduledTask = dayTasks.any { !it.isToDo() },
+            hasTodo = dayTasks.any { it.isToDo() },
             hasOccasion = dayEvents.any { !it.isHoliday },
             isHoliday = dayEvents.any { it.isHoliday },
-            taskCategories = categories
         )
     }
 

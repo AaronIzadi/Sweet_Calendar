@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -118,15 +119,11 @@ fun StatsScreen(
         StatsFieldLabel("THIS WEEK")
         StatsJarCard {
             val chartHeight = MockupDimens.STATS_BAR_HEIGHT
-            val labelReserve = 14f
             var barsVisible by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) { barsVisible = true }
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(mockupDp(chartHeight)),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
-                verticalAlignment = Alignment.Bottom
             ) {
                 weekBars.forEachIndexed { index, bar ->
                     val targetRatio = if (bar.ratio <= 0f) 0.08f else bar.ratio.coerceIn(0.08f, 1f)
@@ -139,24 +136,28 @@ fun StatsScreen(
                         label = "statsBar-${bar.label}",
                     )
                     Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(mockupDp(chartHeight)),
+                        modifier = Modifier.weight(1f),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Bottom
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(mockupDp((chartHeight - labelReserve) * heightRatio))
-                                .clip(
-                                    RoundedCornerShape(
-                                        topStart = mockupDp(MockupDimens.STATS_BAR_RADIUS),
-                                        topEnd = mockupDp(MockupDimens.STATS_BAR_RADIUS)
+                                .height(mockupDp(chartHeight)),
+                            contentAlignment = Alignment.BottomCenter,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(heightRatio)
+                                    .clip(
+                                        RoundedCornerShape(
+                                            topStart = mockupDp(MockupDimens.STATS_BAR_RADIUS),
+                                            topEnd = mockupDp(MockupDimens.STATS_BAR_RADIUS)
+                                        )
                                     )
-                                )
-                                .background(if (bar.isToday) colors.pinkDeep else colors.mintDeep)
-                        )
+                                    .background(if (bar.isToday) colors.pinkDeep else colors.mintDeep)
+                            )
+                        }
                         Text(
                             bar.label,
                             style = TextStyle(

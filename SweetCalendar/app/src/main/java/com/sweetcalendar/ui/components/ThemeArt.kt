@@ -49,12 +49,19 @@ fun ThemeFabIcon(modifier: Modifier = Modifier, size: Dp = 30.dp) {
 fun ThemeCategoryTaskIcon(
     category: TaskCategory,
     modifier: Modifier = Modifier,
-    size: Dp = 16.dp
+    size: Dp = 16.dp,
+    forTodo: Boolean = false,
 ) {
+    val marker = categoryMarkerColor(category, forTodo)
     when (category) {
-        TaskCategory.Personal -> TaskHeartIcon(modifier = modifier, size = size)
-        TaskCategory.Home -> TaskHomeIcon(modifier = modifier, size = size)
-        TaskCategory.Work -> TaskBriefcaseIcon(modifier = modifier, size = size)
+        TaskCategory.Personal -> TaskHeartIcon(modifier = modifier, size = size, color = marker)
+        TaskCategory.Home -> TaskHomeIcon(modifier = modifier, size = size, color = marker)
+        TaskCategory.Work -> TaskBriefcaseIcon(modifier = modifier, size = size, color = marker)
+        TaskCategory.School -> if (forTodo) {
+            TaskPenIcon(modifier = modifier, size = size, color = marker)
+        } else {
+            TaskSchoolIcon(modifier = modifier, size = size, spineColor = marker)
+        }
     }
 }
 
@@ -68,6 +75,7 @@ fun ThemeCategorySwatchIcon(
         TaskCategory.Personal -> PeppermintCandyIcon(modifier = modifier, size = size)
         TaskCategory.Home -> ChocolateIcon(modifier = modifier, size = size)
         TaskCategory.Work -> WrappedCandyIcon(modifier = modifier, size = size)
+        TaskCategory.School -> WrappedCandyIcon(modifier = modifier, size = size)
     }
 }
 

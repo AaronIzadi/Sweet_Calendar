@@ -49,6 +49,7 @@ import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
 import com.sweetcalendar.ui.theme.formChipFillColor
 import com.sweetcalendar.ui.theme.formChipShadowColor
+import com.sweetcalendar.ui.theme.formChipShadowLayer
 import com.sweetcalendar.ui.theme.formChipTextColor
 
 @Composable
@@ -330,22 +331,20 @@ private fun PeriodChip(
     modifier: Modifier = Modifier,
 ) {
     val radius = mockupDp(MockupDimens.FORM_FIELD_RADIUS)
-    Box(
-        modifier = modifier.clickable(onClick = onClick)
-    ) {
+    Box(modifier = modifier) {
         Box(
             modifier = Modifier
                 .matchParentSize()
                 .offset(
                     y = if (selected) mockupDp(3) else mockupDp(MockupDimens.FORM_FIELD_SHADOW)
                 )
-                .clip(RoundedCornerShape(radius))
-                .background(formChipShadowColor(selected))
+                .formChipShadowLayer(formChipShadowColor(selected), radius)
         )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(radius))
+                .clickable(onClick = onClick)
                 .background(formChipFillColor(selected))
                 .padding(vertical = mockupDp(12)),
             contentAlignment = Alignment.Center

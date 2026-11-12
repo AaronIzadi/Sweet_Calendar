@@ -1,5 +1,7 @@
 package com.sweetcalendar.recurrence
 
+import com.sweetcalendar.data.TaskScheduleKind
+import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import java.util.UUID
@@ -9,7 +11,10 @@ fun TaskEntity.parsedDate(): JalaliDate = JalaliDate.parseIso(jalaliDate)
 fun TaskEntity.isVirtualOccurrence(): Boolean = id < 0
 
 /** Stable list key for materialized and projected occurrences. */
-fun TaskEntity.occurrenceKey(): String = "${seriesId ?: "t$id"}:$jalaliDate"
+fun TaskEntity.occurrenceKey(): String = when {
+    isToDo() -> "todo-$id"
+    else -> "${seriesId ?: "t$id"}:$jalaliDate"
+}
 
 fun virtualOccurrenceTaskId(anchorTaskId: Long, date: JalaliDate): Long {
     val dayKey = date.year * 10_000 + date.month * 100 + date.day
@@ -25,7 +30,11 @@ fun List<TaskEntity>.resolveOccurrence(task: TaskEntity): TaskEntity {
         find { it.seriesId == seriesId && it.parsedDate() == date && it.id > 0 }?.let { return it }
     }
     if (task.id > 0) {
-        find { it.id == task.id && it.parsedDate() == date }?.let { return it }
+        if (task.isToDo()) {
+            find { it.id == task.id }?.let { return it }
+        } else {
+            find { it.id == task.id && it.parsedDate() == date }?.let { return it }
+        }
     }
     return task
 }
@@ -78,9 +87,11 @@ fun TaskEntity.applyFormFields(
     recurrenceCount: Int? = null,
     recurrenceWeekdays: Set<Int> = emptySet(),
     recurrenceMonthDay: RecurrenceMonthDay = RecurrenceMonthDay.OnThisDay,
+    kind: TaskScheduleKind = TaskScheduleKind.fromStored(this.scheduleKind),
 ): TaskEntity {
+    val effectiveFreq = if (kind == TaskScheduleKind.TODO) RecurrenceFreq.NONE else freq
     val storedDate = JalaliDate.parseIso(jalaliDate)
-    val weekdayStr = recurrenceWeekdaysStorage(freq, storedDate, recurrenceWeekdays, recurrenceMonthDay)
+    val weekdayStr = recurrenceWeekdaysStorage(effectiveFreq, storedDate, recurrenceWeekdays, recurrenceMonthDay)
     val base = copy(
         title = title,
         notes = notes,
@@ -88,14 +99,15 @@ fun TaskEntity.applyFormFields(
         reminderTime = reminderTime,
         category = category,
         priority = priority,
-        repeatWeekly = freq == RecurrenceFreq.WEEKLY,
-        recurrenceFreq = freq.name,
+        repeatWeekly = effectiveFreq == RecurrenceFreq.WEEKLY,
+        recurrenceFreq = effectiveFreq.name,
         recurrenceInterval = 1,
-        recurrenceCount = if (freq == RecurrenceFreq.NONE) null else recurrenceCount,
+        recurrenceCount = if (effectiveFreq == RecurrenceFreq.NONE) null else recurrenceCount,
         recurrenceWeekdays = weekdayStr,
+        scheduleKind = kind.name,
     )
     return when {
-        freq == RecurrenceFreq.NONE -> base.copy(
+        effectiveFreq == RecurrenceFreq.NONE -> base.copy(
             seriesId = null,
             recurrenceInterval = 1,
             recurrenceCount = null,
@@ -103,7 +115,7 @@ fun TaskEntity.applyFormFields(
             isRecurrenceException = false,
         )
         seriesId == null -> base.withRecurrence(
-            freq,
+            effectiveFreq,
             interval = 1,
             count = recurrenceCount,
             weekdays = recurrenceWeekdays.ifEmpty { setOf(storedDate.weekdayIndex()) },

@@ -24,18 +24,55 @@ object WidgetPixelIcons {
         return bitmap
     }
 
-    fun categoryBitmap(category: TaskCategory, sizePx: Int, theme: WidgetTheme.Colors): Bitmap {
+    fun categoryBitmap(
+        category: TaskCategory,
+        sizePx: Int,
+        theme: WidgetTheme.Colors,
+        forTodo: Boolean = false,
+    ): Bitmap {
         val rows = when (category) {
             TaskCategory.Work -> BRIEFCASE_ROWS
             TaskCategory.Personal -> HEART_ROWS
             TaskCategory.Home -> HOME_ROWS
+            TaskCategory.School -> if (forTodo) PEN_ROWS else BOOK_ROWS
         }
-        val color = when (category) {
+        if (category == TaskCategory.School && !forTodo) {
+            return render(
+                BOOK_ROWS,
+                mapOf(
+                    '1' to markerColor(category, theme, forTodo = false),
+                    '2' to theme.choc,
+                    '3' to theme.paperFill,
+                ),
+                sizePx,
+            )
+        }
+        if (category == TaskCategory.School && forTodo) {
+            val pen = markerColor(category, theme, forTodo = true)
+            return render(
+                PEN_ROWS,
+                mapOf('1' to pen, '2' to pen, 'e' to blendAlpha(pen, 0.65f)),
+                sizePx,
+            )
+        }
+        return render(rows, mapOf('1' to markerColor(category, theme, forTodo)), sizePx)
+    }
+
+    private fun markerColor(category: TaskCategory, theme: WidgetTheme.Colors, forTodo: Boolean): Int {
+        if (forTodo) {
+            return when (category) {
+                TaskCategory.Personal -> theme.purpleDeep
+                TaskCategory.Work -> theme.mintDeep
+                TaskCategory.School -> theme.pinkDeep
+                TaskCategory.Home -> theme.mintDeep
+            }
+        }
+        return when (category) {
             TaskCategory.Work -> if (theme.isDark) 0xFFC3AEEF.toInt() else theme.purpleDeep
             TaskCategory.Personal -> if (theme.isDark) 0xFFFF8FBB.toInt() else theme.pinkDeep
             TaskCategory.Home -> theme.mintDeep
+            TaskCategory.School -> theme.choc
         }
-        return render(rows, mapOf('1' to color), sizePx)
     }
 
     private fun lollipopHeadPalette(theme: WidgetTheme.Colors): Map<Char, Int> {
@@ -60,6 +97,11 @@ object WidgetPixelIcons {
             )
         }
 
+    private fun blendAlpha(color: Int, alpha: Float): Int {
+        val a = (alpha * ((color shr 24) and 0xFF)).toInt().coerceIn(0, 255)
+        return (color and 0x00FFFFFF) or (a shl 24)
+    }
+
     private fun render(rows: List<String>, palette: Map<Char, Int>, sizePx: Int): Bitmap {
         val cols = rows.maxOf { it.length }
         val cell = sizePx / maxOf(cols, rows.size).coerceAtLeast(1)
@@ -77,7 +119,7 @@ object WidgetPixelIcons {
                         offsetY + rowIndex * cell,
                         offsetX + (colIndex + 1) * cell,
                         offsetY + (rowIndex + 1) * cell,
-                        paint
+                        paint,
                     )
                 }
             }
@@ -127,5 +169,25 @@ object WidgetPixelIcons {
         ".1...1.",
         ".1.1.1.",
         ".11111."
+    )
+
+    private val BOOK_ROWS = listOf(
+        "....1....",
+        "...122...",
+        "..123321.",
+        ".12333321",
+        ".12333321",
+        "..123321.",
+        "...122...",
+    )
+
+    private val PEN_ROWS = listOf(
+        ".ee....",
+        ".e11...",
+        "..111..",
+        "...111.",
+        "....111",
+        ".....11",
+        "......12",
     )
 }

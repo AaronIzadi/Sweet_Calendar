@@ -40,7 +40,9 @@ import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.recurrence.tasksOnDate
+import com.sweetcalendar.ui.components.scheduledAndTodoTaskSections
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
@@ -200,17 +202,17 @@ fun WeekScreen(
                 item(key = "label-${selectedDay.formatIso()}") {
                     WeekDayLabel(selectedDay, calendarSystem)
                 }
-                items(selectedDayTasks, key = { it.occurrenceKey() }) { task ->
-                    val isNew = remember(task.id) { isNewTask(task.id) }
-                    SweetTaskCard(
-                        task = task,
-                        modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                        onClick = { onEditTask(task) },
-                        onToggleComplete = { onCompleteTask(task) },
-                        onDelete = { onDeleteTask(task) },
-                        style = TaskCardStyle.Mockup
-                    )
-                }
+                val scheduled = selectedDayTasks.filter { !it.isToDo() }
+                val todos = selectedDayTasks.filter { it.isToDo() }
+                scheduledAndTodoTaskSections(
+                    scheduled = scheduled,
+                    todos = todos,
+                    scheduledLabel = "TASKS",
+                    isNewTask = { id -> isNewTask(id) },
+                    onTaskClick = onEditTask,
+                    onCompleteTask = onCompleteTask,
+                    onDeleteTask = onDeleteTask,
+                )
             }
             item { Spacer(Modifier.height(mockupDp(90))) }
         }

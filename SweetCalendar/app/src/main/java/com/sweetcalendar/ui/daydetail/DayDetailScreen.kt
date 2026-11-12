@@ -27,6 +27,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.sweetcalendar.data.aggregateJarCounts
+import com.sweetcalendar.data.effectiveIsDone
+import com.sweetcalendar.data.forTask
+import com.sweetcalendar.data.groupedByParent
+import com.sweetcalendar.data.isToDo
+import com.sweetcalendar.data.local.SubtaskEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.calendar.CalendarSystem
@@ -38,9 +44,7 @@ import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetSectionLabel
-import com.sweetcalendar.ui.components.SweetTaskCard
-import com.sweetcalendar.ui.components.sweetTaskItemMotion
-import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.components.scheduledAndTodoTaskSections
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatAlternateCalendarLine
@@ -61,6 +65,7 @@ private fun dayEventMetaColor(): Color = SweetTheme.colors.muted
 fun DayDetailScreen(
     date: JalaliDate,
     tasks: List<TaskEntity>,
+    subtasks: List<SubtaskEntity> = emptyList(),
     events: List<DayEvent>,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onBack: () -> Unit,
@@ -81,11 +86,15 @@ fun DayDetailScreen(
         }
     }
     val secondaryLine = "${weekday} · ${date.formatAlternateCalendarLine(calendarSystem)}"
-    val done = tasks.count { it.isDone }
+    val subtasksByParent = remember(subtasks) { subtasks.groupedByParent() }
+    val done = tasks.count { it.effectiveIsDone(subtasksByParent.forTask(it.id)) }
+    val (weightedDone, weightedTotal) = remember(tasks, subtasksByParent) {
+        aggregateJarCounts(tasks, subtasksByParent)
+    }
     val holidays = events.filter { it.isHoliday && it.description.isNotBlank() }
     val occasions = events.filter { !it.isHoliday && it.description.isNotBlank() }
     val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
-    val isNewTask = rememberNewItemTracker(tasks.map { it.occurrenceKey().hashCode().toLong() })
+    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
 
     Box(modifier = modifier.fillMaxSize().background(colors.cream)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -140,23 +149,31 @@ fun DayDetailScreen(
                     JarProgressCard(
                         label = "Day's jar",
                         completed = done,
-                        total = tasks.size.coerceAtLeast(done)
+                        total = tasks.size.coerceAtLeast(done),
+                        weightedCompleted = weightedDone,
+                        weightedTotal = weightedTotal,
                     )
                 }
                 if (tasks.isNotEmpty()) {
-                    item { SweetSectionLabel("TASKS") }
-                    items(tasks, key = { it.occurrenceKey() }) { task ->
-                        val isNew = remember(task.occurrenceKey()) {
-                            isNewTask(task.occurrenceKey().hashCode().toLong())
-                        }
-                        SweetTaskCard(
-                            task = task,
-                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                            onClick = { onTaskClick(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            style = TaskCardStyle.Mockup
-                        )
+                    val scheduled = tasks.filter {
+                        !it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it.id))
                     }
+                    val todos = tasks.filter {
+                        it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it.id))
+                    }
+                    val completed = tasks.filter {
+                        it.effectiveIsDone(subtasksByParent.forTask(it.id))
+                    }
+                    scheduledAndTodoTaskSections(
+                        scheduled = scheduled,
+                        todos = todos,
+                        subtasksByParent = subtasksByParent,
+                        scheduledLabel = "TASKS",
+                        done = completed,
+                        isNewTask = { id -> isNewTask(id) },
+                        onTaskClick = onTaskClick,
+                        onCompleteTask = onCompleteTask,
+                    )
                 }
                 if (occasions.isNotEmpty()) {
                     item { SweetSectionLabel("OCCASIONS") }

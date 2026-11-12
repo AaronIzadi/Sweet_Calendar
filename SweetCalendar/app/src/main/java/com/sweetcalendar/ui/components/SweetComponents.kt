@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
@@ -127,7 +128,8 @@ private fun navIconColors(selected: Boolean): NavIconColors {
 enum class TaskCategory(val label: String) {
     Personal("Personal"),
     Home("Home"),
-    Work("Work");
+    Work("Work"),
+    School("School");
 
     companion object {
         fun fromString(value: String): TaskCategory = entries.find {
@@ -150,10 +152,22 @@ enum class TaskMetaStyle {
 }
 
 @Composable
-fun TaskCategory.accentColor(): Color = when (this) {
-    TaskCategory.Personal -> SweetTheme.colors.pinkText
-    TaskCategory.Home -> SweetTheme.colors.mint
-    TaskCategory.Work -> SweetTheme.colors.purpleDeep
+fun TaskCategory.accentColor(forTodo: Boolean = false): Color {
+    val colors = SweetTheme.colors
+    if (forTodo) {
+        return when (this) {
+            TaskCategory.Personal -> colors.purpleDeep
+            TaskCategory.Work -> colors.mintDeep
+            TaskCategory.School -> colors.pinkDeep
+            TaskCategory.Home -> colors.mint
+        }
+    }
+    return when (this) {
+        TaskCategory.Personal -> colors.pinkText
+        TaskCategory.Home -> colors.mint
+        TaskCategory.Work -> colors.purpleDeep
+        TaskCategory.School -> colors.chocDeep
+    }
 }
 
 @Composable
@@ -168,6 +182,37 @@ fun SweetSectionLabel(text: String, modifier: Modifier = Modifier) {
         color = SweetTheme.colors.purpleDeep,
         modifier = modifier.padding(top = 20.dp, bottom = 10.dp)
     )
+}
+
+/** Completed-task list header (check icon + “N completed …”), as on Today. */
+@Composable
+fun CompletedSectionLink(
+    count: Int,
+    suffix: String,
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val colors = SweetTheme.colors
+    Row(
+        modifier = modifier
+            .padding(top = 6.dp, bottom = 6.dp)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        ThemeCompletedCheckIcon(
+            size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
+            bgColor = if (colors.isDark) colors.mint else MintGreen,
+        )
+        Text(
+            "$count completed $suffix",
+            style = MaterialTheme.typography.bodySmall.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F),
+            ),
+            color = colors.muted,
+        )
+    }
 }
 
 @Composable
@@ -189,10 +234,14 @@ fun JarProgressCard(
     label: String,
     completed: Int,
     total: Int,
+    weightedCompleted: Float? = null,
+    weightedTotal: Float? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val progress = if (total > 0) completed.toFloat() / total else 0f
+    val progressNumerator = weightedCompleted ?: completed.toFloat()
+    val progressDenominator = weightedTotal ?: total.toFloat()
+    val progress = if (progressDenominator > 0f) progressNumerator / progressDenominator else 0f
     val animatedProgress by animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = com.sweetcalendar.ui.theme.SweetMotion.mediumTween(),
@@ -229,7 +278,11 @@ fun JarProgressCard(
                     color = colors.ink
                 )
                 Text(
-                    "$animatedCompleted / $total",
+                    if (weightedTotal != null) {
+                        "${(progress * 100).toInt()}%"
+                    } else {
+                        "$animatedCompleted / $total"
+                    },
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = mockupSp(MockupDimens.JAR_LABEL)
@@ -269,7 +322,8 @@ fun SweetTaskCard(
     showDate: Boolean = false,
     highlightQuery: String? = null,
     metaStyle: TaskMetaStyle = TaskMetaStyle.Default,
-    style: TaskCardStyle = TaskCardStyle.Interactive
+    style: TaskCardStyle = TaskCardStyle.Interactive,
+    subtaskProgressRatio: Float? = null,
 ) {
     val listModifier = modifier.fillMaxWidth()
     when (style) {
@@ -290,6 +344,7 @@ fun SweetTaskCard(
                         showDate = showDate,
                         highlightQuery = highlightQuery,
                         metaStyle = metaStyle,
+                        subtaskProgressRatio = subtaskProgressRatio,
                     )
                 }
             } else {
@@ -303,6 +358,7 @@ fun SweetTaskCard(
                     showDate = showDate,
                     highlightQuery = highlightQuery,
                     metaStyle = metaStyle,
+                    subtaskProgressRatio = subtaskProgressRatio,
                 )
             }
         }
@@ -322,11 +378,13 @@ private fun MockupTaskCard(
     modifier: Modifier = Modifier,
     showDate: Boolean = false,
     highlightQuery: String? = null,
-    metaStyle: TaskMetaStyle = TaskMetaStyle.Default
+    metaStyle: TaskMetaStyle = TaskMetaStyle.Default,
+    subtaskProgressRatio: Float? = null,
 ) {
     val colors = SweetTheme.colors
     val category = TaskCategory.fromString(task.category)
-    val accent = category.accentColor()
+    val forTodo = task.isToDo()
+    val accent = category.accentColor(forTodo)
     val priority = TaskPriority.fromString(task.priority)
     val shape = RoundedCornerShape(14.dp)
 
@@ -348,6 +406,7 @@ private fun MockupTaskCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = mockupDp(10))
+            .alpha(cardAlpha)
     ) {
         Box(
             modifier = Modifier
@@ -359,7 +418,6 @@ private fun MockupTaskCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .alpha(cardAlpha)
                 .clip(shape)
                 .background(colors.paper)
                 .clickable(
@@ -411,7 +469,7 @@ private fun MockupTaskCard(
                                 interactionSource = remember { MutableInteractionSource() }
                             )
                         ) {
-                            TaskCategoryIcon(category = category, size = taskIcon)
+                            TaskCategoryIcon(category = category, size = taskIcon, forTodo = forTodo)
                         }
                     }
                 }
@@ -447,7 +505,13 @@ private fun MockupTaskCard(
                         TaskMetaStyle.Default -> buildList {
                             task.reminderTime?.let { add(formatTime12h(it)) }
                             if (task.category.isNotBlank()) add(task.category)
-                            if (showDate) add(JalaliDate.parseIso(task.jalaliDate).formatDisplayShort())
+                            if (showDate) {
+                                val dateLabel = JalaliDate.parseIso(task.jalaliDate).formatDisplayShort()
+                                add(if (task.isToDo()) "Due $dateLabel" else dateLabel)
+                            }
+                            subtaskProgressRatio?.let { ratio ->
+                                add("${(ratio * 100).toInt()}% done")
+                            }
                         }
                     }
                     if (meta.isNotEmpty()) {
@@ -491,7 +555,7 @@ private fun MockupTaskCard(
 }
 
 @Composable
-private fun TaskCardPriorityMarker(
+internal fun TaskCardPriorityMarker(
     priority: TaskPriority,
     modifier: Modifier = Modifier,
 ) {
@@ -593,7 +657,8 @@ private fun InteractiveTaskCard(
 ) {
     val colors = SweetTheme.colors
     val category = TaskCategory.fromString(task.category)
-    val accent = category.accentColor()
+    val forTodo = task.isToDo()
+    val accent = category.accentColor(forTodo)
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -628,6 +693,7 @@ private fun InteractiveTaskCard(
                 TaskCategoryIcon(
                     category = category,
                     size = mockupDp(MockupDimens.TASK_ICON),
+                    forTodo = forTodo,
                 )
             }
             Column(
@@ -648,7 +714,10 @@ private fun InteractiveTaskCard(
                 val meta = buildList {
                     task.reminderTime?.let { add(formatTime12h(it)) }
                     if (task.category.isNotBlank()) add(task.category)
-                    if (showDate) add(JalaliDate.parseIso(task.jalaliDate).formatDisplayShort())
+                    if (showDate) {
+                        val dateLabel = JalaliDate.parseIso(task.jalaliDate).formatDisplayShort()
+                        add(if (task.isToDo()) "Due $dateLabel" else dateLabel)
+                    }
                 }
                 if (meta.isNotEmpty()) {
                     Text(
@@ -727,8 +796,12 @@ private fun TaskCheckbox(
 }
 
 @Composable
-private fun TaskCategoryIcon(category: TaskCategory, size: androidx.compose.ui.unit.Dp) {
-    ThemeCategoryTaskIcon(category = category, size = size)
+private fun TaskCategoryIcon(
+    category: TaskCategory,
+    size: androidx.compose.ui.unit.Dp,
+    forTodo: Boolean = false,
+) {
+    ThemeCategoryTaskIcon(category = category, size = size, forTodo = forTodo)
 }
 
 @Composable

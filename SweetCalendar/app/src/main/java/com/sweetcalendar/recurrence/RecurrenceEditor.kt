@@ -110,6 +110,7 @@ class RecurrenceEditor(private val dao: TaskDao) {
             recurrenceCount = form.recurrenceCount,
             recurrenceWeekdays = form.recurrenceWeekdays,
             recurrenceMonthDay = form.recurrenceMonthDay,
+            kind = form.scheduleKind,
         )
         dao.update(updated)
         return updated
@@ -128,6 +129,7 @@ class RecurrenceEditor(private val dao: TaskDao) {
             recurrenceCount = form.recurrenceCount,
             recurrenceWeekdays = form.recurrenceWeekdays,
             recurrenceMonthDay = form.recurrenceMonthDay,
+            kind = form.scheduleKind,
         )
         val final = when {
             inSeries && form.recurrenceFreq == RecurrenceFreq.NONE -> base.copy(
@@ -212,6 +214,7 @@ class RecurrenceEditor(private val dao: TaskDao) {
                         recurrenceCount = form.recurrenceCount,
                         recurrenceWeekdays = form.recurrenceWeekdays,
                         recurrenceMonthDay = form.recurrenceMonthDay,
+                        kind = form.scheduleKind,
                     ).copy(
                         seriesId = if (freq == RecurrenceFreq.NONE) null else newSeriesId,
                         seriesUntil = null,

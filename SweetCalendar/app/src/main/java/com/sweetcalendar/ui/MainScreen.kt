@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
@@ -34,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sweetcalendar.CalendarTodoApp
+import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.data.prefs.AppPreferences
 import com.sweetcalendar.jalali.JalaliDate
@@ -44,6 +46,7 @@ import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.recurrence.resolveOccurrence
 import com.sweetcalendar.recurrence.sameOccurrenceAs
 import com.sweetcalendar.profile.isBirthdayTask
+import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.addtask.RecurrenceEditScopeDialog
 import com.sweetcalendar.ui.addtask.RecurrenceScopeMode
@@ -147,6 +150,7 @@ fun MainScreen(
     }
     val calendarState by viewModel.uiState.collectAsState()
     val allTasks by viewModel.allTasks.collectAsState()
+    val allSubtasks by viewModel.allSubtasks.collectAsState()
     val deletedTasks by viewModel.deletedTasks.collectAsState()
     var destination by remember { mutableStateOf(AppDestination.Today) }
     var overlay by remember { mutableStateOf<OverlayState>(OverlayState.None) }
@@ -224,7 +228,7 @@ fun MainScreen(
     fun maybePromptForNotifications(form: TaskFormData) {
         pendingNotificationPrompt = NotificationPermissionHelper.shouldPromptForReminder(
             context = context,
-            hasReminder = form.reminderTime != null
+            hasReminder = form.reminderTime != null || form.alerts.isNotEmpty()
         )
     }
 
@@ -237,7 +241,8 @@ fun MainScreen(
 
     fun completeTask(task: TaskEntity) {
         if (task.isBirthdayTask()) return
-        val dayTasks = allTasks.tasksOnDate(task.parsedDate(), userBirthDate, userName)
+        val listDate = if (task.isToDo()) JalaliDate.today() else task.parsedDate()
+        val dayTasks = allTasks.tasksOnDate(listDate, userBirthDate, userName)
             .filter { !it.isBirthdayTask() }
         if (!task.isDone) {
             val willFillJar = dayTasks.all { it.isDone || it.sameOccurrenceAs(task) }
@@ -335,7 +340,7 @@ fun MainScreen(
             containerColor = colors.cream,
             bottomBar = {
                 if (showMainChrome) {
-                    Column {
+                    Column(modifier = Modifier.navigationBarsPadding()) {
                         Box(
                             modifier = Modifier
                                 .background(colors.paper)
@@ -395,6 +400,7 @@ fun MainScreen(
                         when (key.destination) {
                             AppDestination.Today -> TodayScreen(
                                 tasks = allTasks,
+                                subtasks = allSubtasks,
                                 userName = userName,
                                 userBirthDate = userBirthDate,
                                 calendarSystem = calendarState.calendarSystem,
@@ -430,7 +436,9 @@ fun MainScreen(
                                         event = event,
                                         returnTo = OverlayState.None,
                                     )
-                                }
+                                },
+                                onEditTask = { openTaskDetail(it) },
+                                onCompleteTask = { completeTask(it) },
                             )
                             AppDestination.Settings -> SettingsScreen(
                                 scrollState = settingsScrollState,
@@ -481,7 +489,7 @@ fun MainScreen(
                                 onOpenStats = { overlay = OverlayState.Stats },
                                 onOpenArchive = { overlay = OverlayState.Archive },
                                 onOpenSearch = { overlay = OverlayState.Search },
-                                onOpenRecoverSnackbar = { overlay = OverlayState.RecoverSnackbar }
+                                onOpenRecoverSnackbar = { overlay = OverlayState.RecoverSnackbar },
                             )
                         }
                     }
@@ -510,8 +518,24 @@ fun MainScreen(
                         } else {
                             liveTask
                         }
+                        var todoAlerts by remember(detailTask.id) {
+                            mutableStateOf<List<TaskAlertEntity>>(emptyList())
+                        }
+                        LaunchedEffect(detailTask.id, detailTask.scheduleKind) {
+                            todoAlerts = if (detailTask.isToDo()) {
+                                viewModel.getAlertsForTask(detailTask.id)
+                            } else {
+                                emptyList()
+                            }
+                        }
+                        val detailSubtasks = remember(allSubtasks, detailTask.id) {
+                            allSubtasks.filter { it.parentTaskId == detailTask.id }
+                        }
                         TaskDetailScreen(
                             task = detailTask,
+                            todoAlerts = todoAlerts,
+                            subtasks = detailSubtasks,
+                            onToggleSubtask = { viewModel.toggleSubtask(it) },
                             modifiable = !liveTask.isBirthdayTask(),
                             onBack = { overlay = current.returnTo },
                             onEdit = {
@@ -547,6 +571,7 @@ fun MainScreen(
                             modifier = Modifier.fillMaxSize(),
                             date = current.date,
                             tasks = dayTasks,
+                            subtasks = allSubtasks,
                             events = dayEvents,
                             calendarSystem = calendarState.calendarSystem,
                             onBack = { overlay = OverlayState.None },
@@ -639,9 +664,26 @@ fun MainScreen(
                 is SheetState.Edit -> {
                     val task = sheet.task
                     val d = JalaliDate.parseIso(task.jalaliDate)
+                    var existingAlerts by remember(task.id) {
+                        mutableStateOf<List<TaskAlertEntity>?>(null)
+                    }
+                    LaunchedEffect(task.id) {
+                        existingAlerts = viewModel.getAlertsForTask(task.id)
+                    }
+                    val loadedAlerts = existingAlerts
+                    val existingSubtasks = remember(allSubtasks, task.id) {
+                        allSubtasks
+                            .filter { it.parentTaskId == task.id }
+                            .map { com.sweetcalendar.ui.addtask.SubtaskFormItem.fromEntity(it) }
+                    }
+                    if (loadedAlerts == null) {
+                        Unit
+                    } else {
                     TaskBottomSheet(
                         date = d,
                         existingTask = task,
+                        existingAlerts = loadedAlerts,
+                        existingSubtasks = existingSubtasks,
                         calendarSystem = calendarState.calendarSystem,
                         eventRepository = eventRepository,
                         weekStartsOn = calendarState.weekStartsOn,
@@ -661,6 +703,7 @@ fun MainScreen(
                                         reminderTime = form.reminderTime,
                                         category = form.category,
                                         priority = form.priority,
+                                        scheduleKind = form.scheduleKind.name,
                                         repeatWeekly = form.repeatWeekly,
                                         recurrenceFreq = form.recurrenceFreq.name,
                                     ),
@@ -672,6 +715,7 @@ fun MainScreen(
                             }
                         }
                     )
+                    }
                 }
             }
         }

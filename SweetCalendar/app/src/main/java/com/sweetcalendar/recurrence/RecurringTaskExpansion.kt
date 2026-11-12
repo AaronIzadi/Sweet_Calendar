@@ -1,5 +1,6 @@
 package com.sweetcalendar.recurrence
 
+import com.sweetcalendar.data.isToDoVisibleOn
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.profile.birthdayTaskFor
@@ -67,7 +68,8 @@ fun List<TaskEntity>.tasksOnDate(
         )
     }
 
-    val combined = (materialized + virtual).distinctBy { it.occurrenceKey() }
+    val activeToDos = filter { it.isToDoVisibleOn(date) }
+    val combined = (materialized + virtual + activeToDos).distinctBy { it.occurrenceKey() }
     val birthday = birthdayTaskFor(date, userBirthDate, userName)
     if (birthday == null || combined.any { it.isBirthdayTask() }) return combined
     return combined + birthday

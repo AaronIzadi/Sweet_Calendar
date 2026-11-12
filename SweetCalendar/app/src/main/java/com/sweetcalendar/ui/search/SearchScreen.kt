@@ -34,7 +34,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.sweetcalendar.data.TaskListScope
+import com.sweetcalendar.data.activityScopeForPicker
+import com.sweetcalendar.data.filterTasks
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.searchPlaceholder
+import com.sweetcalendar.ui.components.ActivityTypeFilterRow
 import com.sweetcalendar.ui.components.SearchGroupLabel
 import com.sweetcalendar.ui.components.SearchIcon
 import com.sweetcalendar.ui.components.RequestKeyboardOnEnter
@@ -70,12 +75,18 @@ fun SearchScreen(
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
     onSearchSubmitted: (String) -> Unit,
+    initialActivityScope: TaskListScope = TaskListScope.Scheduled,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    var activityScope by remember {
+        mutableStateOf(activityScopeForPicker(initialActivityScope))
+    }
+    val scopedTasks = remember(tasks, activityScope) { activityScope.filterTasks(tasks) }
+    val searchPlaceholder = activityScope.searchPlaceholder()
     var query by remember { mutableStateOf("") }
-    val results = remember(tasks, query) { searchTasks(tasks, query) }
-    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
+    val results = remember(scopedTasks, query) { searchTasks(scopedTasks, query) }
+    val isNewTask = rememberNewItemTracker(scopedTasks.map { it.id })
     val chipBackground = if (colors.isDark) colors.surfaceElevated else RecentChipBackgroundLight
     val placeholderColor = searchPlaceholderColor()
     val searchFocus = remember { FocusRequester() }
@@ -89,13 +100,22 @@ fun SearchScreen(
             .background(colors.cream)
             .imePadding()
     ) {
+        ActivityTypeFilterRow(
+            selected = activityScope,
+            onSelect = { activityScope = it },
+            modifier = Modifier.padding(
+                start = mockupDp(18),
+                end = mockupDp(18),
+                top = mockupDp(16),
+            ),
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
-                    top = mockupDp(16),
+                    top = mockupDp(6),
                     bottom = mockupDp(6)
                 )
         ) {
@@ -141,7 +161,7 @@ fun SearchScreen(
                         decorationBox = { inner ->
                             if (query.isEmpty()) {
                                 Text(
-                                    "Search tasks…",
+                                    searchPlaceholder,
                                     style = TextStyle(
                                         fontFamily = BodyFont,
                                         fontWeight = SecondaryTextWeight,

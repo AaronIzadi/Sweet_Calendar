@@ -22,20 +22,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.sweetcalendar.data.aggregateJarCounts
+import com.sweetcalendar.data.effectiveIsDone
+import com.sweetcalendar.data.forTask
+import com.sweetcalendar.data.groupedByParent
+import com.sweetcalendar.data.isToDo
+import com.sweetcalendar.data.local.SubtaskEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.profile.isBirthdayTask
 import com.sweetcalendar.recurrence.tasksOnDate
-import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
+import com.sweetcalendar.ui.components.CompletedSectionLink
 import com.sweetcalendar.ui.components.EmptyStateContent
 import com.sweetcalendar.ui.components.JarProgressCard
 import com.sweetcalendar.ui.components.StreakPill
-import com.sweetcalendar.ui.components.SweetSectionLabel
-import com.sweetcalendar.ui.components.SweetTaskCard
-import com.sweetcalendar.ui.components.sweetTaskItemMotion
-import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.components.scheduledAndTodoTaskSections
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.formatDisplayWithWeekday
@@ -43,7 +46,6 @@ import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-import com.sweetcalendar.ui.theme.MintGreen
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.themeTodayJarLabel
 import java.util.Calendar
@@ -81,6 +83,7 @@ fun computeStreak(tasks: List<TaskEntity>): Int {
 @Composable
 fun TodayScreen(
     tasks: List<TaskEntity>,
+    subtasks: List<SubtaskEntity> = emptyList(),
     userName: String,
     userBirthDate: JalaliDate? = null,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
@@ -95,12 +98,27 @@ fun TodayScreen(
 ) {
     val colors = SweetTheme.colors
     val today = remember { JalaliDate.today() }
+    val subtasksByParent = remember(subtasks) { subtasks.groupedByParent() }
     val todayTasks = remember(tasks, today, userBirthDate, userName) {
         tasks.tasksOnDate(today, userBirthDate, userName).sortedBy { it.createdAt }
     }
     val actionableTasks = remember(todayTasks) { todayTasks.filter { !it.isBirthdayTask() } }
-    val pending = remember(actionableTasks) { actionableTasks.filter { !it.isDone } }
-    val done = remember(actionableTasks) { actionableTasks.filter { it.isDone } }
+    val pendingScheduled = remember(todayTasks, subtasksByParent) {
+        todayTasks.filter { task ->
+            !task.isToDo() && !task.effectiveIsDone(subtasksByParent.forTask(task.id))
+        }
+    }
+    val pendingTodos = remember(todayTasks, subtasksByParent) {
+        todayTasks.filter { task ->
+            task.isToDo() && !task.effectiveIsDone(subtasksByParent.forTask(task.id))
+        }
+    }
+    val done = remember(actionableTasks, subtasksByParent) {
+        actionableTasks.filter { it.effectiveIsDone(subtasksByParent.forTask(it.id)) }
+    }
+    val (weightedDone, weightedTotal) = remember(actionableTasks, subtasksByParent) {
+        aggregateJarCounts(actionableTasks, subtasksByParent)
+    }
     val streak = remember(tasks) { computeStreak(tasks) }
     val isNewTask = rememberNewItemTracker(todayTasks.map { it.id })
 
@@ -151,6 +169,8 @@ fun TodayScreen(
                 label = themeTodayJarLabel(),
                 completed = done.size,
                 total = actionableTasks.size,
+                weightedCompleted = weightedDone,
+                weightedTotal = weightedTotal,
                 modifier = Modifier.padding(top = 16.dp)
             )
         }
@@ -173,81 +193,25 @@ fun TodayScreen(
                     }
                 }
             } else {
-                item { SweetSectionLabel("TODAY") }
-                if (done.isNotEmpty()) {
-                    if (pending.isNotEmpty()) {
-                        items(pending, key = { it.occurrenceKey() }) { task ->
-                            val isNew = remember(task.id) { isNewTask(task.id) }
-                            SweetTaskCard(
-                                task = task,
-                                modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                                onClick = { onEditTask(task) },
-                                onToggleComplete = { onCompleteTask(task) },
-                                onDelete = { onDeleteTask(task) },
-                                style = TaskCardStyle.Mockup
-                            )
-                        }
-                    }
-                    item {
-                        CompletedTodayLink(
+                scheduledAndTodoTaskSections(
+                    scheduled = pendingScheduled,
+                    todos = pendingTodos,
+                    subtasksByParent = subtasksByParent,
+                    isNewTask = isNewTask,
+                    onTaskClick = onEditTask,
+                    onCompleteTask = onCompleteTask,
+                    onDeleteTask = onDeleteTask,
+                    done = done,
+                    completedHeader = {
+                        CompletedSectionLink(
                             count = done.size,
+                            suffix = "today",
                             onClick = onOpenArchive,
                         )
-                    }
-                    items(done, key = { it.occurrenceKey() }) { task ->
-                        val isNew = remember(task.id) { isNewTask(task.id) }
-                        SweetTaskCard(
-                            task = task,
-                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                            onClick = { onEditTask(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            onDelete = { onDeleteTask(task) },
-                            style = TaskCardStyle.Mockup
-                        )
-                    }
-                } else {
-                    items(todayTasks, key = { it.occurrenceKey() }) { task ->
-                        val isNew = remember(task.id) { isNewTask(task.id) }
-                        SweetTaskCard(
-                            task = task,
-                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                            onClick = { onEditTask(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            onDelete = { onDeleteTask(task) },
-                            style = TaskCardStyle.Mockup
-                        )
-                    }
-                }
+                    },
+                )
             }
             item { Spacer(Modifier.height(90.dp)) }
         }
-    }
-}
-
-@Composable
-private fun CompletedTodayLink(
-    count: Int,
-    onClick: () -> Unit,
-) {
-    val colors = SweetTheme.colors
-    Row(
-        modifier = Modifier
-            .padding(top = 6.dp, bottom = 6.dp)
-            .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        ThemeCompletedCheckIcon(
-            size = mockupDp(MockupDimens.COMPLETED_ROW_ICON),
-            bgColor = if (colors.isDark) colors.mint else MintGreen
-        )
-        Text(
-            "$count completed today",
-            style = MaterialTheme.typography.bodySmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F)
-            ),
-            color = colors.muted
-        )
     }
 }

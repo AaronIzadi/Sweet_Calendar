@@ -31,10 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import com.sweetcalendar.data.isToDo
+import com.sweetcalendar.data.local.SubtaskEntity
+import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.recurrenceIntervalInlineTextStyle
 import com.sweetcalendar.recurrence.repeatSummary
-import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.ui.components.CalMiniIcon
 import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.PenMiniIcon
@@ -43,7 +46,11 @@ import com.sweetcalendar.ui.components.RepeatMiniIcon
 import com.sweetcalendar.ui.components.TrashIcon
 import com.sweetcalendar.ui.components.ThemeSparkleIcon
 import com.sweetcalendar.ui.components.TaskCategory
+import com.sweetcalendar.ui.components.accentColor
 import com.sweetcalendar.ui.components.TaskBriefcaseIcon
+import com.sweetcalendar.ui.components.TaskPenIcon
+import com.sweetcalendar.ui.components.TaskSchoolIcon
+import com.sweetcalendar.ui.components.categoryMarkerColor
 import com.sweetcalendar.ui.components.TaskHeartIcon
 import com.sweetcalendar.ui.components.TaskHomeIcon
 import com.sweetcalendar.ui.components.TaskPriority
@@ -83,6 +90,7 @@ private fun detailCategoryHeroBackground(category: TaskCategory): Color {
         TaskCategory.Personal -> colors.navActiveBg
         TaskCategory.Home -> colors.holidayBg
         TaskCategory.Work -> if (colors.isDark) colors.streakBg else WorkHeroBgLight
+        TaskCategory.School -> colors.holidayBg
     }
 }
 
@@ -93,12 +101,16 @@ private fun detailCategoryAccent(category: TaskCategory): Color {
         TaskCategory.Personal -> colors.pinkDeep
         TaskCategory.Home -> colors.mintDeep
         TaskCategory.Work -> colors.purpleDeep
+        TaskCategory.School -> colors.chocDeep
     }
 }
 
 @Composable
 fun TaskDetailScreen(
     task: TaskEntity,
+    todoAlerts: List<TaskAlertEntity> = emptyList(),
+    subtasks: List<SubtaskEntity> = emptyList(),
+    onToggleSubtask: (SubtaskEntity) -> Unit = {},
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onComplete: () -> Unit,
@@ -110,6 +122,8 @@ fun TaskDetailScreen(
     val colors = SweetTheme.colors
     val date = remember(task.jalaliDate) { JalaliDate.parseIso(task.jalaliDate) }
     val category = TaskCategory.fromString(task.category)
+    val forTodo = task.isToDo()
+    val categoryMarker = categoryMarkerColor(category, forTodo)
     val priority = TaskPriority.fromString(task.priority)
     val weekday = JalaliDate.WEEKDAY_NAMES_EN[date.weekdayIndex()]
     val month = JalaliDate.MONTH_NAMES_EN[date.month - 1]
@@ -124,6 +138,8 @@ fun TaskDetailScreen(
             title = task.title,
             isDone = task.isDone,
             category = category,
+            categoryMarker = categoryMarker,
+            forTodo = forTodo,
             priority = priority,
             onBack = onBack,
             onEdit = onEdit,
@@ -151,15 +167,32 @@ fun TaskDetailScreen(
                         icon = {
                             CalMiniIcon(size = miniIconSize, color = colors.purpleDeep)
                         },
-                        text = "$weekday, $month ${date.day}, ${date.year}"
+                        text = buildString {
+                            if (task.isToDo()) append("Deadline · ")
+                            append("$weekday, $month ${date.day}, ${date.year}")
+                        }
                     )
-                    task.reminderTime?.let { time ->
-                        MetaRow(
-                            icon = {
-                                ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
-                            },
-                            text = formatTime12h(time)
-                        )
+                    if (task.isToDo() && todoAlerts.isNotEmpty()) {
+                        todoAlerts.forEach { alert ->
+                            val alertDate = JalaliDate.parseIso(alert.jalaliDate)
+                            val weekdayName = JalaliDate.WEEKDAY_NAMES_EN[alertDate.weekdayIndex()]
+                            val monthName = JalaliDate.MONTH_NAMES_EN[alertDate.month - 1]
+                            MetaRow(
+                                icon = {
+                                    ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
+                                },
+                                text = "Alert · $weekdayName, $monthName ${alertDate.day} · ${formatTime12h(alert.reminderTime)}",
+                            )
+                        }
+                    } else {
+                        task.reminderTime?.let { time ->
+                            MetaRow(
+                                icon = {
+                                    ClockMiniIcon(size = miniIconSize, color = colors.purpleDeep)
+                                },
+                                text = formatTime12h(time)
+                            )
+                        }
                     }
                     if (task.isDone) {
                         task.completedAt?.let { completedAt ->
@@ -191,6 +224,13 @@ fun TaskDetailScreen(
                         )
                     }
                 }
+
+                TaskDetailSubtasksSection(
+                    task = task,
+                    subtasks = subtasks,
+                    onToggle = onToggleSubtask,
+                    modifier = Modifier.padding(bottom = mockupDp(16)),
+                )
 
                 if (task.notes.isNotBlank()) {
                     DetailFieldLabel("NOTES")
@@ -225,6 +265,8 @@ private fun TaskDetailHero(
     title: String,
     isDone: Boolean,
     category: TaskCategory,
+    categoryMarker: Color,
+    forTodo: Boolean,
     priority: TaskPriority,
     onBack: () -> Unit,
     onEdit: () -> Unit,
@@ -233,7 +275,7 @@ private fun TaskDetailHero(
 ) {
     val colors = SweetTheme.colors
     val heroBg = detailCategoryHeroBackground(category)
-    val accent = detailCategoryAccent(category)
+    val accent = category.accentColor(forTodo)
     val heroIconSize = mockupDp(44)
     val bottomRadius = mockupDp(20)
     val iconBtnSize = mockupDp(MockupDimens.DETAIL_ICON_BTN)
@@ -308,9 +350,14 @@ private fun TaskDetailHero(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 when (category) {
-                    TaskCategory.Personal -> TaskHeartIcon(size = heroIconSize)
-                    TaskCategory.Home -> TaskHomeIcon(size = heroIconSize)
-                    TaskCategory.Work -> TaskBriefcaseIcon(size = heroIconSize)
+                    TaskCategory.Personal -> TaskHeartIcon(size = heroIconSize, color = categoryMarker)
+                    TaskCategory.Home -> TaskHomeIcon(size = heroIconSize, color = categoryMarker)
+                    TaskCategory.Work -> TaskBriefcaseIcon(size = heroIconSize, color = categoryMarker)
+                    TaskCategory.School -> if (forTodo) {
+                        TaskPenIcon(size = heroIconSize, color = categoryMarker)
+                    } else {
+                        TaskSchoolIcon(size = heroIconSize, spineColor = categoryMarker)
+                    }
                 }
                 Spacer(Modifier.height(mockupDp(8)))
                 Text(

@@ -46,24 +46,6 @@ private val MockupGumHiDark = Color(0xFFE4D9FB)
 private val MockupIconHeartDark = Color(0xFFFF8FBB)
 private val MockupIconGemDark = Color(0xFFC3AEEF)
 @Composable
-private fun themedCategoryHeartColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) MockupIconHeartDark else PinkDeep
-}
-
-@Composable
-private fun themedCategoryGemColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) MockupIconGemDark else PurpleDeep
-}
-
-@Composable
-private fun themedCategoryLeafColor(): Color {
-    val colors = SweetTheme.colors
-    return if (colors.isDark) colors.mint else MintDeep
-}
-
-@Composable
 private fun themedChocolateFillColor(): Color {
     val colors = SweetTheme.colors
     return if (colors.isDark) MockupChocFillDark else MockupChocFillLight
@@ -228,7 +210,11 @@ fun GummyIcon(modifier: Modifier = Modifier, size: Dp = 16.dp, color: Color = Le
 
 /** Work category marker — purple briefcase outline. */
 @Composable
-fun TaskBriefcaseIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun TaskBriefcaseIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    color: Color? = null,
+) {
     PixelIcon(
         rows = listOf(
             "..111..",
@@ -237,7 +223,7 @@ fun TaskBriefcaseIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             "1.111.1",
             "1111111"
         ),
-        palette = mapOf('1' to themedCategoryGemColor()),
+        palette = mapOf('1' to (color ?: taskCategoryGemColor())),
         size = size,
         modifier = modifier
     )
@@ -245,7 +231,11 @@ fun TaskBriefcaseIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
 
 /** Personal category marker — pink heart from mockup `buildHeart`. */
 @Composable
-fun TaskHeartIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun TaskHeartIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    color: Color? = null,
+) {
     PixelIcon(
         rows = listOf(
             ".11.11.",
@@ -255,15 +245,48 @@ fun TaskHeartIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             "..111..",
             "...1..."
         ),
-        palette = mapOf('1' to themedCategoryHeartColor()),
+        palette = mapOf('1' to (color ?: taskCategoryHeartColor())),
         size = size,
         modifier = modifier
     )
 }
 
+/** School category — closed book with spine, cover edge, and pages. */
+@Composable
+fun TaskSchoolIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    spineColor: Color? = null,
+) {
+    val colors = SweetTheme.colors
+    val spine = spineColor ?: taskCategoryBookSpineColor()
+    PixelIcon(
+        rows = listOf(
+            "....1....",
+            "...122...",
+            "..123321.",
+            ".12333321",
+            ".12333321",
+            "..123321.",
+            "...122...",
+        ),
+        palette = mapOf(
+            '1' to spine,
+            '2' to colors.choc,
+            '3' to if (colors.isDark) colors.surfaceElevated else colors.cream,
+        ),
+        size = size,
+        modifier = modifier,
+    )
+}
+
 /** Home category marker — mint house outline. */
 @Composable
-fun TaskHomeIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
+fun TaskHomeIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    color: Color? = null,
+) {
     PixelIcon(
         rows = listOf(
             "...1...",
@@ -272,10 +295,34 @@ fun TaskHomeIcon(modifier: Modifier = Modifier, size: Dp = 16.dp) {
             ".1.1.1.",
             ".11111."
         ),
-        palette = mapOf('1' to themedCategoryLeafColor()),
+        palette = mapOf('1' to (color ?: taskCategoryLeafColor())),
         size = size,
         modifier = modifier
     )
+}
+
+@Composable
+internal fun taskCategoryHeartColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) Color(0xFFFF8FBB) else PinkDeep
+}
+
+@Composable
+internal fun taskCategoryGemColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) Color(0xFFC3AEEF) else PurpleDeep
+}
+
+@Composable
+internal fun taskCategoryLeafColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.mint else MintDeep
+}
+
+@Composable
+internal fun taskCategoryBookSpineColor(): Color {
+    val colors = SweetTheme.colors
+    return if (colors.isDark) colors.choc else colors.chocDeep
 }
 
 /** Search magnifier from mockup `buildSearchIcon` (cell × 3). */
@@ -487,6 +534,30 @@ fun ForwardArrowMiniIcon(
         palette = mapOf('1' to color),
         size = size,
         modifier = modifier
+    )
+}
+
+/** Category / school to-do marker — pixel pen. */
+@Composable
+fun TaskPenIcon(
+    modifier: Modifier = Modifier,
+    size: Dp = 16.dp,
+    color: Color,
+) {
+    val eraser = color.copy(alpha = 0.65f)
+    PixelIcon(
+        rows = listOf(
+            ".ee....",
+            ".e11...",
+            "..111..",
+            "...111.",
+            "....111",
+            ".....11",
+            "......12",
+        ),
+        palette = mapOf('1' to color, '2' to color, 'e' to eraser),
+        size = size,
+        modifier = modifier.graphicsLayer { scaleX = -1f },
     )
 }
 
