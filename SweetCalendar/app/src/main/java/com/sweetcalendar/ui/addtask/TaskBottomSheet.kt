@@ -3,12 +3,15 @@ package com.sweetcalendar.ui.addtask
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -45,6 +48,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.getValue
@@ -570,68 +574,94 @@ fun TaskBottomSheet(
                     )
 
                     FieldLabel("ALERTS")
-                    if (todoAlerts.isEmpty()) {
-                        Text(
-                            "No alerts yet — add one below",
-                            style = TextStyle(
-                                fontFamily = BodyFont,
-                                fontWeight = SecondaryTextWeight,
-                                fontSize = mockupSp(12f),
-                            ),
-                            color = formMetaMutedColor(),
-                            modifier = Modifier.padding(bottom = mockupDp(8)),
-                        )
-                    }
-                    todoAlerts.forEach { alert ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = mockupDp(8)),
-                            horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            SweetField(
-                                value = alert.date.formatDisplayShort(calendarSystem),
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        datePickerTarget = DatePickerTarget.Alert(alert.stableKey)
-                                        showDatePicker = true
-                                    },
-                                leading = {
-                                    CalMiniIcon(
-                                        size = mockupDp(MockupDimens.MINI_FIELD_ICON),
-                                        color = colors.purpleDeep
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateContentSize(
+                                animationSpec = if (reducedMotion) {
+                                    SweetMotion.shortTween()
+                                } else {
+                                    spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow,
                                     )
-                                }
-                            )
-                            SweetField(
-                                value = formatTime12h(alert.time),
-                                onValueChange = {},
-                                readOnly = true,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable {
-                                        timePickerSeed = alert.time
-                                        timePickerTarget = TimePickerTarget.Alert(alert.stableKey)
-                                        showTimePicker = true
-                                    },
-                                leading = {
-                                    ClockMiniIcon(
-                                        size = mockupDp(MockupDimens.MINI_FIELD_ICON),
-                                        color = colors.purpleDeep
-                                    )
-                                }
-                            )
-                            ClosePixelIcon(
-                                size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
-                                color = colors.muted,
-                                modifier = Modifier.clickable {
-                                    todoAlerts = todoAlerts.filter { it.stableKey != alert.stableKey }
                                 },
+                            ),
+                    ) {
+                        AnimatedVisibility(
+                            visible = todoAlerts.isEmpty(),
+                            enter = fadeIn(SweetMotion.shortTween()) + expandVertically(SweetMotion.shortTween()),
+                            exit = fadeOut(SweetMotion.shortTween()) + shrinkVertically(SweetMotion.shortTween()),
+                        ) {
+                            Text(
+                                "No alerts yet — add one below",
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = SecondaryTextWeight,
+                                    fontSize = mockupSp(12f),
+                                ),
+                                color = formMetaMutedColor(),
+                                modifier = Modifier.padding(bottom = mockupDp(8)),
                             )
+                        }
+                        todoAlerts.forEach { alert ->
+                            key(alert.stableKey) {
+                                AnimatedFormListItem(
+                                    reducedMotion = reducedMotion,
+                                    onRemoved = {
+                                        todoAlerts = todoAlerts.filter { it.stableKey != alert.stableKey }
+                                    },
+                                ) { requestRemove ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = mockupDp(8)),
+                                        horizontalArrangement = Arrangement.spacedBy(mockupDp(8)),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        SweetField(
+                                            value = alert.date.formatDisplayShort(calendarSystem),
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable {
+                                                    datePickerTarget = DatePickerTarget.Alert(alert.stableKey)
+                                                    showDatePicker = true
+                                                },
+                                            leading = {
+                                                CalMiniIcon(
+                                                    size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                                    color = colors.purpleDeep
+                                                )
+                                            }
+                                        )
+                                        SweetField(
+                                            value = formatTime12h(alert.time),
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable {
+                                                    timePickerSeed = alert.time
+                                                    timePickerTarget = TimePickerTarget.Alert(alert.stableKey)
+                                                    showTimePicker = true
+                                                },
+                                            leading = {
+                                                ClockMiniIcon(
+                                                    size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                                    color = colors.purpleDeep
+                                                )
+                                            }
+                                        )
+                                        ClosePixelIcon(
+                                            size = mockupDp(MockupDimens.SHEET_HEADER_ICON),
+                                            color = colors.muted,
+                                            modifier = Modifier.clickable(onClick = requestRemove),
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                     RepeatFreqChip(

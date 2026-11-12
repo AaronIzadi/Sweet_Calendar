@@ -100,7 +100,7 @@ fun SubtaskEditorSection(
         )
         subtasks.forEach { item ->
             key(item.stableKey()) {
-                AnimatedSubtaskEditorItem(
+                AnimatedFormListItem(
                     reducedMotion = reducedMotion,
                     onRemoved = {
                         onChange(subtasks.filter { it.stableKey() != item.stableKey() })
@@ -219,48 +219,6 @@ fun SubtaskEditorSection(
                 }
                 .padding(top = mockupDp(2)),
         )
-    }
-}
-
-@Composable
-private fun AnimatedSubtaskEditorItem(
-    reducedMotion: Boolean,
-    onRemoved: () -> Unit,
-    content: @Composable (requestRemove: () -> Unit) -> Unit,
-) {
-    var visible by remember { mutableStateOf(true) }
-    val enterTransition = if (reducedMotion) {
-        fadeIn(SweetMotion.shortTween())
-    } else {
-        fadeIn(SweetMotion.mediumTween()) +
-            expandVertically(SweetMotion.mediumTween()) +
-            scaleIn(
-                initialScale = 0.96f,
-                animationSpec = SweetMotion.mediumTween(),
-            )
-    }
-    val exitTransition = if (reducedMotion) {
-        fadeOut(SweetMotion.shortTween())
-    } else {
-        fadeOut(SweetMotion.shortTween()) +
-            shrinkVertically(SweetMotion.shortTween()) +
-            scaleOut(
-                targetScale = 0.96f,
-                animationSpec = SweetMotion.shortTween(),
-            )
-    }
-    AnimatedVisibility(
-        visible = visible,
-        enter = enterTransition,
-        exit = exitTransition,
-    ) {
-        content { visible = false }
-    }
-    LaunchedEffect(visible) {
-        if (!visible) {
-            delay(if (reducedMotion) 0L else SweetMotion.ShortMillis.toLong())
-            onRemoved()
-        }
     }
 }
 
