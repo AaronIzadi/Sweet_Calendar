@@ -64,11 +64,11 @@ import com.sweetcalendar.ui.components.MonthNavChevron
 import com.sweetcalendar.ui.components.SweetSectionLabel
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.TaskCardStyle
-import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
-import com.sweetcalendar.ui.daydetail.DayEventCard
+import com.sweetcalendar.ui.components.TaskMetaStyle
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.PixelFont
+import com.sweetcalendar.ui.theme.SprinklesBlue
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
@@ -111,7 +111,6 @@ fun MonthScreen(
     viewModel: CalendarViewModel,
     onDayClick: (JalaliDate) -> Unit,
     onOfflineClick: () -> Unit = {},
-    onEventClick: (DayEvent) -> Unit = {},
     onEditTask: (TaskEntity) -> Unit = {},
     onCompleteTask: (TaskEntity) -> Unit = {},
     modifier: Modifier = Modifier
@@ -209,61 +208,28 @@ fun MonthScreen(
                 .padding(horizontal = 14.dp, vertical = 8.dp),
         )
 
-        if (state.showHolidays && state.todayEvents.isNotEmpty()) {
-            val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
-            val occasions = state.todayEvents.filter { !it.isHoliday }
-            val holidays = state.todayEvents.filter { it.isHoliday }
+        val pendingTodos = state.monthTodos.filter { !it.isDone }
+        val completedTodos = state.monthTodos.filter { it.isDone }
+        if (pendingTodos.isNotEmpty() || completedTodos.isNotEmpty()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 18.dp, vertical = 12.dp)
             ) {
-                SweetSectionLabel("TODAY")
-                occasions.forEach { event ->
-                    DayEventCard(
-                        title = event.description,
-                        meta = "Calendar occasion",
-                        accentColor = colors.purpleDeep,
-                        icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
-                        onClick = { onEventClick(event) }
+                SweetSectionLabel("TO DO")
+                pendingTodos.forEach { task ->
+                    SweetTaskCard(
+                        task = task,
+                        onClick = { onEditTask(task) },
+                        onToggleComplete = { onCompleteTask(task) },
+                        style = TaskCardStyle.Mockup,
+                        metaStyle = TaskMetaStyle.Deadline,
                     )
-                }
-                holidays.forEach { event ->
-                    DayEventCard(
-                        title = event.description,
-                        meta = "Official holiday",
-                        accentColor = colors.mintDeep,
-                        icon = { ThemeHolidayHeroIcon(size = eventIconSize) },
-                        onClick = { onEventClick(event) }
-                    )
-                }
-            }
-        }
-
-        if (state.monthTodos.isNotEmpty()) {
-            val pendingTodos = state.monthTodos.filter { !it.isDone }
-            val completedTodos = state.monthTodos.filter { it.isDone }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 18.dp, vertical = 12.dp)
-            ) {
-                if (pendingTodos.isNotEmpty()) {
-                    SweetSectionLabel("TO DO")
-                    pendingTodos.forEach { task ->
-                        SweetTaskCard(
-                            task = task,
-                            onClick = { onEditTask(task) },
-                            onToggleComplete = { onCompleteTask(task) },
-                            style = TaskCardStyle.Mockup,
-                        )
-                    }
                 }
                 if (completedTodos.isNotEmpty()) {
                     CompletedSectionLink(
                         count = completedTodos.size,
                         suffix = "this month",
-                        modifier = Modifier.padding(top = if (pendingTodos.isNotEmpty()) 10.dp else 0.dp),
                     )
                     completedTodos.forEach { task ->
                         SweetTaskCard(
@@ -271,6 +237,7 @@ fun MonthScreen(
                             onClick = { onEditTask(task) },
                             onToggleComplete = { onCompleteTask(task) },
                             style = TaskCardStyle.Mockup,
+                            metaStyle = TaskMetaStyle.Deadline,
                         )
                     }
                 }
@@ -530,7 +497,9 @@ private fun MonthDayCell(
                 ),
                 color = textColor
             )
-            val hasMarkers = cell.hasScheduledTask || cell.hasTodo || cell.isHoliday
+            val hasMarkers =
+                cell.hasScheduledTask || cell.hasTodo || cell.hasHabit ||
+                    cell.hasOccasion || cell.isHoliday
             if (hasMarkers) {
                 Row(
                     modifier = Modifier
@@ -543,6 +512,12 @@ private fun MonthDayCell(
                     }
                     if (cell.hasTodo) {
                         CategoryDot(colors.pinkDeep, DotShape.Circle, isToday)
+                    }
+                    if (cell.hasHabit) {
+                        CategoryDot(SprinklesBlue, DotShape.Circle, isToday)
+                    }
+                    if (cell.hasOccasion) {
+                        CategoryDot(colors.lemonDeep, DotShape.Circle, isToday)
                     }
                     if (cell.isHoliday) {
                         CategoryDot(colors.mintDeep, DotShape.Circle, isToday)
@@ -586,7 +561,11 @@ private fun CalendarActivityLegend(showHoliday: Boolean, modifier: Modifier = Mo
     val entries = buildList {
         add(colors.purpleDeep to "Task")
         add(colors.pinkDeep to "To-do")
-        if (showHoliday) add(colors.mintDeep to "Holiday")
+        add(SprinklesBlue to "Habit")
+        if (showHoliday) {
+            add(colors.lemonDeep to "Occasion")
+            add(colors.mintDeep to "Holiday")
+        }
     }
     Row(
         modifier = modifier.fillMaxWidth(),

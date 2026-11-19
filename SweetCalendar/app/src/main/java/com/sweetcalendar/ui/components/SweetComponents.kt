@@ -148,7 +148,9 @@ enum class TaskCardStyle {
 enum class TaskMetaStyle {
     Default,
     /** Date · time · category — used on search results. */
-    SearchResult
+    SearchResult,
+    /** Deadline only — used on the month to-do list. */
+    Deadline,
 }
 
 @Composable
@@ -205,7 +207,7 @@ fun CompletedSectionLink(
             bgColor = if (colors.isDark) colors.mint else MintGreen,
         )
         Text(
-            "$count completed $suffix",
+            if (suffix.isBlank()) "$count completed" else "$count completed $suffix",
             style = MaterialTheme.typography.bodySmall.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = mockupSp(MockupDimens.COMPLETED_LABEL_F),
@@ -500,6 +502,11 @@ private fun MockupTaskCard(
                                 else date.formatDisplayShort()
                             )
                             task.reminderTime?.let { add(formatTime12h(it)) }
+                            if (task.category.isNotBlank()) add(task.category)
+                        }
+                        TaskMetaStyle.Deadline -> buildList {
+                            val dateLabel = JalaliDate.parseIso(task.jalaliDate).formatDisplayShort()
+                            add("Due $dateLabel")
                             if (task.category.isNotBlank()) add(task.category)
                         }
                         TaskMetaStyle.Default -> buildList {
@@ -978,12 +985,13 @@ fun SweetBottomNav(
                     bottom = mockupDp(16)
                 ),
             horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top,
         ) {
             NavItem(
-                label = "TODAY",
+                label = "Daily Tasks",
                 selected = selected == AppDestination.Today,
-                onClick = { onSelect(AppDestination.Today) }
+                onClick = { onSelect(AppDestination.Today) },
+                modifier = Modifier.weight(1f),
             ) { iconColors ->
                 ThemeNavTodayIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
@@ -993,9 +1001,10 @@ fun SweetBottomNav(
                 )
             }
             NavItem(
-                label = "WEEK",
+                label = "Weekly Habits",
                 selected = selected == AppDestination.Week,
-                onClick = { onSelect(AppDestination.Week) }
+                onClick = { onSelect(AppDestination.Week) },
+                modifier = Modifier.weight(1f),
             ) { iconColors ->
                 ThemeNavWeekIcon(
                     size = mockupDp(MockupDimens.NAV_ICON),
@@ -1005,9 +1014,10 @@ fun SweetBottomNav(
                 )
             }
             NavItem(
-                label = "MONTH",
+                label = "Monthly To-Dos",
                 selected = selected == AppDestination.Month,
-                onClick = { onSelect(AppDestination.Month) }
+                onClick = { onSelect(AppDestination.Month) },
+                modifier = Modifier.weight(1f),
             ) { iconColors ->
                 NavMonthGridIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
@@ -1017,7 +1027,8 @@ fun SweetBottomNav(
             NavItem(
                 label = "SETTINGS",
                 selected = selected == AppDestination.Settings,
-                onClick = { onSelect(AppDestination.Settings) }
+                onClick = { onSelect(AppDestination.Settings) },
+                modifier = Modifier.weight(1f),
             ) { iconColors ->
                 NavSettingsGearIcon(
                     size = mockupDp(MockupDimens.NAV_ICON_LARGE),
@@ -1033,6 +1044,7 @@ private fun NavItem(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     icon: @Composable (NavIconColors) -> Unit
 ) {
     val colors = SweetTheme.colors
@@ -1055,7 +1067,7 @@ private fun NavItem(
     }
     val navInteraction = remember { MutableInteractionSource() }
     Column(
-        modifier = Modifier
+        modifier = modifier
             .clip(RoundedCornerShape(mockupDp(12)))
             .background(if (selected) colors.navActiveBg else Color.Transparent)
             .pressScale(navInteraction, pressedScale = 0.95f)
@@ -1064,7 +1076,7 @@ private fun NavItem(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(horizontal = mockupDp(10), vertical = mockupDp(6)),
+            .padding(horizontal = mockupDp(4), vertical = mockupDp(6)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(mockupDp(4))
     ) {
@@ -1093,14 +1105,19 @@ private fun NavItem(
             style = TextStyle(
                 fontFamily = PixelFont,
                 fontSize = mockupSp(MockupDimens.NAV_LABEL_F),
-                lineHeight = mockupSp(14f)
+                lineHeight = mockupSp(11f)
             ),
             color = if (selected) {
                 if (colors.isDark) colors.pink else colors.pinkText
             } else {
                 colors.navInactive
             },
-            modifier = Modifier.graphicsLayer { alpha = labelAlpha },
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer { alpha = labelAlpha },
         )
     }
 }

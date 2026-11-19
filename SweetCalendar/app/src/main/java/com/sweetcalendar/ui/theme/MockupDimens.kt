@@ -90,7 +90,7 @@ object MockupDimens {
     const val NAV_ICON_SLOT = 18
     /** Fits `buildLollipop(2)` head + stick with −1px overlap (25px mockup). */
     const val NAV_ICON_SLOT_H = 26
-    const val NAV_LABEL_F = 10f
+    const val NAV_LABEL_F = 8.5f
     const val PRIORITY_SPARKLE_SLOT = 10
     const val PRIORITY_CHIP_PAD_V = 10
     const val PRIORITY_CHIP_PAD_H = 4

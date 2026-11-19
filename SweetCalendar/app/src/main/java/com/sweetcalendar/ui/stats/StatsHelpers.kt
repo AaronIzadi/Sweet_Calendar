@@ -1,5 +1,9 @@
 package com.sweetcalendar.ui.stats
 
+import com.sweetcalendar.data.HabitOccurrence
+import com.sweetcalendar.data.HabitWithDays
+import com.sweetcalendar.data.appearsOn
+import com.sweetcalendar.data.local.HabitCompletionEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.repository.DELETED_TASK_RETENTION_MS
@@ -175,4 +179,93 @@ fun searchTasks(tasks: List<TaskEntity>, query: String): List<TaskEntity> {
             it.notes.lowercase().contains(q) ||
             it.category.lowercase().contains(q)
     }.sortedWith(compareBy({ it.isDone }, { it.jalaliDate }))
+}
+
+fun searchHabits(habits: List<HabitWithDays>, query: String): List<HabitWithDays> {
+    if (query.isBlank()) return emptyList()
+    val q = query.trim().lowercase()
+    return habits.filter {
+        it.name.lowercase().contains(q) ||
+            it.habit.category.lowercase().contains(q)
+    }.sortedBy { it.name.lowercase() }
+}
+
+fun filterCompletedHabitOccurrences(
+    habits: List<HabitWithDays>,
+    completions: List<HabitCompletionEntity>,
+    filter: ArchiveFilter,
+): List<HabitOccurrence> {
+    val byId = habits.associateBy { it.id }
+    val today = JalaliDate.today()
+    val week = JalaliDate.weekContaining(today).map { it.formatIso() }.toSet()
+    return completions.mapNotNull { row ->
+        val habit = byId[row.habitId] ?: return@mapNotNull null
+        val date = JalaliDate.parseIso(row.jalaliDate)
+        val inFilter = when (filter) {
+            ArchiveFilter.AllTime -> true
+            ArchiveFilter.ThisWeek -> row.jalaliDate in week
+            ArchiveFilter.ThisMonth -> date.year == today.year && date.month == today.month
+        }
+        if (!inFilter) return@mapNotNull null
+        HabitOccurrence(
+            habit = habit,
+            date = date,
+            reminderTime = habit.reminderOn(date),
+            isDone = true,
+        )
+    }.sortedByDescending { it.date.formatIso() }
+}
+
+fun groupHabitOccurrencesByDay(
+    occurrences: List<HabitOccurrence>,
+): List<Pair<String, List<HabitOccurrence>>> {
+    val today = JalaliDate.today().formatIso()
+    val yesterday = JalaliDate.today().minusDays(1).formatIso()
+    return occurrences.groupBy { it.date.formatIso() }
+        .toList()
+        .sortedByDescending { it.first }
+        .map { (iso, dayItems) ->
+            val date = JalaliDate.parseIso(iso)
+            val label = when (iso) {
+                today -> "TODAY · ${JalaliDate.MONTH_NAMES_EN[date.month - 1].uppercase()} ${date.day}"
+                yesterday -> "YESTERDAY · ${JalaliDate.MONTH_NAMES_EN[date.month - 1].uppercase()} ${date.day}"
+                else -> "${JalaliDate.WEEKDAY_NAMES_EN_SHORT[date.weekdayIndex()].uppercase()} · ${JalaliDate.MONTH_NAMES_EN[date.month - 1].uppercase()} ${date.day}"
+            }
+            label to dayItems.sortedBy { it.name.lowercase() }
+        }
+}
+
+fun computeHabitCompletionStreak(completions: List<HabitCompletionEntity>): Int {
+    if (completions.isEmpty()) return 0
+    val days = completions.map { it.jalaliDate }.toSet()
+    var streak = 0
+    var day = JalaliDate.today()
+    while (day.formatIso() in days) {
+        streak++
+        day = day.minusDays(1)
+    }
+    return streak
+}
+
+fun computeHabitMonthCompletionPercent(
+    habits: List<HabitWithDays>,
+    completions: List<HabitCompletionEntity>,
+): Int {
+    val today = JalaliDate.today()
+    val monthDays = (1..today.day).map { day ->
+        JalaliDate(today.year, today.month, day)
+    }
+    var total = 0
+    var done = 0
+    val completedPairs = completions.map { it.habitId to it.jalaliDate }.toSet()
+    monthDays.forEach { date ->
+        habits.forEach { habit ->
+            if (habit.appearsOn(date)) {
+                total++
+                if ((habit.id to date.formatIso()) in completedPairs) done++
+            }
+        }
+    }
+    if (total == 0) return 0
+    return ((done.toFloat() / total) * 100).toInt()
 }

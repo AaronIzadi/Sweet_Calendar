@@ -35,8 +35,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sweetcalendar.CalendarTodoApp
+import com.sweetcalendar.data.habitsOnDate
 import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.HabitWithDays
 import com.sweetcalendar.data.prefs.AppPreferences
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.RecurrenceEditScope
@@ -61,6 +63,8 @@ import com.sweetcalendar.ui.components.SweetBottomNav
 import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.daydetail.DayDetailScreen
+import com.sweetcalendar.ui.habit.HabitBottomSheet
+import com.sweetcalendar.ui.habit.HabitDetailScreen
 import com.sweetcalendar.ui.holiday.HolidayDetailScreen
 import com.sweetcalendar.ui.navigation.AppDestination
 import com.sweetcalendar.ui.navigation.sweetFullScreenSheetEnter
@@ -95,11 +99,13 @@ private sealed class SheetState {
     data object Hidden : SheetState()
     data class Add(val date: JalaliDate) : SheetState()
     data class Edit(val task: TaskEntity) : SheetState()
+    data class EditHabit(val habit: HabitWithDays) : SheetState()
 }
 
 private sealed class OverlayState {
     data object None : OverlayState()
     data class TaskDetail(val task: TaskEntity, val returnTo: OverlayState = None) : OverlayState()
+    data class HabitDetail(val habitId: Long, val returnTo: OverlayState = None) : OverlayState()
     data class DayDetail(val date: JalaliDate) : OverlayState()
     data object Search : OverlayState()
     data object Archive : OverlayState()
@@ -124,7 +130,7 @@ private sealed class AppRoot {
 
 private fun OverlayState.depth(): Int = when (this) {
     OverlayState.None -> 0
-    is OverlayState.TaskDetail, is OverlayState.HolidayDetail -> 2
+    is OverlayState.TaskDetail, is OverlayState.HabitDetail, is OverlayState.HolidayDetail -> 2
     else -> 1
 }
 
@@ -151,11 +157,14 @@ fun MainScreen(
     val calendarState by viewModel.uiState.collectAsState()
     val allTasks by viewModel.allTasks.collectAsState()
     val allSubtasks by viewModel.allSubtasks.collectAsState()
+    val allHabits by viewModel.allHabits.collectAsState()
+    val habitCompletions by viewModel.habitCompletions.collectAsState()
     val deletedTasks by viewModel.deletedTasks.collectAsState()
     var destination by remember { mutableStateOf(AppDestination.Today) }
     var overlay by remember { mutableStateOf<OverlayState>(OverlayState.None) }
     var sheetState by remember { mutableStateOf<SheetState>(SheetState.Hidden) }
     var taskToDelete by remember { mutableStateOf<TaskEntity?>(null) }
+    var habitToDelete by remember { mutableStateOf<HabitWithDays?>(null) }
     var pendingRecurrenceEdit by remember {
         mutableStateOf<Pair<TaskEntity, TaskFormData>?>(null)
     }
@@ -205,6 +214,20 @@ fun MainScreen(
 
     fun openTaskDetail(task: TaskEntity, returnTo: OverlayState = OverlayState.None) {
         overlay = OverlayState.TaskDetail(task, returnTo)
+    }
+
+    fun openHabitDetail(habit: HabitWithDays, returnTo: OverlayState = OverlayState.None) {
+        overlay = OverlayState.HabitDetail(habit.id, returnTo)
+    }
+
+    fun onHabitSaved(hasReminder: Boolean) {
+        pendingNotificationPrompt = NotificationPermissionHelper.shouldPromptForReminder(
+            context = context,
+            hasReminder = hasReminder,
+        )
+        if (pendingNotificationPrompt) {
+            overlay = OverlayState.NotificationPermission
+        }
     }
 
     fun showSnackbar(message: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
@@ -387,6 +410,7 @@ fun MainScreen(
                             OverlayState.None -> it.destination
                             is OverlayState.DayDetail -> "day:${o.date.formatIso()}"
                             is OverlayState.TaskDetail -> "task:${o.task.occurrenceKey()}"
+                            is OverlayState.HabitDetail -> "habit:${o.habitId}"
                             is OverlayState.HolidayDetail -> "holiday:${o.date.formatIso()}:${o.event.description}"
                             else -> o::class
                         }
@@ -400,11 +424,21 @@ fun MainScreen(
                         when (key.destination) {
                             AppDestination.Today -> TodayScreen(
                                 tasks = allTasks,
+                                habits = allHabits,
+                                habitCompletions = habitCompletions,
                                 subtasks = allSubtasks,
                                 userName = userName,
                                 userBirthDate = userBirthDate,
                                 calendarSystem = calendarState.calendarSystem,
                                 onEditTask = { openTaskDetail(it) },
+                                onHabitClick = { openHabitDetail(it) },
+                                onToggleHabitComplete = { occurrence ->
+                                    viewModel.setHabitCompleted(
+                                        habitId = occurrence.id,
+                                        date = occurrence.date,
+                                        completed = !occurrence.isDone,
+                                    )
+                                },
                                 onAddTask = { sheetState = SheetState.Add(JalaliDate.today()) },
                                 onCompleteTask = { completeTask(it) },
                                 onDeleteTask = { deleteWithRecover(it) },
@@ -415,13 +449,17 @@ fun MainScreen(
                             AppDestination.Week -> WeekScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 tasks = allTasks,
+                                habits = allHabits,
+                                habitCompletions = habitCompletions,
                                 userBirthDate = userBirthDate,
                                 userName = userName,
                                 weekStartsOn = calendarState.weekStartsOn,
                                 calendarSystem = calendarState.calendarSystem,
-                                onEditTask = { openTaskDetail(it) },
-                                onCompleteTask = { completeTask(it) },
-                                onDeleteTask = { deleteWithRecover(it) }
+                                onDayClick = { date ->
+                                    viewModel.selectDate(date)
+                                    overlay = OverlayState.DayDetail(date)
+                                },
+                                onHabitClick = { openHabitDetail(it) },
                             )
                             AppDestination.Month -> MonthScreen(
                                 viewModel = viewModel,
@@ -430,13 +468,6 @@ fun MainScreen(
                                     overlay = OverlayState.DayDetail(date)
                                 },
                                 onOfflineClick = { overlay = OverlayState.Offline },
-                                onEventClick = { event ->
-                                    overlay = OverlayState.HolidayDetail(
-                                        date = JalaliDate.today(),
-                                        event = event,
-                                        returnTo = OverlayState.None,
-                                    )
-                                },
                                 onEditTask = { openTaskDetail(it) },
                                 onCompleteTask = { completeTask(it) },
                             )
@@ -495,15 +526,20 @@ fun MainScreen(
                     }
                     OverlayState.Search -> SearchScreen(
                         tasks = allTasks,
+                        habits = allHabits,
                         recentSearches = preferences.recentSearches,
                         onBack = { overlay = OverlayState.None },
                         onTaskClick = { openTaskDetail(it, OverlayState.Search) },
+                        onHabitClick = { openHabitDetail(it, OverlayState.Search) },
                         onSearchSubmitted = { preferences.addRecentSearch(it) }
                     )
                     OverlayState.Archive -> ArchiveScreen(
                         tasks = allTasks,
+                        habits = allHabits,
+                        habitCompletions = habitCompletions,
                         onBack = { overlay = OverlayState.None },
                         onTaskClick = { openTaskDetail(it, OverlayState.Archive) },
+                        onHabitClick = { openHabitDetail(it, OverlayState.Archive) },
                         onDeleteTask = { deleteWithRecover(it) }
                     )
                     OverlayState.Stats -> StatsScreen(
@@ -557,11 +593,46 @@ fun MainScreen(
                             }
                         )
                     }
+                    is OverlayState.HabitDetail -> {
+                        val liveHabit = allHabits.firstOrNull { it.id == current.habitId }
+                        if (liveHabit == null) {
+                            LaunchedEffect(current.habitId) {
+                                overlay = current.returnTo
+                            }
+                        } else {
+                            val todayIso = JalaliDate.today().formatIso()
+                            val isTodayDone = habitCompletions.any {
+                                it.habitId == liveHabit.id && it.jalaliDate == todayIso
+                            }
+                            HabitDetailScreen(
+                                habit = liveHabit,
+                                onBack = { overlay = current.returnTo },
+                                onEdit = { sheetState = SheetState.EditHabit(liveHabit) },
+                                onToggleEnabled = {
+                                    viewModel.setHabitEnabled(liveHabit.id, !liveHabit.isEnabled)
+                                },
+                                onDelete = { habitToDelete = liveHabit },
+                                isTodayDone = isTodayDone,
+                                onToggleTodayComplete = {
+                                    viewModel.setHabitCompleted(
+                                        habitId = liveHabit.id,
+                                        date = JalaliDate.today(),
+                                        completed = !isTodayDone,
+                                    )
+                                },
+                            )
+                        }
+                    }
                     is OverlayState.DayDetail -> {
                         LaunchedEffect(current.date) {
                             viewModel.selectDate(current.date)
                         }
                         val dayTasks = allTasks.tasksOnDate(current.date, userBirthDate, userName)
+                        val dayCompletedHabitIds = habitCompletions
+                            .filter { it.jalaliDate == current.date.formatIso() }
+                            .map { it.habitId }
+                            .toSet()
+                        val dayHabits = allHabits.habitsOnDate(current.date, dayCompletedHabitIds)
                         val dayEvents = if (calendarState.selectedDate == current.date) {
                             calendarState.selectedDayEvents
                         } else {
@@ -571,11 +642,20 @@ fun MainScreen(
                             modifier = Modifier.fillMaxSize(),
                             date = current.date,
                             tasks = dayTasks,
+                            habits = dayHabits,
                             subtasks = allSubtasks,
                             events = dayEvents,
                             calendarSystem = calendarState.calendarSystem,
                             onBack = { overlay = OverlayState.None },
                             onTaskClick = { openTaskDetail(it, current) },
+                            onHabitClick = { openHabitDetail(it, current) },
+                            onToggleHabitComplete = { occurrence ->
+                                viewModel.setHabitCompleted(
+                                    habitId = occurrence.id,
+                                    date = occurrence.date,
+                                    completed = !occurrence.isDone,
+                                )
+                            },
                             onCompleteTask = { completeTask(it) },
                             onAddTask = { sheetState = SheetState.Add(current.date) },
                             onHolidayClick = { event ->
@@ -658,7 +738,26 @@ fun MainScreen(
                             sheetState = SheetState.Hidden
                             onTaskSaved(form)
                             showSnackbar(themeFamily.taskAddedSnackbar)
-                        }
+                        },
+                        onConfirmHabit = { form ->
+                            viewModel.addHabit(form)
+                            sheetState = SheetState.Hidden
+                            onHabitSaved(form.dayReminders.values.any { it != null })
+                            showSnackbar("Habit added!")
+                        },
+                    )
+                }
+                is SheetState.EditHabit -> {
+                    HabitBottomSheet(
+                        existing = sheet.habit,
+                        weekStartsOn = calendarState.weekStartsOn,
+                        onDismiss = { sheetState = SheetState.Hidden },
+                        onConfirm = { form ->
+                            viewModel.updateHabit(sheet.habit.id, form)
+                            sheetState = SheetState.Hidden
+                            onHabitSaved(form.dayReminders.values.any { it != null })
+                            showSnackbar("Habit updated!")
+                        },
                     )
                 }
                 is SheetState.Edit -> {
@@ -773,6 +872,21 @@ fun MainScreen(
                     recoverTask = task
                 },
                 onDismiss = { taskToDelete = null }
+            )
+        }
+
+        habitToDelete?.let { habit ->
+            PixelConfirmDialog(
+                title = "Delete habit?",
+                message = "Are you sure you want to delete \"${habit.name}\"?",
+                confirmLabel = "Delete",
+                dismissLabel = "Keep",
+                onConfirm = {
+                    viewModel.deleteHabit(habit.id)
+                    habitToDelete = null
+                    overlay = (overlay as? OverlayState.HabitDetail)?.returnTo ?: OverlayState.None
+                },
+                onDismiss = { habitToDelete = null }
             )
         }
 

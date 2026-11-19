@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.sweetcalendar.MainActivity
+import com.sweetcalendar.data.HabitWithDays
 import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
@@ -17,7 +18,7 @@ class TaskReminderScheduler(private val context: Context) {
 
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-  /** Single-day task reminder (existing behavior). */
+    /** Single-day task reminder (existing behavior). */
     fun schedule(task: TaskEntity) {
         if (task.isToDo()) return
         cancelTaskReminders(task.id)
@@ -78,6 +79,58 @@ class TaskReminderScheduler(private val context: Context) {
         alertIds.forEach { id ->
             cancelAlarm(alertRequestCode(id, isEarly = false))
             cancelAlarm(alertRequestCode(id, isEarly = true))
+        }
+    }
+
+    /**
+     * Schedules the next [HABIT_WEEKS_AHEAD] matching weekdays for an enabled habit.
+     * Cancels prior habit alarms for this id first.
+     */
+    fun scheduleHabit(habit: HabitWithDays) {
+        cancelHabit(habit.id)
+        if (!habit.isEnabled) return
+        val now = System.currentTimeMillis()
+        val today = JalaliDate.today()
+        habit.days.forEach { day ->
+            val time = day.reminderTime ?: return@forEach
+            var scheduled = 0
+            var cursor = today
+            val limit = today.plusDays(HABIT_WEEKS_AHEAD * 7 + 7)
+            while (scheduled < HABIT_WEEKS_AHEAD && cursor <= limit) {
+                if (cursor.weekdayIndex() == day.weekdayIndex) {
+                    val iso = cursor.formatIso()
+                    val triggerAt = reminderMillis(iso, time)
+                    if (triggerAt != null && triggerAt > now) {
+                        scheduleAlarm(
+                            title = habit.name,
+                            body = "Habit reminder",
+                            dateTimeLabel = formatDateTime(iso, time),
+                            triggerAt = triggerAt,
+                            requestCode = habitRequestCode(habit.id, day.weekdayIndex, scheduled, isEarly = false),
+                            now = now,
+                        )
+                        scheduleAlarm(
+                            title = habit.name,
+                            body = "Reminder in 10 minutes",
+                            dateTimeLabel = formatDateTime(iso, time),
+                            triggerAt = triggerAt - EARLY_OFFSET_MS,
+                            requestCode = habitRequestCode(habit.id, day.weekdayIndex, scheduled, isEarly = true),
+                            now = now,
+                        )
+                        scheduled++
+                    }
+                }
+                cursor = cursor.plusDays(1)
+            }
+        }
+    }
+
+    fun cancelHabit(habitId: Long) {
+        for (weekday in 0..6) {
+            for (weekOffset in 0 until HABIT_WEEKS_AHEAD) {
+                cancelAlarm(habitRequestCode(habitId, weekday, weekOffset, isEarly = false))
+                cancelAlarm(habitRequestCode(habitId, weekday, weekOffset, isEarly = true))
+            }
         }
     }
 
@@ -184,6 +237,8 @@ class TaskReminderScheduler(private val context: Context) {
         private const val SHOW_INTENT_REQUEST_CODE_OFFSET = 2_000_000
         private const val TASK_REQUEST_BASE = 100_000
         private const val ALERT_REQUEST_BASE = 2_100_000
+        private const val HABIT_REQUEST_BASE = 3_100_000
+        private const val HABIT_WEEKS_AHEAD = 4
 
         private fun taskRequestCode(taskId: Long, isEarly: Boolean): Int {
             val base = (TASK_REQUEST_BASE + (taskId % 800_000)).toInt()
@@ -192,6 +247,18 @@ class TaskReminderScheduler(private val context: Context) {
 
         private fun alertRequestCode(alertId: Long, isEarly: Boolean): Int {
             val base = (ALERT_REQUEST_BASE + (alertId % 800_000)).toInt()
+            return if (isEarly) base * 2 + 1 else base * 2
+        }
+
+        /** Unique code per habit × weekday × week-offset × early/main. */
+        private fun habitRequestCode(
+            habitId: Long,
+            weekdayIndex: Int,
+            weekOffset: Int,
+            isEarly: Boolean,
+        ): Int {
+            val slot = ((habitId % 10_000) * 56 + weekdayIndex * 8 + weekOffset).toInt()
+            val base = HABIT_REQUEST_BASE + slot
             return if (isEarly) base * 2 + 1 else base * 2
         }
 

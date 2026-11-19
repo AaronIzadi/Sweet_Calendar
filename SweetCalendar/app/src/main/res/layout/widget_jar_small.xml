@@ -3,13 +3,13 @@
     android:id="@+id/widget_jar_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_background"
+    android:background="@drawable/widget_card_candy_light"
     android:gravity="center_vertical"
     android:orientation="vertical"
-    android:paddingStart="4dp"
-    android:paddingTop="8dp"
-    android:paddingEnd="8dp"
-    android:paddingBottom="8dp">
+    android:paddingStart="12dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="13dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,22 +19,60 @@
 
         <ImageView
             android:id="@+id/widget_jar_icon"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginStart="4dp"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
             android:contentDescription="@string/app_name"
             android:scaleType="fitCenter" />
+
+        <TextView
+            android:id="@+id/widget_jar_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="@font/quicksand_variable"
+            android:maxLines="1"
+            android:text="@string/app_name"
+            android:textColor="#3A2317"
+            android:textFontWeight="700"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_jar_add_button"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/widget_add_button_candy_light"
+            android:fontFamily="@font/quicksand_variable"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:paddingBottom="2dp"
+            android:text="+"
+            android:textColor="#FFFFFF"
+            android:textFontWeight="700"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <TextView
             android:id="@+id/widget_jar_label"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="@font/quicksand_variable"
             android:maxLines="1"
             android:text="@string/widget_preview_jar_label"
             android:textColor="#3A2317"
+            android:textFontWeight="700"
             android:textSize="12sp"
             android:textStyle="bold" />
 
@@ -42,19 +80,20 @@
             android:id="@+id/widget_jar_big_num"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/quicksand_variable"
             android:text="0 / 0"
             android:textColor="#3A2317"
+            android:textFontWeight="700"
             android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="8dp"
+        android:layout_height="14dp"
         android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="8dp">
 
         <ProgressBar
             android:id="@+id/widget_jar_progress_candy_light"

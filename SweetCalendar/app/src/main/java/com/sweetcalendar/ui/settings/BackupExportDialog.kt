@@ -29,6 +29,7 @@ import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.ui.components.SweetModalOverlay
 import com.sweetcalendar.export.ExportCacheResult
 import com.sweetcalendar.export.ExportFormat
+import com.sweetcalendar.export.ExportFormatting
 import com.sweetcalendar.export.PdfExportRequest
 import com.sweetcalendar.export.PdfExportScope
 import com.sweetcalendar.export.TaskExportRunner
@@ -144,7 +145,7 @@ fun BackupExportDialog(
                                         Toast.makeText(
                                             context,
                                             if (saved) {
-                                                "Saved ${result.taskCount} tasks to Downloads"
+                                                "Saved ${ExportFormatting.itemCountLabel(result.taskCount, result.todoCount, result.habitCount)} to Downloads"
                                             } else {
                                                 "Could not save file"
                                             },
@@ -161,7 +162,7 @@ fun BackupExportDialog(
                                         exportRunner.share(result.file, result.format)
                                         Toast.makeText(
                                             context,
-                                            "Sharing ${result.taskCount} tasks",
+                                            "Sharing ${ExportFormatting.itemCountLabel(result.taskCount, result.todoCount, result.habitCount)}",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }

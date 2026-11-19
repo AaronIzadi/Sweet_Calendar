@@ -11,15 +11,18 @@ import android.text.TextPaint
 import androidx.core.content.res.ResourcesCompat
 import com.sweetcalendar.R
 import com.sweetcalendar.calendar.CalendarSystem
+import com.sweetcalendar.data.HabitWithDays
+import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.weekDayLabels
 import com.sweetcalendar.recurrence.repeatSummary
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
 import java.io.OutputStream
 
 /**
- * Renders task data into a multi-page PDF using the platform [PdfDocument] API.
- * Call [export] with a prepared task list; filtering is handled upstream.
+ * Renders task and habit data into a multi-page PDF using the platform [PdfDocument] API.
+ * Call [export] with prepared lists; filtering is handled upstream.
  */
 class TaskPdfExporter(context: Context) {
 
@@ -37,20 +40,26 @@ class TaskPdfExporter(context: Context) {
     fun export(
         request: PdfExportRequest,
         tasks: List<TaskEntity>,
+        habits: List<HabitWithDays>,
+        completionCounts: Map<Long, Int>,
         output: OutputStream
     ): PdfExportResult {
         val document = PdfDocument()
         val renderer = PageRenderer(document, request)
 
         try {
-            renderer.drawReport(tasks)
+            renderer.drawReport(tasks, habits, completionCounts)
             document.writeTo(output)
         } finally {
             document.close()
         }
 
+        val scheduledCount = tasks.count { !it.isToDo() }
+        val todoCount = tasks.count { it.isToDo() }
         return PdfExportResult(
-            taskCount = tasks.size,
+            taskCount = scheduledCount,
+            todoCount = todoCount,
+            habitCount = habits.size,
             pageCount = renderer.pageCount,
             scope = request.scope
         )
@@ -114,18 +123,30 @@ class TaskPdfExporter(context: Context) {
             color = COLOR_PAPER
         }
 
-        fun drawReport(tasks: List<TaskEntity>) {
+        fun drawReport(
+            tasks: List<TaskEntity>,
+            habits: List<HabitWithDays>,
+            completionCounts: Map<Long, Int>,
+        ) {
+            val scheduled = tasks.filter { !it.isToDo() }
+            val todos = tasks.filter { it.isToDo() }
             startPage()
-            drawHeader(tasks)
-            if (tasks.isEmpty()) {
-                drawParagraph("No tasks match this export.", taskMetaPaint)
+            drawHeader(scheduled, todos, habits)
+            if (scheduled.isEmpty() && todos.isEmpty() && habits.isEmpty()) {
+                drawParagraph("No activities match this export.", taskMetaPaint)
             } else {
-                drawTaskSections(tasks)
+                drawKindSection("TASKS", scheduled, emptyMessage = "No tasks match this export.")
+                drawKindSection("TO-DOS", todos, emptyMessage = "No to-dos match this export.")
+                drawHabitSection(habits, completionCounts)
             }
             finishPage()
         }
 
-        private fun drawHeader(tasks: List<TaskEntity>) {
+        private fun drawHeader(
+            scheduled: List<TaskEntity>,
+            todos: List<TaskEntity>,
+            habits: List<HabitWithDays>,
+        ) {
             drawText("Sweet Calendar", titlePaint)
             advance(6f)
             drawText("Export for ${request.userName}", subtitlePaint)
@@ -133,19 +154,37 @@ class TaskPdfExporter(context: Context) {
             drawText("Generated ${ExportFormatting.formatGeneratedAt(request.generatedAtMillis)}", subtitlePaint)
             advance(4f)
             drawText("Scope: ${ExportFormatting.scopeLabel(request.scope)}", subtitlePaint)
-            if (tasks.isNotEmpty()) {
+            advance(4f)
+            drawText(
+                ExportFormatting.itemCountLabel(scheduled.size, todos.size, habits.size),
+                subtitlePaint,
+            )
+            val allItems = scheduled + todos
+            if (allItems.isNotEmpty()) {
                 advance(4f)
-                val done = tasks.count { it.isDone }
-                val pending = tasks.size - done
-                drawText("${tasks.size} tasks · $done completed · $pending pending", subtitlePaint)
+                val done = allItems.count { it.isDone }
+                val pending = allItems.size - done
+                drawText("$done completed · $pending pending", subtitlePaint)
             }
             advance(14f)
             drawDivider()
             advance(16f)
         }
 
-        private fun drawTaskSections(tasks: List<TaskEntity>) {
-            val grouped = groupTasksByDay(tasks, request.calendarSystem)
+        private fun drawKindSection(
+            title: String,
+            items: List<TaskEntity>,
+            emptyMessage: String,
+        ) {
+            ensureSpace(36f)
+            drawText(title, sectionPaint)
+            advance(10f)
+            if (items.isEmpty()) {
+                drawParagraph(emptyMessage, taskMetaPaint)
+                advance(10f)
+                return
+            }
+            val grouped = groupTasksByDay(items, request.calendarSystem)
             grouped.forEach { (dayLabel, dayTasks) ->
                 ensureSpace(28f)
                 drawText(dayLabel, sectionPaint)
@@ -159,12 +198,18 @@ class TaskPdfExporter(context: Context) {
         }
 
         private fun drawTask(task: TaskEntity) {
-            val statusPrefix = "[${ExportFormatting.taskStatus(task)}] "
+            val kind = ExportTaskColumns.typeLabel(task)
+            val statusPrefix = "[$kind · ${ExportFormatting.taskStatus(task)}] "
             drawParagraph(statusPrefix + task.title, taskTitlePaint)
             advance(2f)
 
             val metaParts = buildList {
-                add(ExportFormatting.formatTaskDate(task.jalaliDate, request.calendarSystem))
+                val dateLabel = if (task.isToDo()) {
+                    "Due ${ExportFormatting.formatTaskDate(task.jalaliDate, request.calendarSystem)}"
+                } else {
+                    ExportFormatting.formatTaskDate(task.jalaliDate, request.calendarSystem)
+                }
+                add(dateLabel)
                 if (task.category.isNotBlank()) add(task.category)
                 if (task.priority.isNotBlank() && task.priority != "Medium") add(task.priority)
                 task.reminderTime?.let { add("Reminder $it") }
@@ -180,6 +225,40 @@ class TaskPdfExporter(context: Context) {
                 advance(2f)
             }
 
+            drawDivider()
+        }
+
+        private fun drawHabitSection(
+            habits: List<HabitWithDays>,
+            completionCounts: Map<Long, Int>,
+        ) {
+            ensureSpace(36f)
+            drawText("HABITS", sectionPaint)
+            advance(10f)
+            if (habits.isEmpty()) {
+                drawParagraph("No habits to export.", taskMetaPaint)
+                return
+            }
+            habits.forEach { habit ->
+                drawHabit(habit, completionCounts[habit.id] ?: 0)
+                advance(8f)
+            }
+        }
+
+        private fun drawHabit(habit: HabitWithDays, completionCount: Int) {
+            val statusPrefix = "[${ExportFormatting.habitStatus(habit)}] "
+            drawParagraph(statusPrefix + habit.name, taskTitlePaint)
+            advance(2f)
+            val metaParts = buildList {
+                add(habit.habit.category)
+                if (habit.habit.priority.isNotBlank() && habit.habit.priority != "Medium") {
+                    add(habit.habit.priority)
+                }
+                add(habit.weekDayLabels())
+                add("$completionCount completion${if (completionCount == 1) "" else "s"}")
+            }
+            drawParagraph(metaParts.joinToString(" · "), taskMetaPaint)
+            advance(2f)
             drawDivider()
         }
 

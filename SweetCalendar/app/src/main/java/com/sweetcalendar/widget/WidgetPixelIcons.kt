@@ -64,14 +64,32 @@ object WidgetPixelIcons {
                 TaskCategory.Personal -> theme.purpleDeep
                 TaskCategory.Work -> theme.mintDeep
                 TaskCategory.School -> theme.pinkDeep
-                TaskCategory.Home -> theme.mintDeep
+                TaskCategory.Home -> theme.mint
             }
         }
         return when (category) {
             TaskCategory.Work -> if (theme.isDark) 0xFFC3AEEF.toInt() else theme.purpleDeep
             TaskCategory.Personal -> if (theme.isDark) 0xFFFF8FBB.toInt() else theme.pinkDeep
-            TaskCategory.Home -> theme.mintDeep
-            TaskCategory.School -> theme.choc
+            TaskCategory.Home -> if (theme.isDark) theme.mint else theme.mintDeep
+            TaskCategory.School -> if (theme.isDark) theme.choc else theme.chocDeep
+        }
+    }
+
+    /** Left accent strip colors — mirrors [TaskCategory.accentColor]. */
+    fun accentColor(category: TaskCategory, theme: WidgetTheme.Colors, forTodo: Boolean): Int {
+        if (forTodo) {
+            return when (category) {
+                TaskCategory.Personal -> theme.purpleDeep
+                TaskCategory.Work -> theme.mintDeep
+                TaskCategory.School -> theme.pinkDeep
+                TaskCategory.Home -> theme.mint
+            }
+        }
+        return when (category) {
+            TaskCategory.Personal -> theme.pinkText
+            TaskCategory.Home -> theme.mint
+            TaskCategory.Work -> theme.purpleDeep
+            TaskCategory.School -> theme.chocDeep
         }
     }
 

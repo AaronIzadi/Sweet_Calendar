@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -27,6 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import com.sweetcalendar.data.HabitOccurrence
+import com.sweetcalendar.data.HabitWithDays
+import com.sweetcalendar.data.aggregateHabitJarCounts
 import com.sweetcalendar.data.aggregateJarCounts
 import com.sweetcalendar.data.effectiveIsDone
 import com.sweetcalendar.data.forTask
@@ -34,20 +39,25 @@ import com.sweetcalendar.data.groupedByParent
 import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.data.local.SubtaskEntity
 import com.sweetcalendar.data.local.TaskEntity
-import com.sweetcalendar.recurrence.occurrenceKey
+import com.sweetcalendar.data.taskProgressSlice
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
+import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.ui.calendar.DayEvent
-import com.sweetcalendar.ui.components.JarProgressCard
-import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
-import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.BackArrowMiniIcon
+import com.sweetcalendar.ui.components.CompletedSectionLink
+import com.sweetcalendar.ui.components.JarProgressCard
+import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetSectionLabel
-import com.sweetcalendar.ui.components.scheduledAndTodoTaskSections
-import com.sweetcalendar.ui.motion.rememberNewItemTracker
+import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.TaskCardStyle
+import com.sweetcalendar.ui.components.ThemeHolidayHeroIcon
 import com.sweetcalendar.ui.components.formatAlternateCalendarLine
+import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.habit.SweetHabitCard
+import com.sweetcalendar.ui.motion.appearOnEnter
+import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.MockupDimens
@@ -65,11 +75,14 @@ private fun dayEventMetaColor(): Color = SweetTheme.colors.muted
 fun DayDetailScreen(
     date: JalaliDate,
     tasks: List<TaskEntity>,
+    habits: List<HabitOccurrence> = emptyList(),
     subtasks: List<SubtaskEntity> = emptyList(),
     events: List<DayEvent>,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
+    onHabitClick: (HabitWithDays) -> Unit = {},
+    onToggleHabitComplete: (HabitOccurrence) -> Unit = {},
     onCompleteTask: (TaskEntity) -> Unit = {},
     onAddTask: () -> Unit,
     onHolidayClick: (DayEvent) -> Unit = {},
@@ -87,14 +100,25 @@ fun DayDetailScreen(
     }
     val secondaryLine = "${weekday} · ${date.formatAlternateCalendarLine(calendarSystem)}"
     val subtasksByParent = remember(subtasks) { subtasks.groupedByParent() }
-    val done = tasks.count { it.effectiveIsDone(subtasksByParent.forTask(it.id)) }
-    val (weightedDone, weightedTotal) = remember(tasks, subtasksByParent) {
+    val doneTasks = tasks.count { it.effectiveIsDone(subtasksByParent.forTask(it)) }
+    val doneHabits = habits.count { it.isDone }
+    val (taskWeightedDone, taskWeightedTotal) = remember(tasks, subtasksByParent) {
         aggregateJarCounts(tasks, subtasksByParent)
     }
+    val (habitWeightedDone, habitWeightedTotal) = remember(habits) {
+        aggregateHabitJarCounts(
+            habits.map { it.habit.habit.priority to it.isDone },
+        )
+    }
+    val done = doneTasks + doneHabits
+    val total = tasks.size + habits.size
+    val weightedDone = taskWeightedDone + habitWeightedDone
+    val weightedTotal = taskWeightedTotal + habitWeightedTotal
     val holidays = events.filter { it.isHoliday && it.description.isNotBlank() }
     val occasions = events.filter { !it.isHoliday && it.description.isNotBlank() }
     val eventIconSize = mockupDp(MockupDimens.HOLIDAY_EVENT_ICON)
     val isNewTask = rememberNewItemTracker(tasks.map { it.id })
+    val isNewHabit = rememberNewItemTracker(habits.map { it.id })
 
     Box(modifier = modifier.fillMaxSize().background(colors.cream)) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -149,28 +173,67 @@ fun DayDetailScreen(
                     JarProgressCard(
                         label = "Day's jar",
                         completed = done,
-                        total = tasks.size.coerceAtLeast(done),
+                        total = total.coerceAtLeast(done),
                         weightedCompleted = weightedDone,
                         weightedTotal = weightedTotal,
                     )
                 }
-                if (tasks.isNotEmpty()) {
-                    val scheduled = tasks.filter {
-                        !it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it.id))
-                    }
-                    val todos = tasks.filter {
-                        it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it.id))
-                    }
-                    val completed = tasks.filter {
-                        it.effectiveIsDone(subtasksByParent.forTask(it.id))
-                    }
-                    scheduledAndTodoTaskSections(
-                        scheduled = scheduled,
-                        todos = todos,
-                        subtasksByParent = subtasksByParent,
-                        scheduledLabel = "TASKS",
-                        done = completed,
-                        isNewTask = { id -> isNewTask(id) },
+                val pendingScheduled = tasks.filter {
+                    !it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it))
+                }
+                val doneScheduled = tasks.filter {
+                    !it.isToDo() && it.effectiveIsDone(subtasksByParent.forTask(it))
+                }
+                val pendingTodos = tasks.filter {
+                    it.isToDo() && !it.effectiveIsDone(subtasksByParent.forTask(it))
+                }
+                val doneTodos = tasks.filter {
+                    it.isToDo() && it.effectiveIsDone(subtasksByParent.forTask(it))
+                }
+                val pendingHabits = habits.filter { !it.isDone }
+                val completedHabits = habits.filter { it.isDone }
+
+                dayDetailActivitySection(
+                    label = "TASKS",
+                    pending = pendingScheduled,
+                    completed = doneScheduled,
+                    pendingKey = { it.occurrenceKey() },
+                    completedKey = { "done:${it.occurrenceKey()}" },
+                ) { task ->
+                    dayDetailTaskCard(
+                        task = task,
+                        subtasks = subtasksByParent.forTask(task),
+                        isNew = isNewTask(task.id),
+                        onTaskClick = onTaskClick,
+                        onCompleteTask = onCompleteTask,
+                    )
+                }
+                dayDetailActivitySection(
+                    label = "HABITS",
+                    pending = pendingHabits,
+                    completed = completedHabits,
+                    pendingKey = { it.key },
+                    completedKey = { "done:${it.key}" },
+                ) { occurrence ->
+                    SweetHabitCard(
+                        habit = occurrence.habit,
+                        occurrence = occurrence,
+                        onClick = { onHabitClick(occurrence.habit) },
+                        onToggleComplete = { onToggleHabitComplete(occurrence) },
+                        modifier = Modifier.appearOnEnter(isNewHabit(occurrence.id)),
+                    )
+                }
+                dayDetailActivitySection(
+                    label = "TO DO",
+                    pending = pendingTodos,
+                    completed = doneTodos,
+                    pendingKey = { it.occurrenceKey() },
+                    completedKey = { "done:${it.occurrenceKey()}" },
+                ) { task ->
+                    dayDetailTaskCard(
+                        task = task,
+                        subtasks = subtasksByParent.forTask(task),
+                        isNew = isNewTask(task.id),
                         onTaskClick = onTaskClick,
                         onCompleteTask = onCompleteTask,
                     )
@@ -201,7 +264,7 @@ fun DayDetailScreen(
                         )
                     }
                 }
-                if (tasks.isEmpty() && holidays.isEmpty() && occasions.isEmpty()) {
+                if (tasks.isEmpty() && habits.isEmpty() && holidays.isEmpty() && occasions.isEmpty()) {
                     item {
                         Text(
                             "Nothing scheduled for this day",
@@ -227,6 +290,47 @@ fun DayDetailScreen(
                 .padding(end = mockupDp(18), bottom = mockupDp(18))
         )
     }
+}
+
+private fun <T> LazyListScope.dayDetailActivitySection(
+    label: String,
+    pending: List<T>,
+    completed: List<T>,
+    pendingKey: (T) -> Any,
+    completedKey: (T) -> Any,
+    itemContent: @Composable LazyItemScope.(T) -> Unit,
+) {
+    if (pending.isEmpty() && completed.isEmpty()) return
+    item { SweetSectionLabel(label) }
+    items(pending, key = pendingKey, itemContent = itemContent)
+    if (completed.isNotEmpty()) {
+        item {
+            CompletedSectionLink(
+                count = completed.size,
+                suffix = "",
+            )
+        }
+        items(completed, key = completedKey, itemContent = itemContent)
+    }
+}
+
+@Composable
+private fun LazyItemScope.dayDetailTaskCard(
+    task: TaskEntity,
+    subtasks: List<SubtaskEntity>,
+    isNew: Boolean,
+    onTaskClick: (TaskEntity) -> Unit,
+    onCompleteTask: (TaskEntity) -> Unit,
+) {
+    val ratio = taskProgressSlice(task, subtasks).ratio.takeIf { subtasks.isNotEmpty() }
+    SweetTaskCard(
+        task = task,
+        modifier = sweetTaskItemMotion().appearOnEnter(isNew),
+        onClick = { onTaskClick(task) },
+        onToggleComplete = { onCompleteTask(task) },
+        style = TaskCardStyle.Mockup,
+        subtaskProgressRatio = ratio,
+    )
 }
 
 @Composable

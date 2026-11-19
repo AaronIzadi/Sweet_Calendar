@@ -56,7 +56,7 @@ class JarWidgetProvider : AppWidgetProvider() {
             val theme = WidgetTheme.colors(context)
             val data = WidgetDataLoader.loadToday(context)
             bindJarContent(views, context, theme, data.done, data.total, data.progress)
-            attachOpenAppIntent(views, context)
+            attachOpenAppIntents(views, context)
             return views
         }
 
@@ -64,7 +64,7 @@ class JarWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_jar_small)
             val theme = WidgetTheme.colors(context)
             bindJarContent(views, context, theme, done = 0, total = 0, progress = 0)
-            attachOpenAppIntent(views, context)
+            attachOpenAppIntents(views, context)
             return views
         }
 
@@ -76,27 +76,35 @@ class JarWidgetProvider : AppWidgetProvider() {
             total: Int,
             progress: Int,
         ) {
-            val iconPx = (22f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+            val iconPx = (16f * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
             WidgetUi.applyCardSurface(views, R.id.widget_jar_root, theme)
             views.setImageViewBitmap(
                 R.id.widget_jar_icon,
                 WidgetPixelIcons.brandBitmap(iconPx, theme),
             )
+            views.setTextViewText(R.id.widget_jar_title, context.getString(R.string.app_name))
+            views.setTextColor(R.id.widget_jar_title, theme.ink)
             views.setTextViewText(R.id.widget_jar_label, WidgetCopy.todayJarLabel(theme.isSpace))
             views.setTextViewText(R.id.widget_jar_big_num, WidgetCopy.jarCount(done, total))
             views.setTextColor(R.id.widget_jar_label, theme.ink)
             views.setTextColor(R.id.widget_jar_big_num, theme.ink)
+            WidgetUi.applyAddButton(views, R.id.widget_jar_add_button, theme)
             WidgetUi.applyJarProgress(views, progress, theme)
         }
 
-        private fun attachOpenAppIntent(views: RemoteViews, context: Context) {
-            val openApp = PendingIntent.getActivity(
+        private fun attachOpenAppIntents(views: RemoteViews, context: Context) {
+            val openApp = openAppIntent(context, requestCode = 1)
+            val addTask = openAppIntent(context, requestCode = 2)
+            views.setOnClickPendingIntent(R.id.widget_jar_root, openApp)
+            views.setOnClickPendingIntent(R.id.widget_jar_add_button, addTask)
+        }
+
+        private fun openAppIntent(context: Context, requestCode: Int): PendingIntent =
+            PendingIntent.getActivity(
                 context,
-                1,
+                requestCode,
                 Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
-            views.setOnClickPendingIntent(R.id.widget_jar_root, openApp)
-        }
     }
 }

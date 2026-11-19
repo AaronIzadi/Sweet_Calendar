@@ -7,11 +7,11 @@ import com.sweetcalendar.R
 
 internal object WidgetUi {
     fun applyCardSurface(views: RemoteViews, @IdRes viewId: Int, theme: WidgetTheme.Colors) {
-        views.setInt(viewId, "setBackgroundColor", theme.cardBackgroundArgb)
+        views.setInt(viewId, "setBackgroundResource", theme.cardBackgroundRes)
     }
 
     fun applyAddButton(views: RemoteViews, @IdRes viewId: Int, theme: WidgetTheme.Colors) {
-        views.setInt(viewId, "setBackgroundColor", theme.addButtonFaceArgb)
+        views.setInt(viewId, "setBackgroundResource", theme.addButtonRes)
         views.setTextColor(viewId, theme.addButtonText)
     }
 

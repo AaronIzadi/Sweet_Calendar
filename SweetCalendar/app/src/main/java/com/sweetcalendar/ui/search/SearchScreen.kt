@@ -34,22 +34,28 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.sweetcalendar.data.HabitWithDays
 import com.sweetcalendar.data.TaskListScope
 import com.sweetcalendar.data.activityScopeForPicker
 import com.sweetcalendar.data.filterTasks
 import com.sweetcalendar.data.local.TaskEntity
+import com.sweetcalendar.data.searchEmptyMessage
 import com.sweetcalendar.data.searchPlaceholder
 import com.sweetcalendar.ui.components.ActivityTypeFilterRow
+import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.SearchGroupLabel
 import com.sweetcalendar.ui.components.SearchIcon
 import com.sweetcalendar.ui.components.RequestKeyboardOnEnter
 import com.sweetcalendar.ui.components.searchFieldFocus
+import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.habit.SweetHabitCard
 import com.sweetcalendar.ui.motion.appearOnEnter
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.components.TaskMetaStyle
+import com.sweetcalendar.ui.stats.searchHabits
 import com.sweetcalendar.ui.stats.searchTasks
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -71,9 +77,11 @@ private fun searchPlaceholderColor(): Color {
 @Composable
 fun SearchScreen(
     tasks: List<TaskEntity>,
+    habits: List<HabitWithDays> = emptyList(),
     recentSearches: List<String>,
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
+    onHabitClick: (HabitWithDays) -> Unit = {},
     onSearchSubmitted: (String) -> Unit,
     initialActivityScope: TaskListScope = TaskListScope.Scheduled,
     modifier: Modifier = Modifier
@@ -82,14 +90,19 @@ fun SearchScreen(
     var activityScope by remember {
         mutableStateOf(activityScopeForPicker(initialActivityScope))
     }
+    val showingHabits = activityScope == TaskListScope.Habit
     val scopedTasks = remember(tasks, activityScope) { activityScope.filterTasks(tasks) }
     val searchPlaceholder = activityScope.searchPlaceholder()
+    val emptyMessage = activityScope.searchEmptyMessage()
     var query by remember { mutableStateOf("") }
     val results = remember(scopedTasks, query) { searchTasks(scopedTasks, query) }
+    val habitResults = remember(habits, query) { searchHabits(habits, query) }
     val isNewTask = rememberNewItemTracker(scopedTasks.map { it.id })
+    val isNewHabit = rememberNewItemTracker(habits.map { it.id })
     val chipBackground = if (colors.isDark) colors.surfaceElevated else RecentChipBackgroundLight
     val placeholderColor = searchPlaceholderColor()
     val searchFocus = remember { FocusRequester() }
+    val resultCount = if (showingHabits) habitResults.size else results.size
 
     BackHandler(onBack = onBack)
     RequestKeyboardOnEnter(searchFocus)
@@ -100,13 +113,42 @@ fun SearchScreen(
             .background(colors.cream)
             .imePadding()
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(16),
+                    bottom = mockupDp(4),
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SweetIconButton(onClick = onBack) {
+                BackArrowMiniIcon(
+                    size = mockupDp(14),
+                    color = colors.purpleDeep,
+                )
+            }
+            Text(
+                "Search",
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.DAY_DETAIL_TITLE),
+                    lineHeight = mockupSp(22f),
+                ),
+                color = colors.ink,
+                modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP)),
+            )
+        }
         ActivityTypeFilterRow(
             selected = activityScope,
             onSelect = { activityScope = it },
             modifier = Modifier.padding(
                 start = mockupDp(18),
                 end = mockupDp(18),
-                top = mockupDp(16),
+                top = mockupDp(10),
             ),
         )
         Box(
@@ -184,12 +226,39 @@ fun SearchScreen(
         ) {
             if (query.isNotBlank()) {
                 item {
-                    SearchGroupLabel("RESULTS · ${results.size}")
+                    SearchGroupLabel("RESULTS · $resultCount")
                 }
-                if (results.isEmpty()) {
+                if (showingHabits) {
+                    if (habitResults.isEmpty()) {
+                        item {
+                            Text(
+                                emptyMessage,
+                                style = TextStyle(
+                                    fontFamily = BodyFont,
+                                    fontWeight = SecondaryTextWeight,
+                                    fontSize = mockupSp(12f),
+                                    lineHeight = mockupSp(16f)
+                                ),
+                                color = colors.muted,
+                                modifier = Modifier.padding(bottom = mockupDp(8))
+                            )
+                        }
+                    } else {
+                        items(habitResults, key = { it.id }) { habit ->
+                            SweetHabitCard(
+                                habit = habit,
+                                onClick = {
+                                    onSearchSubmitted(query)
+                                    onHabitClick(habit)
+                                },
+                                modifier = Modifier.appearOnEnter(isNewHabit(habit.id)),
+                            )
+                        }
+                    }
+                } else if (results.isEmpty()) {
                     item {
                         Text(
-                            "No matching tasks",
+                            emptyMessage,
                             style = TextStyle(
                                 fontFamily = BodyFont,
                                 fontWeight = SecondaryTextWeight,

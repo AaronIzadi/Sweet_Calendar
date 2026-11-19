@@ -6,9 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sweetcalendar.calendar.CalendarSystem
+import com.sweetcalendar.data.HabitWithDays
 import com.sweetcalendar.data.TaskScheduleKind
+import com.sweetcalendar.data.hasHabitOn
 import com.sweetcalendar.data.todosWithDeadlineInRange
 import com.sweetcalendar.data.isToDo
+import com.sweetcalendar.data.local.HabitCompletionEntity
 import com.sweetcalendar.data.local.SubtaskEntity
 import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.data.local.TaskEntity
@@ -19,6 +22,7 @@ import com.sweetcalendar.export.TaskExportRunner
 import com.sweetcalendar.reminder.TaskReminderScheduler
 import com.sweetcalendar.data.local.EventCacheEntity
 import com.sweetcalendar.repository.EventRepository
+import com.sweetcalendar.repository.HabitRepository
 import com.sweetcalendar.repository.TaskRepository
 import com.sweetcalendar.repository.gregorianEventStorageKey
 import com.sweetcalendar.repository.jalaliEventStorageKey
@@ -32,6 +36,7 @@ import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.recurrence.isVirtualOccurrence
 import com.sweetcalendar.recurrence.withRecurrence
 import com.sweetcalendar.ui.addtask.TaskFormData
+import com.sweetcalendar.ui.habit.HabitFormData
 import com.sweetcalendar.widget.SweetWidgets
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +60,7 @@ data class DayCellInfo(
     val displayDay: Int,
     val hasScheduledTask: Boolean,
     val hasTodo: Boolean,
+    val hasHabit: Boolean,
     val hasOccasion: Boolean,
     val isHoliday: Boolean,
 )
@@ -80,6 +86,7 @@ class CalendarViewModel(
     application: Application,
     private val taskRepository: TaskRepository,
     private val eventRepository: EventRepository,
+    private val habitRepository: HabitRepository,
     taskExportRepository: TaskExportRepository
 ) : AndroidViewModel(application) {
 
@@ -149,11 +156,26 @@ class CalendarViewModel(
     val allSubtasks: StateFlow<List<SubtaskEntity>> = taskRepository.observeSubtasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val allHabits: StateFlow<List<HabitWithDays>> = habitRepository.observeAll()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val habitCompletions: StateFlow<List<HabitCompletionEntity>> =
+        habitRepository.observeCompletions()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     init {
         viewModelScope.launch {
             taskRepository.purgeExpiredDeleted()
         }
     }
+
+    private data class MonthUiParts(
+        val context: MonthContext,
+        val allTasks: List<TaskEntity>,
+        val monthEvents: List<EventCacheEntity>,
+        val birthDate: JalaliDate?,
+        val name: String,
+    )
 
     val uiState: StateFlow<CalendarUiState> = combine(
         monthContextFlow,
@@ -162,72 +184,83 @@ class CalendarViewModel(
         userBirthDate,
         userName,
     ) { context, allTasks, monthEvents, birthDate, name ->
-        val pMonth = context.persianMonth
-        val gMonth = context.gregorianMonth
-        val selected = context.selected
-        val meta = context.meta
-        val eventsByDayKey = if (meta.showHolidays) {
-            groupMonthEventsByDayKey(monthEvents, meta.calendarSystem)
-        } else {
-            emptyMap()
-        }
-        val tasksByDate = when (meta.calendarSystem) {
-            CalendarSystem.PERSIAN -> {
-                val lastDay = pMonth.daysInMonth()
-                val rangeStart = JalaliDate(pMonth.year, pMonth.month, 1)
-                val rangeEnd = JalaliDate(pMonth.year, pMonth.month, lastDay)
-                allTasks.tasksByDateInRange(rangeStart, rangeEnd, birthDate, name)
+        MonthUiParts(context, allTasks, monthEvents, birthDate, name)
+    }.let { base ->
+        combine(base, habitRepository.observeAll()) { parts, habits ->
+            val context = parts.context
+            val allTasks = parts.allTasks
+            val monthEvents = parts.monthEvents
+            val birthDate = parts.birthDate
+            val name = parts.name
+            val pMonth = context.persianMonth
+            val gMonth = context.gregorianMonth
+            val selected = context.selected
+            val meta = context.meta
+            val eventsByDayKey = if (meta.showHolidays) {
+                groupMonthEventsByDayKey(monthEvents, meta.calendarSystem)
+            } else {
+                emptyMap()
             }
-            CalendarSystem.GREGORIAN -> {
-                val lastDay = gMonth.daysInMonth()
-                val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
-                val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
-                val start = minOf(rangeStart, rangeEnd)
-                val end = maxOf(rangeStart, rangeEnd)
-                allTasks.tasksByDateInRange(start, end, birthDate, name)
+            val tasksByDate = when (meta.calendarSystem) {
+                CalendarSystem.PERSIAN -> {
+                    val lastDay = pMonth.daysInMonth()
+                    val rangeStart = JalaliDate(pMonth.year, pMonth.month, 1)
+                    val rangeEnd = JalaliDate(pMonth.year, pMonth.month, lastDay)
+                    allTasks.tasksByDateInRange(rangeStart, rangeEnd, birthDate, name)
+                }
+                CalendarSystem.GREGORIAN -> {
+                    val lastDay = gMonth.daysInMonth()
+                    val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
+                    val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
+                    val start = minOf(rangeStart, rangeEnd)
+                    val end = maxOf(rangeStart, rangeEnd)
+                    allTasks.tasksByDateInRange(start, end, birthDate, name)
+                }
             }
-        }
 
-        val cells = when (meta.calendarSystem) {
-            CalendarSystem.PERSIAN -> buildPersianMonthCells(pMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
-            CalendarSystem.GREGORIAN -> buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate)
-        }
-
-        val monthRange = when (meta.calendarSystem) {
-            CalendarSystem.PERSIAN -> {
-                val lastDay = pMonth.daysInMonth()
-                JalaliDate(pMonth.year, pMonth.month, 1) to JalaliDate(pMonth.year, pMonth.month, lastDay)
+            val cells = when (meta.calendarSystem) {
+                CalendarSystem.PERSIAN ->
+                    buildPersianMonthCells(pMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate, habits)
+                CalendarSystem.GREGORIAN ->
+                    buildGregorianMonthCells(gMonth, meta.weekStartsOn, eventsByDayKey, tasksByDate, habits)
             }
-            CalendarSystem.GREGORIAN -> {
-                val lastDay = gMonth.daysInMonth()
-                val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
-                val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
-                minOf(rangeStart, rangeEnd) to maxOf(rangeStart, rangeEnd)
-            }
-        }
-        val monthTodos = allTasks.todosWithDeadlineInRange(monthRange.first, monthRange.second)
 
-        val selectedEvents = eventsForSelectedDay(eventsByDayKey, selected, meta.calendarSystem).map {
-            DayEvent(
-                description = it.description,
-                additionalDescription = it.additionalDescription,
-                isHoliday = it.isHoliday
+            val monthRange = when (meta.calendarSystem) {
+                CalendarSystem.PERSIAN -> {
+                    val lastDay = pMonth.daysInMonth()
+                    JalaliDate(pMonth.year, pMonth.month, 1) to JalaliDate(pMonth.year, pMonth.month, lastDay)
+                }
+                CalendarSystem.GREGORIAN -> {
+                    val lastDay = gMonth.daysInMonth()
+                    val rangeStart = GregorianDate(gMonth.year, gMonth.month, 1).toJalali()
+                    val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
+                    minOf(rangeStart, rangeEnd) to maxOf(rangeStart, rangeEnd)
+                }
+            }
+            val monthTodos = allTasks.todosWithDeadlineInRange(monthRange.first, monthRange.second)
+
+            val selectedEvents = eventsForSelectedDay(eventsByDayKey, selected, meta.calendarSystem).map {
+                DayEvent(
+                    description = it.description,
+                    additionalDescription = it.additionalDescription,
+                    isHoliday = it.isHoliday
+                )
+            }
+
+            CalendarUiState(
+                calendarSystem = meta.calendarSystem,
+                visibleMonth = pMonth,
+                visibleGregorianMonth = gMonth,
+                selectedDate = selected,
+                monthCells = cells,
+                selectedDayEvents = selectedEvents,
+                isLoadingEvents = meta.loading,
+                eventsLoadFailed = meta.failed,
+                showHolidays = meta.showHolidays,
+                weekStartsOn = meta.weekStartsOn,
+                monthTodos = monthTodos,
             )
         }
-
-        CalendarUiState(
-            calendarSystem = meta.calendarSystem,
-            visibleMonth = pMonth,
-            visibleGregorianMonth = gMonth,
-            selectedDate = selected,
-            monthCells = cells,
-            selectedDayEvents = selectedEvents,
-            isLoadingEvents = meta.loading,
-            eventsLoadFailed = meta.failed,
-            showHolidays = meta.showHolidays,
-            weekStartsOn = meta.weekStartsOn,
-            monthTodos = monthTodos,
-        )
     }.let { base ->
         combine(base, selectedDate, taskRepository.observeAll(), userBirthDate, userName) { state, selected, allTasks, birthDate, name ->
             state.copy(selectedDayTasks = allTasks.tasksOnDate(selected, birthDate, name))
@@ -274,6 +307,7 @@ class CalendarViewModel(
             todos.forEach { (task, alerts) ->
                 scheduleTodoAlertsSafely(task, alerts)
             }
+            habitRepository.getEnabledWithDays().forEach { scheduleHabitSafely(it) }
         }
     }
 
@@ -290,6 +324,65 @@ class CalendarViewModel(
             reminderScheduler.scheduleTodoAlerts(task, alerts)
         } catch (_: Exception) {
             // Keep the app usable even when the OS rejects alarm scheduling.
+        }
+    }
+
+    private fun scheduleHabitSafely(habit: HabitWithDays) {
+        try {
+            reminderScheduler.scheduleHabit(habit)
+        } catch (_: Exception) {
+            // Keep the app usable even when the OS rejects alarm scheduling.
+        }
+    }
+
+    fun addHabit(form: HabitFormData) {
+        if (form.name.isBlank() || form.dayReminders.isEmpty()) return
+        viewModelScope.launch {
+            val id = habitRepository.addHabit(
+                name = form.name,
+                dayReminders = form.dayReminders,
+                category = form.category.label,
+                priority = form.priority.label,
+            )
+            habitRepository.getById(id)?.let { scheduleHabitSafely(it) }
+        }
+    }
+
+    fun updateHabit(habitId: Long, form: HabitFormData) {
+        if (form.name.isBlank() || form.dayReminders.isEmpty()) return
+        viewModelScope.launch {
+            habitRepository.updateHabit(
+                habitId = habitId,
+                name = form.name,
+                dayReminders = form.dayReminders,
+                category = form.category.label,
+                priority = form.priority.label,
+            )
+            habitRepository.getById(habitId)?.let { scheduleHabitSafely(it) }
+        }
+    }
+
+    fun setHabitEnabled(habitId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            habitRepository.setEnabled(habitId, enabled)
+            if (enabled) {
+                habitRepository.getById(habitId)?.let { scheduleHabitSafely(it) }
+            } else {
+                reminderScheduler.cancelHabit(habitId)
+            }
+        }
+    }
+
+    fun deleteHabit(habitId: Long) {
+        viewModelScope.launch {
+            reminderScheduler.cancelHabit(habitId)
+            habitRepository.deleteHabit(habitId)
+        }
+    }
+
+    fun setHabitCompleted(habitId: Long, date: JalaliDate, completed: Boolean) {
+        viewModelScope.launch {
+            habitRepository.setCompleted(habitId, date, completed)
         }
     }
 
@@ -611,7 +704,8 @@ class CalendarViewModel(
         month: JalaliDate,
         weekStartsOn: Int,
         eventsByDayKey: Map<String, List<EventCacheEntity>>,
-        tasksByDate: Map<String, List<TaskEntity>>
+        tasksByDate: Map<String, List<TaskEntity>>,
+        habits: List<HabitWithDays>,
     ): List<DayCellInfo?> {
         val daysInMonth = month.daysInMonth()
         val leadingBlanks = (month.firstOfMonth().weekdayIndex() - weekStartsOn + 7) % 7
@@ -620,7 +714,7 @@ class CalendarViewModel(
         for (d in 1..daysInMonth) {
             val date = JalaliDate(month.year, month.month, d)
             val dayEvents = eventsByDayKey[jalaliEventStorageKey(date)].orEmpty()
-            cells.add(buildDayCell(date, d, dayEvents, tasksByDate))
+            cells.add(buildDayCell(date, d, dayEvents, tasksByDate, habits))
         }
         return cells
     }
@@ -629,7 +723,8 @@ class CalendarViewModel(
         month: GregorianDate,
         weekStartsOn: Int,
         eventsByDayKey: Map<String, List<EventCacheEntity>>,
-        tasksByDate: Map<String, List<TaskEntity>>
+        tasksByDate: Map<String, List<TaskEntity>>,
+        habits: List<HabitWithDays>,
     ): List<DayCellInfo?> {
         val daysInMonth = month.daysInMonth()
         val leadingBlanks = (month.firstOfMonth().weekdayIndex() - weekStartsOn + 7) % 7
@@ -639,7 +734,7 @@ class CalendarViewModel(
             val gregorian = GregorianDate(month.year, month.month, d)
             val jalali = gregorian.toJalali()
             val dayEvents = eventsByDayKey[gregorianEventStorageKey(gregorian)].orEmpty()
-            cells.add(buildDayCell(jalali, d, dayEvents, tasksByDate))
+            cells.add(buildDayCell(jalali, d, dayEvents, tasksByDate, habits))
         }
         return cells
     }
@@ -648,7 +743,8 @@ class CalendarViewModel(
         date: JalaliDate,
         displayDay: Int,
         dayEvents: List<EventCacheEntity>,
-        tasksByDate: Map<String, List<TaskEntity>>
+        tasksByDate: Map<String, List<TaskEntity>>,
+        habits: List<HabitWithDays>,
     ): DayCellInfo {
         val iso = date.formatIso()
         val dayTasks = tasksByDate[iso].orEmpty()
@@ -657,6 +753,7 @@ class CalendarViewModel(
             displayDay = displayDay,
             hasScheduledTask = dayTasks.any { !it.isToDo() },
             hasTodo = dayTasks.any { it.isToDo() },
+            hasHabit = habits.hasHabitOn(date),
             hasOccasion = dayEvents.any { !it.isHoliday },
             isHoliday = dayEvents.any { it.isHoliday },
         )
@@ -700,6 +797,7 @@ class CalendarViewModel(
         private val application: Application,
         private val taskRepository: TaskRepository,
         private val eventRepository: EventRepository,
+        private val habitRepository: HabitRepository,
         private val taskExportRepository: TaskExportRepository
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -708,6 +806,7 @@ class CalendarViewModel(
                 application,
                 taskRepository,
                 eventRepository,
+                habitRepository,
                 taskExportRepository
             ) as T
         }

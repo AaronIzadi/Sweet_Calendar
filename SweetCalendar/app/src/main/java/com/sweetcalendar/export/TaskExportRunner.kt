@@ -20,9 +20,15 @@ class TaskExportRunner(
     suspend fun exportToCache(format: ExportFormat, request: PdfExportRequest): ExportCacheResult {
         val dir = File(context.cacheDir, "exports").apply { mkdirs() }
         val file = File(dir, ExportFileNames.fileName(format))
-        val taskCount = repository.exportToFile(format, request, file)
+        val counts = repository.exportToFile(format, request, file)
         check(file.exists() && file.length() > 0L) { "Export file was not created" }
-        return ExportCacheResult(file = file, taskCount = taskCount, format = format)
+        return ExportCacheResult(
+            file = file,
+            taskCount = counts.taskCount,
+            todoCount = counts.todoCount,
+            habitCount = counts.habitCount,
+            format = format,
+        )
     }
 
     fun saveToDownloads(file: File, format: ExportFormat): Boolean {
@@ -73,8 +79,20 @@ class TaskExportRunner(
     }
 }
 
+data class ExportCounts(
+    val taskCount: Int,
+    val todoCount: Int,
+    val habitCount: Int,
+) {
+    val itemCount: Int get() = taskCount + todoCount + habitCount
+}
+
 data class ExportCacheResult(
     val file: File,
     val taskCount: Int,
-    val format: ExportFormat
-)
+    val todoCount: Int,
+    val habitCount: Int,
+    val format: ExportFormat,
+) {
+    val itemCount: Int get() = taskCount + todoCount + habitCount
+}

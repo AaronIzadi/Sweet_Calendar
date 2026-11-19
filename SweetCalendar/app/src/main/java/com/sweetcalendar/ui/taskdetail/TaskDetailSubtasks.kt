@@ -2,10 +2,12 @@ package com.sweetcalendar.ui.taskdetail
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +29,13 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.data.taskProgressSlice
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.recurrence.parsedDate
+import com.sweetcalendar.ui.components.SettingsBoxUncheckedIcon
 import com.sweetcalendar.ui.components.TaskCardPriorityMarker
 import com.sweetcalendar.ui.components.TaskPriority
+import com.sweetcalendar.ui.components.ThemeCompletedCheckIcon
 import com.sweetcalendar.ui.components.formatDisplayShort
 import com.sweetcalendar.ui.theme.BodyFont
+import com.sweetcalendar.ui.theme.MintGreen
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.SweetTheme
@@ -103,11 +108,19 @@ fun TaskDetailSubtasksSection(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
                 ) {
-                    Text(
-                        if (sub.isDone) "✓" else "○",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        color = if (sub.isDone) colors.mintDeep else colors.muted,
-                    )
+                    Box(
+                        modifier = Modifier.size(mockupDp(18)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (sub.isDone) {
+                            ThemeCompletedCheckIcon(
+                                size = mockupDp(18),
+                                bgColor = if (colors.isDark) colors.mint else MintGreen,
+                            )
+                        } else {
+                            SettingsBoxUncheckedIcon(size = mockupDp(16))
+                        }
+                    }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             sub.title,

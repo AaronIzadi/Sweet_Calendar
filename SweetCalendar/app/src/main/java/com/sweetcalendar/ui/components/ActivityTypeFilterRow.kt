@@ -28,6 +28,11 @@ fun ActivityTypeFilterRow(
             onClick = { onSelect(TaskListScope.Scheduled) },
         )
         ArchiveFilterChip(
+            label = "Habits",
+            selected = selected == TaskListScope.Habit,
+            onClick = { onSelect(TaskListScope.Habit) },
+        )
+        ArchiveFilterChip(
             label = "To-dos",
             selected = selected == TaskListScope.Todo,
             onClick = { onSelect(TaskListScope.Todo) },

@@ -6,6 +6,7 @@ import com.sweetcalendar.data.remote.NetworkModule
 import com.sweetcalendar.export.TaskExportRepository
 import com.sweetcalendar.reminder.NotificationHelper
 import com.sweetcalendar.repository.EventRepository
+import com.sweetcalendar.repository.HabitRepository
 import com.sweetcalendar.repository.TaskRepository
 import com.sweetcalendar.widget.WidgetPreviews
 import java.util.Locale
@@ -23,6 +24,10 @@ class CalendarTodoApp : Application() {
         TaskRepository(db.taskDao(), db.taskAlertDao(), db.subtaskDao())
     }
 
+    val habitRepository: HabitRepository by lazy {
+        HabitRepository(AppDatabase.get(this).habitDao())
+    }
+
     val eventRepository: EventRepository by lazy {
         val db = AppDatabase.get(this)
         EventRepository(
@@ -37,6 +42,7 @@ class CalendarTodoApp : Application() {
     }
 
     val taskExportRepository: TaskExportRepository by lazy {
-        TaskExportRepository(this, AppDatabase.get(this).taskDao())
+        val db = AppDatabase.get(this)
+        TaskExportRepository(this, db.taskDao(), db.habitDao())
     }
 }

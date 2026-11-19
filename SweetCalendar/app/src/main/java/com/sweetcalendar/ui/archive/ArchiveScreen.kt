@@ -29,20 +29,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import com.sweetcalendar.data.HabitWithDays
 import com.sweetcalendar.data.TaskListScope
 import com.sweetcalendar.data.activityScopeForPicker
 import com.sweetcalendar.data.archiveEmptyMessage
 import com.sweetcalendar.data.filterTasks
+import com.sweetcalendar.data.local.HabitCompletionEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.ui.components.ActivityTypeFilterRow
+import com.sweetcalendar.ui.components.BackArrowMiniIcon
+import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.habit.SweetHabitCard
 import com.sweetcalendar.ui.motion.appearOnEnter
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
 import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.stats.ArchiveFilter
+import com.sweetcalendar.ui.stats.computeHabitCompletionStreak
+import com.sweetcalendar.ui.stats.computeHabitMonthCompletionPercent
 import com.sweetcalendar.ui.stats.computeMonthCompletionPercent
+import com.sweetcalendar.ui.stats.filterCompletedHabitOccurrences
 import com.sweetcalendar.ui.stats.filterCompletedTasks
+import com.sweetcalendar.ui.stats.groupHabitOccurrencesByDay
 import com.sweetcalendar.ui.stats.groupTasksByDay
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
@@ -77,8 +86,11 @@ private fun archiveFilterChipTextColor(selected: Boolean): Color {
 @Composable
 fun ArchiveScreen(
     tasks: List<TaskEntity>,
+    habits: List<HabitWithDays> = emptyList(),
+    habitCompletions: List<HabitCompletionEntity> = emptyList(),
     onBack: () -> Unit,
     onTaskClick: (TaskEntity) -> Unit,
+    onHabitClick: (HabitWithDays) -> Unit = {},
     onDeleteTask: (TaskEntity) -> Unit = {},
     initialActivityScope: TaskListScope = TaskListScope.Scheduled,
     modifier: Modifier = Modifier
@@ -87,15 +99,29 @@ fun ArchiveScreen(
     var activityScope by remember {
         mutableStateOf(activityScopeForPicker(initialActivityScope))
     }
+    val showingHabits = activityScope == TaskListScope.Habit
     val scopedTasks = remember(tasks, activityScope) { activityScope.filterTasks(tasks) }
     val emptyMessage = activityScope.archiveEmptyMessage()
     var filter by remember { mutableStateOf(ArchiveFilter.ThisWeek) }
     val completed = remember(scopedTasks, filter) { filterCompletedTasks(scopedTasks, filter) }
     val grouped = remember(completed) { groupTasksByDay(completed) }
-    val totalDone = scopedTasks.count { it.isDone }
-    val streak = remember(scopedTasks) { computeStreak(scopedTasks) }
-    val monthPct = remember(scopedTasks) { computeMonthCompletionPercent(scopedTasks) }
+    val habitOccurrences = remember(habits, habitCompletions, filter) {
+        filterCompletedHabitOccurrences(habits, habitCompletions, filter)
+    }
+    val habitGrouped = remember(habitOccurrences) { groupHabitOccurrencesByDay(habitOccurrences) }
+    val taskTotalDone = remember(scopedTasks) { scopedTasks.count { it.isDone } }
+    val habitTotalDone = habitCompletions.size
+    val totalDone = if (showingHabits) habitTotalDone else taskTotalDone
+    val taskStreak = remember(scopedTasks) { computeStreak(scopedTasks) }
+    val habitStreak = remember(habitCompletions) { computeHabitCompletionStreak(habitCompletions) }
+    val streak = if (showingHabits) habitStreak else taskStreak
+    val taskMonthPct = remember(scopedTasks) { computeMonthCompletionPercent(scopedTasks) }
+    val habitMonthPct = remember(habits, habitCompletions) {
+        computeHabitMonthCompletionPercent(habits, habitCompletions)
+    }
+    val monthPct = if (showingHabits) habitMonthPct else taskMonthPct
     val isNewTask = rememberNewItemTracker(scopedTasks.map { it.id })
+    val isNewHabit = rememberNewItemTracker(habits.map { it.id })
 
     BackHandler(onBack = onBack)
 
@@ -104,13 +130,42 @@ fun ArchiveScreen(
             .fillMaxSize()
             .background(colors.cream)
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(16),
+                    bottom = mockupDp(4),
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SweetIconButton(onClick = onBack) {
+                BackArrowMiniIcon(
+                    size = mockupDp(14),
+                    color = colors.purpleDeep,
+                )
+            }
+            Text(
+                "Completed",
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.DAY_DETAIL_TITLE),
+                    lineHeight = mockupSp(22f),
+                ),
+                color = colors.ink,
+                modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP)),
+            )
+        }
         ActivityTypeFilterRow(
             selected = activityScope,
             onSelect = { activityScope = it },
             modifier = Modifier.padding(
                 start = mockupDp(18),
                 end = mockupDp(18),
-                top = mockupDp(16),
+                top = mockupDp(10),
             ),
         )
 
@@ -155,7 +210,33 @@ fun ArchiveScreen(
                 .weight(1f)
                 .padding(horizontal = mockupDp(18))
         ) {
-            if (grouped.isEmpty()) {
+            if (showingHabits) {
+                if (habitGrouped.isEmpty()) {
+                    item {
+                        Text(
+                            emptyMessage,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = SecondaryTextWeight,
+                                fontSize = mockupSp(12f)
+                            ),
+                            color = colors.muted,
+                            modifier = Modifier.padding(vertical = mockupDp(24))
+                        )
+                    }
+                } else {
+                    habitGrouped.forEach { (label, dayHabits) ->
+                        item { ArchiveDayLabel(label) }
+                        items(dayHabits, key = { it.key }) { occurrence ->
+                            SweetHabitCard(
+                                habit = occurrence.habit,
+                                occurrence = occurrence,
+                                onClick = { onHabitClick(occurrence.habit) },
+                                modifier = Modifier.appearOnEnter(isNewHabit(occurrence.id)),
+                            )
+                        }
+                    }
+                }
+            } else if (grouped.isEmpty()) {
                 item {
                     Text(
                         emptyMessage,

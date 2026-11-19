@@ -33,6 +33,8 @@ import com.sweetcalendar.ui.components.ActivityTypeFilterRow
 import com.sweetcalendar.ui.archive.ArchiveDayLabel
 import com.sweetcalendar.ui.archive.ArchiveFilterChip
 import com.sweetcalendar.ui.archive.ArchiveStatCard
+import com.sweetcalendar.ui.components.BackArrowMiniIcon
+import com.sweetcalendar.ui.components.SweetIconButton
 import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
@@ -65,6 +67,7 @@ fun RecoverSnackbarScreen(
     var activityScope by remember {
         mutableStateOf(activityScopeForPicker(initialActivityScope))
     }
+    val showingHabits = activityScope == TaskListScope.Habit
     val scopedDeleted = remember(deletedTasks, activityScope) {
         activityScope.filterTasks(deletedTasks)
     }
@@ -76,6 +79,9 @@ fun RecoverSnackbarScreen(
     val deletedThisWeek = remember(scopedDeleted) { countDeletedThisWeek(scopedDeleted) }
     val expiringSoon = remember(scopedDeleted) { countExpiringDeletedTasks(scopedDeleted) }
     val isNewTask = rememberNewItemTracker(deletedTasks.map { it.id })
+    val trashCount = if (showingHabits) 0 else scopedDeleted.size
+    val weekCount = if (showingHabits) 0 else deletedThisWeek
+    val expiringCount = if (showingHabits) 0 else expiringSoon
 
     BackHandler(onBack = onBack)
 
@@ -85,13 +91,42 @@ fun RecoverSnackbarScreen(
             .background(colors.cream)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = mockupDp(18),
+                        end = mockupDp(18),
+                        top = mockupDp(16),
+                        bottom = mockupDp(4),
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SweetIconButton(onClick = onBack) {
+                    BackArrowMiniIcon(
+                        size = mockupDp(14),
+                        color = colors.purpleDeep,
+                    )
+                }
+                Text(
+                    "Recover deleted",
+                    style = TextStyle(
+                        fontFamily = BodyFont,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = mockupSp(MockupDimens.DAY_DETAIL_TITLE),
+                        lineHeight = mockupSp(22f),
+                    ),
+                    color = colors.ink,
+                    modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP)),
+                )
+            }
             ActivityTypeFilterRow(
                 selected = activityScope,
                 onSelect = { activityScope = it },
                 modifier = Modifier.padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
-                    top = mockupDp(16),
+                    top = mockupDp(10),
                 ),
             )
 
@@ -106,9 +141,9 @@ fun RecoverSnackbarScreen(
                     ),
                 horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
             ) {
-                ArchiveStatCard("${scopedDeleted.size}", "IN TRASH", modifier = Modifier.weight(1f))
-                ArchiveStatCard("$deletedThisWeek", "THIS WEEK", modifier = Modifier.weight(1f))
-                ArchiveStatCard("$expiringSoon", "EXPIRING", modifier = Modifier.weight(1f))
+                ArchiveStatCard("$trashCount", "IN TRASH", modifier = Modifier.weight(1f))
+                ArchiveStatCard("$weekCount", "THIS WEEK", modifier = Modifier.weight(1f))
+                ArchiveStatCard("$expiringCount", "EXPIRING", modifier = Modifier.weight(1f))
             }
 
             Row(
@@ -136,7 +171,7 @@ fun RecoverSnackbarScreen(
                     .weight(1f)
                     .padding(horizontal = mockupDp(18))
             ) {
-                if (grouped.isEmpty()) {
+                if (showingHabits || grouped.isEmpty()) {
                     item {
                         Text(
                             emptyMessage,

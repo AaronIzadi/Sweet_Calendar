@@ -21,7 +21,13 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: CalendarViewModel by viewModels {
         val app = application as CalendarTodoApp
-        CalendarViewModel.Factory(application, app.taskRepository, app.eventRepository, app.taskExportRepository)
+        CalendarViewModel.Factory(
+            application,
+            app.taskRepository,
+            app.eventRepository,
+            app.habitRepository,
+            app.taskExportRepository,
+        )
     }
 
     private val notificationPermission = registerForActivityResult(

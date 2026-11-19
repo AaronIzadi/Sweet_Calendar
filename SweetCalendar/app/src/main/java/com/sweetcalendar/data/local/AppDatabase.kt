@@ -12,16 +12,20 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TaskEntity::class,
         SubtaskEntity::class,
         TaskAlertEntity::class,
+        HabitEntity::class,
+        HabitDayEntity::class,
+        HabitCompletionEntity::class,
         EventCacheEntity::class,
         EventMonthCacheEntity::class,
     ],
-    version = 15,
+    version = 19,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun subtaskDao(): SubtaskDao
     abstract fun taskAlertDao(): TaskAlertDao
+    abstract fun habitDao(): HabitDao
     abstract fun eventCacheDao(): EventCacheDao
     abstract fun eventMonthCacheDao(): EventMonthCacheDao
 
@@ -112,6 +116,76 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS habits (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        name TEXT NOT NULL,
+                        isEnabled INTEGER NOT NULL,
+                        createdJalali TEXT NOT NULL,
+                        enabledFromJalali TEXT NOT NULL,
+                        disabledAtJalali TEXT,
+                        createdAt INTEGER NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS habit_days (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        habitId INTEGER NOT NULL,
+                        weekdayIndex INTEGER NOT NULL,
+                        reminderTime TEXT,
+                        FOREIGN KEY(habitId) REFERENCES habits(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_habit_days_habitId ON habit_days(habitId)",
+                )
+            }
+        }
+
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE habits ADD COLUMN category TEXT NOT NULL DEFAULT 'Personal'",
+                )
+            }
+        }
+
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS habit_completions (
+                        habitId INTEGER NOT NULL,
+                        jalaliDate TEXT NOT NULL,
+                        completedAt INTEGER NOT NULL,
+                        PRIMARY KEY(habitId, jalaliDate),
+                        FOREIGN KEY(habitId) REFERENCES habits(id) ON DELETE CASCADE
+                    )
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_habit_completions_habitId ON habit_completions(habitId)",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_habit_completions_jalaliDate ON habit_completions(jalaliDate)",
+                )
+            }
+        }
+
+        private val MIGRATION_18_19 = object : Migration(18, 19) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE habits ADD COLUMN priority TEXT NOT NULL DEFAULT 'Medium'",
+                )
+            }
+        }
+
         private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -198,6 +272,10 @@ abstract class AppDatabase : RoomDatabase() {
                         MIGRATION_12_13,
                         MIGRATION_13_14,
                         MIGRATION_14_15,
+                        MIGRATION_15_16,
+                        MIGRATION_16_17,
+                        MIGRATION_17_18,
+                        MIGRATION_18_19,
                     )
                     .build()
                     .also { INSTANCE = it }

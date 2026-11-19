@@ -6,6 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.StrikethroughSpan
@@ -62,7 +65,9 @@ class TodayWidgetProvider : AppWidgetProvider() {
             val theme = WidgetTheme.colors(context)
             val density = context.resources.displayMetrics.density
             val headerPx = (16f * density).toInt().coerceAtLeast(1)
-            val taskIconPx = (14f * density).toInt().coerceAtLeast(1)
+            val taskIconPx = (18f * density).toInt().coerceAtLeast(1)
+            val accentW = (4f * density).toInt().coerceAtLeast(1)
+            val accentH = (22f * density).toInt().coerceAtLeast(1)
 
             WidgetUi.applyCardSurface(views, R.id.widget_root, theme)
             views.setImageViewBitmap(R.id.widget_header_icon, WidgetPixelIcons.brandBitmap(headerPx, theme))
@@ -88,30 +93,39 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 views = views,
                 theme = theme,
                 rowId = R.id.widget_task_row_1,
+                accentId = R.id.widget_task_1_accent,
                 iconId = R.id.widget_task_1_icon,
                 checkboxId = R.id.widget_task_1_checkbox,
                 titleId = R.id.widget_task_1_title,
                 iconPx = taskIconPx,
+                accentW = accentW,
+                accentH = accentH,
                 task = data.displayTasks.getOrNull(0)
             )
             bindTaskRow(
                 views = views,
                 theme = theme,
                 rowId = R.id.widget_task_row_2,
+                accentId = R.id.widget_task_2_accent,
                 iconId = R.id.widget_task_2_icon,
                 checkboxId = R.id.widget_task_2_checkbox,
                 titleId = R.id.widget_task_2_title,
                 iconPx = taskIconPx,
+                accentW = accentW,
+                accentH = accentH,
                 task = data.displayTasks.getOrNull(1)
             )
             bindTaskRow(
                 views = views,
                 theme = theme,
                 rowId = R.id.widget_task_row_3,
+                accentId = R.id.widget_task_3_accent,
                 iconId = R.id.widget_task_3_icon,
                 checkboxId = R.id.widget_task_3_checkbox,
                 titleId = R.id.widget_task_3_title,
                 iconPx = taskIconPx,
+                accentW = accentW,
+                accentH = accentH,
                 task = data.displayTasks.getOrNull(2)
             )
 
@@ -153,10 +167,13 @@ class TodayWidgetProvider : AppWidgetProvider() {
             views: RemoteViews,
             theme: WidgetTheme.Colors,
             rowId: Int,
+            accentId: Int,
             iconId: Int,
             checkboxId: Int,
             titleId: Int,
             iconPx: Int,
+            accentW: Int,
+            accentH: Int,
             task: TaskEntity?
         ) {
             if (task == null) {
@@ -166,13 +183,18 @@ class TodayWidgetProvider : AppWidgetProvider() {
 
             views.setViewVisibility(rowId, View.VISIBLE)
             val category = TaskCategory.fromString(task.category)
+            val forTodo = task.scheduleKind == "TODO"
+            views.setImageViewBitmap(
+                accentId,
+                solidColorBitmap(accentW, accentH, WidgetPixelIcons.accentColor(category, theme, forTodo)),
+            )
             views.setImageViewBitmap(
                 iconId,
                 WidgetPixelIcons.categoryBitmap(
                     category,
                     iconPx,
                     theme,
-                    forTodo = task.scheduleKind == "TODO",
+                    forTodo = forTodo,
                 )
             )
             views.setImageViewResource(
@@ -185,6 +207,16 @@ class TodayWidgetProvider : AppWidgetProvider() {
                 titleId,
                 if (task.isDone) theme.muted else theme.ink
             )
+        }
+
+        private fun solidColorBitmap(width: Int, height: Int, color: Int): Bitmap {
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = color
+                style = Paint.Style.FILL
+            })
+            return bitmap
         }
 
         private fun taskTitleForRemoteViews(title: String, isDone: Boolean): CharSequence {

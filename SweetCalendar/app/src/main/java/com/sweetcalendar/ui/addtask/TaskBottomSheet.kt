@@ -1,5 +1,6 @@
 package com.sweetcalendar.ui.addtask
 
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -60,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
@@ -110,6 +112,9 @@ import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
 import com.sweetcalendar.ui.components.TaskPriority
 import com.sweetcalendar.ui.components.formatDisplayShort
 import com.sweetcalendar.ui.components.formatTime12h
+import com.sweetcalendar.ui.habit.HabitCategory
+import com.sweetcalendar.ui.habit.HabitFormData
+import com.sweetcalendar.ui.habit.HabitSheetFields
 import com.sweetcalendar.ui.theme.BodyFont
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetMotion
@@ -210,6 +215,7 @@ private sealed interface DatePickerTarget {
 private sealed interface TimePickerTarget {
     data object TaskReminder : TimePickerTarget
     data class Alert(val stableKey: Long) : TimePickerTarget
+    data class HabitDay(val weekdayIndex: Int) : TimePickerTarget
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -222,11 +228,14 @@ fun TaskBottomSheet(
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
     eventRepository: EventRepository,
     weekStartsOn: Int = 0,
+    initialActivityKind: ActivitySheetKind? = null,
     onDismiss: () -> Unit,
     onConfirm: (TaskFormData) -> Unit,
+    onConfirmHabit: ((HabitFormData) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
+    val context = LocalContext.current
     val isEdit = existingTask != null
     var title by remember(existingTask) { mutableStateOf(existingTask?.title.orEmpty()) }
     var notesField by remember(existingTask) {
@@ -235,9 +244,18 @@ fun TaskBottomSheet(
     var notesFormatSelection by remember(existingTask) {
         mutableStateOf<TextRange?>(null)
     }
-    var scheduleKind by remember(existingTask) {
-        mutableStateOf(existingTask?.scheduleKind() ?: TaskScheduleKind.TASK)
+    var activityKind by remember(existingTask, initialActivityKind) {
+        mutableStateOf(
+            when {
+                existingTask != null ->
+                    ActivitySheetKind.fromScheduleKind(existingTask.scheduleKind())
+                initialActivityKind != null -> initialActivityKind
+                else -> ActivitySheetKind.TASK
+            }
+        )
     }
+    val scheduleKind = activityKind.toScheduleKind()
+    val allowHabit = !isEdit && onConfirmHabit != null
     var category by remember(existingTask) {
         val kind = existingTask?.scheduleKind() ?: TaskScheduleKind.TASK
         mutableStateOf(TaskCategory.fromString(existingTask?.category.orEmpty()).coercedFor(kind))
@@ -297,10 +315,47 @@ fun TaskBottomSheet(
     var timePickerTarget by remember { mutableStateOf<TimePickerTarget?>(null) }
     var timePickerSeed by remember { mutableStateOf("14:30") }
     var showTitleError by remember { mutableStateOf(false) }
+    var showHabitDaysError by remember { mutableStateOf(false) }
+    var habitCategory by remember { mutableStateOf(HabitCategory.Personal) }
+    var habitPriority by remember { mutableStateOf(TaskPriority.Medium) }
+    var habitDayReminders by remember(date) {
+        mutableStateOf<Map<Int, String?>>(mapOf(date.weekdayIndex() to "08:00"))
+    }
 
-    fun submit() {
+    fun showSaveBlockedToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    fun submitHabit() {
+        val confirm = onConfirmHabit ?: return
         if (title.isBlank()) {
             showTitleError = true
+            showSaveBlockedToast("Please enter a title")
+            return
+        }
+        if (habitDayReminders.isEmpty()) {
+            showHabitDaysError = true
+            showSaveBlockedToast("Pick at least one day")
+            return
+        }
+        confirm(
+            HabitFormData(
+                name = title.trim(),
+                dayReminders = habitDayReminders,
+                category = habitCategory,
+                priority = habitPriority,
+            )
+        )
+    }
+
+    fun submit() {
+        if (activityKind == ActivitySheetKind.HABIT) {
+            submitHabit()
+            return
+        }
+        if (title.isBlank()) {
+            showTitleError = true
+            showSaveBlockedToast("Please enter a title")
             return
         }
         val effectiveRecurrence = if (scheduleKind == TaskScheduleKind.TODO) {
@@ -424,7 +479,7 @@ fun TaskBottomSheet(
         ) {
             val reducedMotion = rememberReducedMotion()
             AnimatedContent(
-                targetState = scheduleKind,
+                targetState = activityKind,
                 transitionSpec = {
                     if (reducedMotion) {
                         fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
@@ -439,8 +494,10 @@ fun TaskBottomSheet(
             ) { kind ->
                 Text(
                     when {
-                        kind == TaskScheduleKind.TODO && isEdit -> "Edit to-do"
-                        kind == TaskScheduleKind.TODO -> "New to-do"
+                        kind == ActivitySheetKind.HABIT && isEdit -> "Edit habit"
+                        kind == ActivitySheetKind.HABIT -> "New habit"
+                        kind == ActivitySheetKind.TODO && isEdit -> "Edit to-do"
+                        kind == ActivitySheetKind.TODO -> "New to-do"
                         isEdit -> "Edit task"
                         else -> "New task"
                     },
@@ -456,41 +513,61 @@ fun TaskBottomSheet(
                 )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = mockupDp(18), vertical = mockupDp(8)),
-                horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
-            ) {
-                RepeatFreqChip(
-                    label = "Task",
-                    selected = scheduleKind == TaskScheduleKind.TASK,
-                    onClick = {
-                        if (scheduleKind != TaskScheduleKind.TASK) {
-                            subtasks = subtasks.filter { it.title.isNotBlank() }
-                            category = category.coercedFor(TaskScheduleKind.TASK)
-                            scheduleKind = TaskScheduleKind.TASK
-                        }
-                    },
+            if (!isEdit) {
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .widthIn(min = mockupDp(0)),
-                )
-                RepeatFreqChip(
-                    label = "To Do",
-                    selected = scheduleKind == TaskScheduleKind.TODO,
-                    onClick = {
-                        if (scheduleKind != TaskScheduleKind.TODO) {
-                            subtasks = subtasks.filter { it.title.isNotBlank() }
-                            category = category.coercedFor(TaskScheduleKind.TODO)
-                            scheduleKind = TaskScheduleKind.TODO
-                            recurrenceFreq = RecurrenceFreq.NONE
-                        }
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .widthIn(min = mockupDp(0)),
-                )
+                        .fillMaxWidth()
+                        .padding(horizontal = mockupDp(18), vertical = mockupDp(8)),
+                    horizontalArrangement = Arrangement.spacedBy(mockupDp(10)),
+                ) {
+                    RepeatFreqChip(
+                        label = "Task",
+                        selected = activityKind == ActivitySheetKind.TASK,
+                        onClick = {
+                            if (activityKind != ActivitySheetKind.TASK) {
+                                subtasks = subtasks.filter { it.title.isNotBlank() }
+                                category = category.coercedFor(TaskScheduleKind.TASK)
+                                showHabitDaysError = false
+                                activityKind = ActivitySheetKind.TASK
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .widthIn(min = mockupDp(0)),
+                    )
+                    RepeatFreqChip(
+                        label = "To Do",
+                        selected = activityKind == ActivitySheetKind.TODO,
+                        onClick = {
+                            if (activityKind != ActivitySheetKind.TODO) {
+                                subtasks = subtasks.filter { it.title.isNotBlank() }
+                                category = category.coercedFor(TaskScheduleKind.TODO)
+                                recurrenceFreq = RecurrenceFreq.NONE
+                                showHabitDaysError = false
+                                activityKind = ActivitySheetKind.TODO
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .widthIn(min = mockupDp(0)),
+                    )
+                    if (allowHabit) {
+                        RepeatFreqChip(
+                            label = "Habit",
+                            selected = activityKind == ActivitySheetKind.HABIT,
+                            onClick = {
+                                if (activityKind != ActivitySheetKind.HABIT) {
+                                    showTitleError = false
+                                    showHabitDaysError = false
+                                    activityKind = ActivitySheetKind.HABIT
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .widthIn(min = mockupDp(0)),
+                        )
+                    }
+                }
             }
 
             Column(
@@ -504,6 +581,117 @@ fun TaskBottomSheet(
                         bottom = mockupDp(24)
                     )
             ) {
+                AnimatedContent(
+                    targetState = activityKind,
+                    transitionSpec = {
+                        if (reducedMotion) {
+                            fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
+                        } else if (targetState.ordinal > initialState.ordinal) {
+                            fadeIn(SweetMotion.mediumTween()) +
+                                slideInVertically(SweetMotion.mediumTween()) { h -> h / 10 } togetherWith
+                                fadeOut(SweetMotion.shortTween()) +
+                                slideOutVertically(SweetMotion.shortTween()) { h -> -h / 10 }
+                        } else {
+                            fadeIn(SweetMotion.mediumTween()) +
+                                slideInVertically(SweetMotion.mediumTween()) { h -> -h / 10 } togetherWith
+                                fadeOut(SweetMotion.shortTween()) +
+                                slideOutVertically(SweetMotion.shortTween()) { h -> h / 10 }
+                        }
+                    },
+                    label = "activityKindFields",
+                    modifier = Modifier.fillMaxWidth(),
+                ) { kind ->
+                if (kind == ActivitySheetKind.HABIT) {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                    HabitSheetFields(
+                        category = habitCategory,
+                        onCategoryChange = { habitCategory = it },
+                        priority = habitPriority,
+                        onPriorityChange = { habitPriority = it },
+                        dayReminders = habitDayReminders,
+                        onDayRemindersChange = {
+                            habitDayReminders = it
+                            if (it.isNotEmpty()) showHabitDaysError = false
+                        },
+                        weekStartsOn = weekStartsOn,
+                        showDaysError = showHabitDaysError,
+                        fieldLabel = { FieldLabel(it) },
+                        kindChip = { label, selected, onClick, mod ->
+                            RepeatFreqChip(
+                                label = label,
+                                selected = selected,
+                                onClick = onClick,
+                                modifier = mod,
+                            )
+                        },
+                        titleField = {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                FieldLabel("TITLE")
+                                SweetField(
+                                    value = title,
+                                    onValueChange = {
+                                        title = it
+                                        if (it.isNotBlank()) showTitleError = false
+                                    },
+                                    placeholder = "e.g. Morning stretch",
+                                    singleLine = true,
+                                    isError = showTitleError,
+                                    textFieldModifier = formTextFieldModifier(
+                                        bringIntoView = titleBringIntoView,
+                                        onFocused = { titleFieldFocused = it },
+                                    ),
+                                )
+                                AnimatedVisibility(
+                                    visible = showTitleError,
+                                    enter = fadeIn(SweetMotion.shortTween()) +
+                                        expandVertically(SweetMotion.shortTween()),
+                                    exit = fadeOut(SweetMotion.shortTween()) +
+                                        shrinkVertically(SweetMotion.shortTween()),
+                                ) {
+                                    Text(
+                                        "Please enter a title",
+                                        style = TextStyle(
+                                            fontFamily = BodyFont,
+                                            fontWeight = SecondaryTextWeight,
+                                            fontSize = mockupSp(12f),
+                                        ),
+                                        color = colors.pinkText,
+                                        modifier = Modifier.padding(top = mockupDp(4)),
+                                    )
+                                }
+                            }
+                        },
+                        reminderField = { value, onClick, trailing ->
+                            SweetField(
+                                value = value,
+                                onValueChange = {},
+                                readOnly = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable(onClick = onClick),
+                                leading = {
+                                    ClockMiniIcon(
+                                        size = mockupDp(MockupDimens.MINI_FIELD_ICON),
+                                        color = colors.purpleDeep,
+                                    )
+                                },
+                                trailing = trailing,
+                            )
+                        },
+                        onPickReminderTime = { weekday ->
+                            timePickerSeed = habitDayReminders[weekday] ?: "08:00"
+                            timePickerTarget = TimePickerTarget.HabitDay(weekday)
+                            showTimePicker = true
+                        },
+                    )
+                    Spacer(Modifier.height(mockupDp(22)))
+                    SweetBigSaveButton(
+                        text = themeAddTaskButtonText(isEdit = false),
+                        onClick = { submitHabit() },
+                    )
+                    }
+                } else {
+                Column(modifier = Modifier.fillMaxWidth()) {
                 FieldLabel("TITLE")
                 SweetField(
                     value = title,
@@ -511,7 +699,11 @@ fun TaskBottomSheet(
                         title = it
                         if (it.isNotBlank()) showTitleError = false
                     },
-                    placeholder = "e.g. Do laundry",
+                    placeholder = if (scheduleKind == TaskScheduleKind.TODO) {
+                        "e.g. Biology homework"
+                    } else {
+                        "e.g. Do laundry"
+                    },
                     singleLine = true,
                     isError = showTitleError,
                     textFieldModifier = formTextFieldModifier(
@@ -532,27 +724,7 @@ fun TaskBottomSheet(
                     )
                 }
 
-                AnimatedContent(
-                    targetState = scheduleKind,
-                    transitionSpec = {
-                        if (reducedMotion) {
-                            fadeIn(SweetMotion.shortTween()) togetherWith fadeOut(SweetMotion.shortTween())
-                        } else if (targetState.ordinal > initialState.ordinal) {
-                            fadeIn(SweetMotion.mediumTween()) +
-                                slideInVertically(SweetMotion.mediumTween()) { h -> h / 10 } togetherWith
-                                fadeOut(SweetMotion.shortTween()) +
-                                slideOutVertically(SweetMotion.shortTween()) { h -> -h / 10 }
-                        } else {
-                            fadeIn(SweetMotion.mediumTween()) +
-                                slideInVertically(SweetMotion.mediumTween()) { h -> -h / 10 } togetherWith
-                                fadeOut(SweetMotion.shortTween()) +
-                                slideOutVertically(SweetMotion.shortTween()) { h -> h / 10 }
-                        }
-                    },
-                    label = "scheduleKindFields",
-                    modifier = Modifier.fillMaxWidth(),
-                ) { kind ->
-                if (kind == TaskScheduleKind.TODO) {
+                if (kind == ActivitySheetKind.TODO) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                     FieldLabel("DEADLINE")
                     SweetField(
@@ -729,7 +901,6 @@ fun TaskBottomSheet(
                         )
                     }
                     }
-                }
                 }
 
                 FieldLabel("CATEGORY")
@@ -956,6 +1127,10 @@ fun TaskBottomSheet(
                     text = themeAddTaskButtonText(isEdit),
                     onClick = { submit() }
                 )
+                } // end task/todo Column
+                } // end task/todo branch
+                } // end AnimatedContent activityKind
+
             }
 
             SheetFooterBar(
@@ -1045,6 +1220,9 @@ fun TaskBottomSheet(
                         todoAlerts = todoAlerts.map {
                             if (it.stableKey == target.stableKey) it.copy(time = time) else it
                         }
+                    }
+                    is TimePickerTarget.HabitDay -> {
+                        habitDayReminders = habitDayReminders + (target.weekdayIndex to time)
                     }
                     TimePickerTarget.TaskReminder, null -> {
                         reminderTime = time

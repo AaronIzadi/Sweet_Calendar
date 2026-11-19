@@ -19,6 +19,7 @@ class BootReceiver : BroadcastReceiver() {
                 val db = AppDatabase.get(context)
                 val taskDao = db.taskDao()
                 val alertDao = db.taskAlertDao()
+                val habitDao = db.habitDao()
                 val scheduler = TaskReminderScheduler(context.applicationContext)
                 taskDao.getActiveReminders().forEach { task ->
                     try {
@@ -36,6 +37,19 @@ class BootReceiver : BroadcastReceiver() {
                         scheduler.scheduleTodoAlerts(task, rows)
                     } catch (_: Exception) {
                         // Skip alerts the OS refuses to schedule after reboot.
+                    }
+                }
+                val habitDays = habitDao.getAllDays().groupBy { it.habitId }
+                habitDao.getEnabled().forEach { habit ->
+                    try {
+                        scheduler.scheduleHabit(
+                            com.sweetcalendar.data.HabitWithDays(
+                                habit = habit,
+                                days = habitDays[habit.id].orEmpty(),
+                            )
+                        )
+                    } catch (_: Exception) {
+                        // Skip habits the OS refuses to schedule after reboot.
                     }
                 }
             } finally {

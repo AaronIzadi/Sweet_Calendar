@@ -35,19 +35,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.sweetcalendar.data.HabitOccurrence
+import com.sweetcalendar.data.HabitWithDays
+import com.sweetcalendar.data.completionPairs
+import com.sweetcalendar.data.habitsInWeek
+import com.sweetcalendar.data.hasHabitOn
+import com.sweetcalendar.data.isCompletedThrough
+import com.sweetcalendar.data.local.HabitCompletionEntity
 import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.GregorianDate
 import com.sweetcalendar.jalali.JalaliDate
-import com.sweetcalendar.recurrence.occurrenceKey
-import com.sweetcalendar.data.isToDo
 import com.sweetcalendar.recurrence.tasksOnDate
-import com.sweetcalendar.ui.components.scheduledAndTodoTaskSections
-import com.sweetcalendar.ui.components.SweetTaskCard
-import com.sweetcalendar.ui.components.sweetTaskItemMotion
+import com.sweetcalendar.ui.components.CompletedSectionLink
+import com.sweetcalendar.ui.components.SweetSectionLabel
+import com.sweetcalendar.ui.habit.SweetHabitCard
 import com.sweetcalendar.ui.motion.appearOnEnter
 import com.sweetcalendar.ui.motion.rememberNewItemTracker
-import com.sweetcalendar.ui.components.TaskCardStyle
 import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.theme.PixelFont
@@ -69,13 +73,14 @@ private fun weekChipDowColor(selected: Boolean): Color {
 @Composable
 fun WeekScreen(
     tasks: List<TaskEntity>,
+    habits: List<HabitWithDays> = emptyList(),
+    habitCompletions: List<HabitCompletionEntity> = emptyList(),
     userBirthDate: JalaliDate? = null,
     userName: String = "Friend",
     weekStartsOn: Int = 0,
     calendarSystem: CalendarSystem = CalendarSystem.PERSIAN,
-    onEditTask: (TaskEntity) -> Unit,
-    onCompleteTask: (TaskEntity) -> Unit = {},
-    onDeleteTask: (TaskEntity) -> Unit = {},
+    onDayClick: (JalaliDate) -> Unit = {},
+    onHabitClick: (HabitWithDays) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
@@ -86,18 +91,22 @@ fun WeekScreen(
 
     val weekStart = weekDays.first()
     val weekEnd = weekDays.last()
-    val tasksByDay = remember(tasks, weekDays, userBirthDate, userName) {
+    val completedPairs = remember(habitCompletions) { habitCompletions.completionPairs() }
+    val weekHabits = remember(habits, weekDays) { habits.habitsInWeek(weekDays) }
+    val pendingHabits = remember(weekHabits, weekDays, completedPairs, today) {
+        weekHabits.filter { !it.isCompletedThrough(weekDays, completedPairs, today) }
+    }
+    val doneHabits = remember(weekHabits, weekDays, completedPairs, today) {
+        weekHabits.filter { it.isCompletedThrough(weekDays, completedPairs, today) }
+    }
+    val isNewHabit = rememberNewItemTracker(weekHabits.map { it.id })
+
+    val dayPendingHints = remember(tasks, habits, weekDays, userBirthDate, userName) {
         weekDays.associateWith { day ->
-            tasks.tasksOnDate(day, userBirthDate, userName)
-                .sortedWith(compareBy({ it.isDone }, { it.reminderTime.orEmpty() }))
+            val taskPending = tasks.tasksOnDate(day, userBirthDate, userName).count { !it.isDone }
+            val habitPending = if (habits.hasHabitOn(day)) 1 else 0
+            (taskPending + habitPending).coerceAtMost(3)
         }
-    }
-    val selectedDayTasks = remember(tasksByDay, selectedDay) {
-        tasksByDay[selectedDay].orEmpty()
-    }
-    val isNewTask = rememberNewItemTracker(tasks.map { it.id })
-    val weekHasTasks = remember(tasksByDay) {
-        tasksByDay.values.any { it.isNotEmpty() }
     }
 
     LaunchedEffect(selectedDay) {
@@ -160,14 +169,15 @@ fun WeekScreen(
             horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
         ) {
             weekDays.forEach { day ->
-                val dayTasks = tasksByDay[day].orEmpty()
-                val pendingCount = dayTasks.count { !it.isDone }
                 DayChip(
                     day = day,
                     calendarSystem = calendarSystem,
-                    pendingCount = pendingCount,
+                    pendingCount = dayPendingHints[day] ?: 0,
                     selected = day == selectedDay,
-                    onClick = { selectedDay = day }
+                    onClick = {
+                        selectedDay = day
+                        onDayClick(day)
+                    }
                 )
             }
         }
@@ -180,70 +190,49 @@ fun WeekScreen(
                 .padding(horizontal = mockupDp(18))
                 .padding(top = mockupDp(8))
         ) {
-            if (!weekHasTasks) {
+            if (weekHabits.isEmpty()) {
                 item {
                     Text(
-                        "No tasks this week",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.muted,
-                        modifier = Modifier.padding(vertical = mockupDp(12))
-                    )
-                }
-            } else if (selectedDayTasks.isEmpty()) {
-                item {
-                    Text(
-                        "No tasks on this day",
+                        "No habits this week",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.muted,
                         modifier = Modifier.padding(vertical = mockupDp(12))
                     )
                 }
             } else {
-                item(key = "label-${selectedDay.formatIso()}") {
-                    WeekDayLabel(selectedDay, calendarSystem)
+                item { SweetSectionLabel("HABITS") }
+                items(pendingHabits, key = { "habit-pending:${it.id}" }) { habit ->
+                    SweetHabitCard(
+                        habit = habit,
+                        onClick = { onHabitClick(habit) },
+                        modifier = Modifier.appearOnEnter(isNewHabit(habit.id)),
+                    )
                 }
-                val scheduled = selectedDayTasks.filter { !it.isToDo() }
-                val todos = selectedDayTasks.filter { it.isToDo() }
-                scheduledAndTodoTaskSections(
-                    scheduled = scheduled,
-                    todos = todos,
-                    scheduledLabel = "TASKS",
-                    isNewTask = { id -> isNewTask(id) },
-                    onTaskClick = onEditTask,
-                    onCompleteTask = onCompleteTask,
-                    onDeleteTask = onDeleteTask,
-                )
+                if (doneHabits.isNotEmpty()) {
+                    item {
+                        CompletedSectionLink(
+                            count = doneHabits.size,
+                            suffix = "this week",
+                        )
+                    }
+                    items(doneHabits, key = { "habit-done:${it.id}" }) { habit ->
+                        SweetHabitCard(
+                            habit = habit,
+                            occurrence = HabitOccurrence(
+                                habit = habit,
+                                date = today,
+                                reminderTime = null,
+                                isDone = true,
+                            ),
+                            onClick = { onHabitClick(habit) },
+                            modifier = Modifier.appearOnEnter(isNewHabit(habit.id)),
+                        )
+                    }
+                }
             }
             item { Spacer(Modifier.height(mockupDp(90))) }
         }
     }
-}
-
-@Composable
-private fun WeekDayLabel(day: JalaliDate, calendarSystem: CalendarSystem) {
-    val colors = SweetTheme.colors
-    val weekday = JalaliDate.WEEKDAY_NAMES_EN_SHORT[day.weekdayIndex()].uppercase()
-    val label = when (calendarSystem) {
-        CalendarSystem.PERSIAN -> {
-            val month = JalaliDate.MONTH_NAMES_EN[day.month - 1].uppercase()
-            "$weekday · $month ${day.day}"
-        }
-        CalendarSystem.GREGORIAN -> {
-            val g = GregorianDate.fromJalali(day)
-            val month = GregorianDate.MONTH_NAMES_EN[g.month - 1].uppercase()
-            "$weekday · $month ${g.day}"
-        }
-    }
-    Text(
-        label,
-        style = TextStyle(
-            fontFamily = PixelFont,
-            fontSize = mockupSp(MockupDimens.WEEK_DAY_LABEL),
-            lineHeight = mockupSp(13f)
-        ),
-        color = colors.purpleDeep,
-        modifier = Modifier.padding(top = mockupDp(14), bottom = mockupDp(8))
-    )
 }
 
 @Composable
