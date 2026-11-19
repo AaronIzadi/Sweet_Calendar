@@ -1,10 +1,10 @@
 # 🍬 Sweet Calendar
 
-A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) calendar** 📅, with optional Gregorian mode, Iranian holidays 🇮🇷, reminders 🔔, stats 📊, home-screen widgets 📱, and a playful pixel-art UI 🎮.
+A candy-themed Android planner built around the **Jalali (Persian/Shamsi) calendar** 📅, with optional Gregorian mode, holidays 🇮🇷, reminders 🔔, habits 🔁, stats 📊, home-screen widgets 📱, and a playful pixel-art UI 🎮.
 
-**🛠️ Stack:** Kotlin · Jetpack Compose · Material 3 · Room · Retrofit
+**🛠️ Stack:** Kotlin · Jetpack Compose · Material 3 · Room · Retrofit · KSP
 
-**📦 Application ID:** `com.sweetcalendar`
+**📦 Application ID:** `com.sweetcalendar` · **minSdk 25** · **target/compileSdk 36**
 
 ---
 
@@ -16,14 +16,36 @@ A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) cale
 - 🔄 Switch calendar system and **week start day** in Settings
 - 🗓️ **Day detail** and **holiday** screens
 
-### ✅ Tasks
-- 📝 Title, notes, category, date, optional time, and **reminders**
+### ✅ Activities (tasks, to-dos, habits)
+Create from one sheet with three modes:
+
+| Kind | Behavior |
+| --- | --- |
+| 📌 **Task** | Scheduled for a single calendar day |
+| 📋 **To-do** | Deadline-based; stays on Today until complete |
+| 🔁 **Habit** | Weekly forever on chosen weekdays (pause/resume) |
+
+Shared fields across kinds:
+- 📝 Title, notes, **category**, **priority** (Low / Medium / High)
 - ✔️ Complete, edit, archive, **search**, and **undo delete** (snackbar)
 - 🍭 Custom **Sweet** time and date pickers aligned with the mockup UI
 
-### 🇮🇷 Holidays (Iran)
-- 🎉 Iranian holidays and occasions via the **time.ir** API
-- 💾 Fetched when needed, **cached in Room**, and usable offline after a month is loaded
+**Tasks & to-dos**
+- 🧩 **Subtasks** with their own priority and optional date
+- 🔔 Reminder time and (for to-dos) **multiple alerts**
+- 🔁 **Recurrence:** weekly or monthly series, with edit scope (this instance / this and following / entire series)
+- 🚨 Full-screen **alarm** UI when a reminder fires
+
+**Habits**
+- 📆 Weekday schedule (Sat–Fri indices) with optional per-day reminder
+- 🏷️ Categories: Personal, School, Health
+- ⏸️ Enable / pause with an enabled window stored in Room
+- 📄 Habit list and detail screens under `ui/habit/`
+
+### 🇮🇷 Holidays
+- 🎉 **Jalali mode:** Iranian occasions via the **time.ir** API
+- 🌍 **Gregorian mode:** public holidays via **[Nager.Date](https://date.nager.at)** (default country `US`)
+- 💾 Fetched when needed, **cached in Room**, and usable offline after a month/year is loaded
 
 ### 📊 Stats and delight
 - 🔥 **Streaks**, jar progress, and a **stats** screen
@@ -32,14 +54,14 @@ A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) cale
 ### 🎨 Personalization
 - 🌙 **Dark mode**
 - 🪐 **App theme:** Bubblegum (candy) or Orbit (space)
-- 👤 Custom **display name** (profile card on Settings)
+- 👤 **Profile:** display name and **birthday** (annual birthday appears on the calendar)
 - 🎊 Show/hide **local holidays**
 
 ### 📤 Data
-- 💾 **Backup and export** (CSV, Excel, PDF) from Settings
+- 💾 **Backup and export** (CSV, Excel, PDF) from Settings — includes **tasks, to-dos, and habits**
 
 ### 📱 Home-screen widgets
-- 📋 **Today tasks** widget
+- 📋 **Today** widget (tasks and to-dos for the day)
 - 🍯 **Jar progress** widget
 
 ### 🖼️ UI
@@ -52,7 +74,7 @@ A candy-themed Android to-do app built around the **Jalali (Persian/Shamsi) cale
 ## 📋 Requirements
 
 - ☕ **JDK 17** (required; other versions often break Gradle)
-- 🤖 **Android SDK** — Platform 34, Build-Tools 34, Platform-Tools
+- 🤖 **Android SDK** — Platform 36, Build-Tools 36, Platform-Tools
 - 💻 **Android Studio** Koala or newer (recommended)
 - 🌐 Network for first-time dependency download
 
@@ -77,7 +99,7 @@ sdk.dir=C\:\\Users\\YourName\\AppData\\Local\\Android\\Sdk
 TIME_IR_API_KEY=your_api_key_here
 ```
 
-**🔑 time.ir API key** — optional but recommended for reliable holiday data. Get a key from [time.ir](https://time.ir) and add `TIME_IR_API_KEY`. Without it, holidays may not load.
+**🔑 time.ir API key** — optional but recommended for reliable Jalali holiday data. Get a key from [time.ir](https://time.ir) and add `TIME_IR_API_KEY`. Without it, Iranian holidays may not load. Gregorian holidays use Nager.Date and need no key.
 
 **🪟 Windows:** Run `.\setup-sdk.ps1` from `SweetCalendar/` to scaffold SDK paths and `local.properties`.
 
@@ -132,26 +154,31 @@ SweetCalendar/
 │   ├── calendar/           Calendar system (Jalali / Gregorian)
 │   ├── jalali/             Date conversion (no external calendar lib)
 │   ├── data/
-│   │   ├── local/          Room (tasks, event cache)
-│   │   ├── remote/         time.ir client
-│   │   └── prefs/           User preferences
+│   │   ├── local/          Room (tasks, subtasks, habits, alerts, event cache)
+│   │   ├── remote/         time.ir + Nager.Date clients
+│   │   └── prefs/          User preferences (theme, profile, birthday)
 │   ├── repository/
-│   ├── reminder/            Alarms and notifications
-│   ├── export/              CSV, Excel, PDF export
-│   ├── widget/              Home-screen widgets
+│   ├── recurrence/         Weekly/monthly series expansion and edit scopes
+│   ├── reminder/           Alarms and notifications
+│   ├── profile/            Birthday virtual task helpers
+│   ├── export/             CSV, Excel, PDF (tasks, to-dos, habits)
+│   ├── widget/             Home-screen widgets
 │   ├── ui/
 │   │   ├── today/ week/ calendar/ daydetail/
-│   │   ├── addtask/ taskdetail/ tasklist/
+│   │   ├── addtask/        Activity sheet (task / to-do / habit) + subtasks
+│   │   ├── taskdetail/ tasklist/
+│   │   ├── habit/          Habit list, detail, sheets
+│   │   ├── alarm/          Full-screen reminder UI
 │   │   ├── holiday/ search/ archive/ stats/
 │   │   ├── settings/ welcome/ permission/ offline/
-│   │   ├── motion/          Shared animations
+│   │   ├── motion/         Shared animations
 │   │   ├── navigation/
-│   │   ├── components/      Shared Compose UI
-│   │   └── theme/           Colors, type, mockup scale
+│   │   ├── components/     Shared Compose UI
+│   │   └── theme/          Colors, type, mockup scale
 │   ├── MainActivity.kt
-│   └── CalendarTodoApp.kt   Application class
+│   └── CalendarTodoApp.kt  Application class
 ├── docs/color-palette.md
-├── resources/pixel-art/     Source art (processed into drawables)
+├── resources/pixel-art/    Source art (processed into drawables)
 └── scripts/process_pixel_art.py
 ```
 
@@ -184,8 +211,8 @@ See `scripts/process_pixel_art.py` (`OUTPUT_NAMES`) when adding or replacing art
 
 | Data | Behavior |
 | --- | --- |
-| 📝 Tasks | Fully local (Room) |
-| 🎉 Holidays | Online fetch once per month, then Room cache |
+| 📝 Tasks, to-dos, habits, subtasks | Fully local (Room) |
+| 🎉 Holidays | Online fetch (time.ir month or Nager year), then Room cache |
 
 ---
 
@@ -216,7 +243,8 @@ See `scripts/process_pixel_art.py` (`OUTPUT_NAMES`) when adding or replacing art
 | 📱 Run does nothing / no device | Start an AVD in **Device Manager**; device dropdown must show `emulator-…` **device** (not offline). Or run `.\run-on-emulator.ps1` |
 | 💥 Emulator “crashes” / app vanishes | Often the **API 35 emulator** (Bluetooth system bug), not Sweet Calendar. Close AVD → `.\fix-emulator.ps1 -ColdBoot` → `.\run-on-emulator.ps1 -ColdBoot`. Save logs with `.\capture-crash-log.ps1` |
 | 📱 “Module not specified” | Use run config **app** (not “Sweet Calendar”). **File → Sync Project with Gradle Files** |
-| 🎉 Holidays missing | Internet, `TIME_IR_API_KEY`, retry after failed month fetch |
+| 🎉 Iranian holidays missing | Internet, `TIME_IR_API_KEY`, retry after failed month fetch |
+| 🌍 Gregorian holidays missing | Internet; Nager.Date must be reachable (no API key) |
 | 📂 Wrong project root | Repo root or `SweetCalendar/` both work after Gradle sync |
 
 ---
@@ -226,10 +254,10 @@ See `scripts/process_pixel_art.py` (`OUTPUT_NAMES`) when adding or replacing art
 | Piece | Use |
 | --- | --- |
 | 🟣 Kotlin | Language |
-| 🎨 Compose | UI |
-| 💾 Room | Tasks and holiday cache |
-| 🌐 Retrofit | time.ir |
-| ⏰ AlarmManager | Reminders |
+| 🎨 Compose + Material 3 | UI |
+| 💾 Room | Tasks, to-dos, habits, subtasks, alerts, holiday cache |
+| 🌐 Retrofit | time.ir + Nager.Date |
+| ⏰ AlarmManager | Reminders / alarm screen |
 | 📱 App Widgets | Today list and jar progress |
 
 ---
