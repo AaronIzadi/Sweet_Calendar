@@ -48,6 +48,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class DayEvent(
     val description: String,
@@ -165,6 +167,7 @@ class CalendarViewModel(
 
     init {
         viewModelScope.launch {
+            taskRepository.ensureRecurringSeriesIds()
             taskRepository.purgeExpiredDeleted()
         }
     }
@@ -172,6 +175,7 @@ class CalendarViewModel(
     private data class MonthUiParts(
         val context: MonthContext,
         val allTasks: List<TaskEntity>,
+        val deletedTasks: List<TaskEntity>,
         val monthEvents: List<EventCacheEntity>,
         val birthDate: JalaliDate?,
         val name: String,
@@ -180,15 +184,18 @@ class CalendarViewModel(
     val uiState: StateFlow<CalendarUiState> = combine(
         monthContextFlow,
         taskRepository.observeAll(),
+        taskRepository.observeDeleted(),
         monthEventsFlow,
         userBirthDate,
-        userName,
-    ) { context, allTasks, monthEvents, birthDate, name ->
-        MonthUiParts(context, allTasks, monthEvents, birthDate, name)
+    ) { context, allTasks, deletedTasks, monthEvents, birthDate ->
+        MonthUiParts(context, allTasks, deletedTasks, monthEvents, birthDate, "")
+    }.let { withoutName ->
+        combine(withoutName, userName) { parts, name -> parts.copy(name = name) }
     }.let { base ->
         combine(base, habitRepository.observeAll()) { parts, habits ->
             val context = parts.context
             val allTasks = parts.allTasks
+            val deletedTasks = parts.deletedTasks
             val monthEvents = parts.monthEvents
             val birthDate = parts.birthDate
             val name = parts.name
@@ -206,7 +213,7 @@ class CalendarViewModel(
                     val lastDay = pMonth.daysInMonth()
                     val rangeStart = JalaliDate(pMonth.year, pMonth.month, 1)
                     val rangeEnd = JalaliDate(pMonth.year, pMonth.month, lastDay)
-                    allTasks.tasksByDateInRange(rangeStart, rangeEnd, birthDate, name)
+                    allTasks.tasksByDateInRange(rangeStart, rangeEnd, birthDate, name, deletedTasks)
                 }
                 CalendarSystem.GREGORIAN -> {
                     val lastDay = gMonth.daysInMonth()
@@ -214,7 +221,7 @@ class CalendarViewModel(
                     val rangeEnd = GregorianDate(gMonth.year, gMonth.month, lastDay).toJalali()
                     val start = minOf(rangeStart, rangeEnd)
                     val end = maxOf(rangeStart, rangeEnd)
-                    allTasks.tasksByDateInRange(start, end, birthDate, name)
+                    allTasks.tasksByDateInRange(start, end, birthDate, name, deletedTasks)
                 }
             }
 
@@ -262,8 +269,26 @@ class CalendarViewModel(
             )
         }
     }.let { base ->
-        combine(base, selectedDate, taskRepository.observeAll(), userBirthDate, userName) { state, selected, allTasks, birthDate, name ->
-            state.copy(selectedDayTasks = allTasks.tasksOnDate(selected, birthDate, name))
+        combine(
+            base,
+            selectedDate,
+            taskRepository.observeAll(),
+            taskRepository.observeDeleted(),
+            userBirthDate,
+        ) { state, selected, allTasks, deletedTasks, birthDate ->
+            Triple(state, selected, Triple(allTasks, deletedTasks, birthDate))
+        }.let { packed ->
+            combine(packed, userName) { (state, selected, taskParts), name ->
+                val (allTasks, deletedTasks, birthDate) = taskParts
+                state.copy(
+                    selectedDayTasks = allTasks.tasksOnDate(
+                        selected,
+                        birthDate,
+                        name,
+                        deletedTasks,
+                    )
+                )
+            }
         }
     }.let { withTasks ->
         combine(withTasks, showHolidays, calendarSystem) { state, show, system ->
@@ -593,18 +618,18 @@ class CalendarViewModel(
                     val alerts = taskRepository.getAlertsForTask(target.id)
                     reminderScheduler.cancelTodoAlerts(alerts.map { it.id })
                 }
-                val recurring = if (
+                val linked = if (
                     target.recurrenceFrequency() != RecurrenceFreq.NONE && target.seriesId == null
                 ) {
-                    target.withRecurrence(target.recurrenceFrequency()).also { linked ->
-                        taskRepository.updateTask(linked)
+                    target.withRecurrence(target.recurrenceFrequency()).also { updated ->
+                        taskRepository.updateTask(updated)
                     }
                 } else {
                     target
                 }
-                val toSpawn = recurring.withRecurrence(recurring.recurrenceFrequency())
-                taskRepository.spawnNextAfterComplete(toSpawn)?.let { next ->
-                    val newId = taskRepository.insertTask(next.withRecurrence(next.recurrenceFrequency()))
+                // Keep the same seriesId when spawning; do not mint a new one via withRecurrence.
+                taskRepository.spawnNextAfterComplete(linked)?.let { next ->
+                    val newId = taskRepository.insertTask(next)
                     scheduleReminderSafely(next.copy(id = newId))
                 }
             } else {
@@ -622,44 +647,62 @@ class CalendarViewModel(
         }
     }
 
+    private val taskMutationMutex = Mutex()
+
     fun deleteTask(
         task: TaskEntity,
         scope: RecurrenceEditScope = RecurrenceEditScope.THIS_INSTANCE,
+        onDeleted: ((TaskEntity) -> Unit)? = null,
     ) {
         viewModelScope.launch {
-            val seriesId = task.seriesId
-            if (taskRepository.needsRecurrenceScopeForDelete(task) && seriesId != null) {
-                when (scope) {
-                    RecurrenceEditScope.ENTIRE_SERIES ->
-                        taskRepository.getActiveBySeriesId(seriesId).forEach {
-                            cancelAllRemindersFor(it)
-                        }
-                    RecurrenceEditScope.THIS_AND_FOLLOWING -> {
-                        cancelAllRemindersFor(task)
-                        taskRepository.getActiveBySeriesId(seriesId)
-                            .filter { it.parsedDate() >= task.parsedDate() }
-                            .forEach { cancelAllRemindersFor(it) }
-                    }
-                    RecurrenceEditScope.THIS_INSTANCE ->
-                        cancelAllRemindersFor(task)
+            val deleted = taskMutationMutex.withLock {
+                // Virtual rows use synthetic negative ids; materialize first so delete sticks.
+                val target = if (task.isVirtualOccurrence()) {
+                    taskRepository.materializeOccurrence(task)
+                } else {
+                    task
                 }
-                taskRepository.applyRecurrenceDelete(task, scope)
-            } else {
-                cancelAllRemindersFor(task)
-                taskRepository.deleteTask(task)
+                val seriesId = target.seriesId
+                if (taskRepository.needsRecurrenceScopeForDelete(target) && seriesId != null) {
+                    when (scope) {
+                        RecurrenceEditScope.ENTIRE_SERIES ->
+                            taskRepository.getActiveBySeriesId(seriesId).forEach {
+                                cancelAllRemindersFor(it)
+                            }
+                        RecurrenceEditScope.THIS_AND_FOLLOWING -> {
+                            cancelAllRemindersFor(target)
+                            taskRepository.getActiveBySeriesId(seriesId)
+                                .filter { it.parsedDate() >= target.parsedDate() }
+                                .forEach { cancelAllRemindersFor(it) }
+                        }
+                        RecurrenceEditScope.THIS_INSTANCE ->
+                            cancelAllRemindersFor(target)
+                    }
+                    taskRepository.applyRecurrenceDelete(target, scope)
+                } else {
+                    cancelAllRemindersFor(target)
+                    taskRepository.deleteTask(target)
+                }
+                target
             }
+            onDeleted?.invoke(deleted)
             refreshWidgets()
         }
     }
 
     fun restoreTask(task: TaskEntity) {
         viewModelScope.launch {
-            taskRepository.restoreTask(task)
-            if (!task.isDone) {
-                if (task.isToDo()) {
-                    scheduleTodoAlertsSafely(task, taskRepository.getAlertsForTask(task.id))
-                } else if (task.reminderTime != null) {
-                    scheduleReminderSafely(task)
+            val restored = taskMutationMutex.withLock {
+                taskRepository.restoreTask(task)
+            } ?: return@launch
+            if (!restored.isDone) {
+                if (restored.isToDo()) {
+                    scheduleTodoAlertsSafely(
+                        restored,
+                        taskRepository.getAlertsForTask(restored.id),
+                    )
+                } else if (restored.reminderTime != null) {
+                    scheduleReminderSafely(restored)
                 }
             }
             refreshWidgets()

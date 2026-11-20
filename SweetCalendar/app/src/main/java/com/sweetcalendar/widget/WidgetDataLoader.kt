@@ -28,8 +28,11 @@ object WidgetDataLoader {
             val prefs = AppPreferences(context)
             val birthDate = prefs.userBirthDate()
             val userName = prefs.userName
-            val allActive = AppDatabase.get(context).taskDao().getAllActive()
-            val tasks = allActive.tasksOnDate(today, birthDate, userName)
+            val dao = AppDatabase.get(context).taskDao()
+            val allActive = dao.getAllActive()
+            // Soft-deleted series members suppress virtual reappearance on the widget too.
+            val deleted = dao.getAllIncludingDeleted().filter { it.deletedAt != null }
+            val tasks = allActive.tasksOnDate(today, birthDate, userName, deleted)
             val actionable = tasks.filter { !it.isBirthdayTask() }
             val done = actionable.count { it.isDone }
             val total = actionable.size

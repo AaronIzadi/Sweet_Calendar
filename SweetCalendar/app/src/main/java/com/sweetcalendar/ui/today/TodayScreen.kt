@@ -38,6 +38,7 @@ import com.sweetcalendar.data.local.TaskEntity
 import com.sweetcalendar.calendar.CalendarSystem
 import com.sweetcalendar.jalali.JalaliDate
 import com.sweetcalendar.profile.isBirthdayTask
+import com.sweetcalendar.recurrence.occurrenceKey
 import com.sweetcalendar.recurrence.tasksOnDate
 import com.sweetcalendar.ui.components.CompletedSectionLink
 import com.sweetcalendar.ui.components.EmptyStateContent
@@ -90,6 +91,8 @@ fun computeStreak(tasks: List<TaskEntity>): Int {
 @Composable
 fun TodayScreen(
     tasks: List<TaskEntity>,
+    deletedTasks: List<TaskEntity> = emptyList(),
+    hiddenOccurrenceKeys: Set<String> = emptySet(),
     habits: List<HabitWithDays> = emptyList(),
     habitCompletions: List<HabitCompletionEntity> = emptyList(),
     subtasks: List<SubtaskEntity> = emptyList(),
@@ -119,8 +122,10 @@ fun TodayScreen(
     val pendingHabits = remember(todayHabits) { todayHabits.filter { !it.isDone } }
     val doneHabits = remember(todayHabits) { todayHabits.filter { it.isDone } }
     val isNewHabit = rememberNewItemTracker(todayHabits.map { it.id })
-    val todayTasks = remember(tasks, today, userBirthDate, userName) {
-        tasks.tasksOnDate(today, userBirthDate, userName).sortedBy { it.createdAt }
+    val todayTasks = remember(tasks, deletedTasks, hiddenOccurrenceKeys, today, userBirthDate, userName) {
+        tasks.tasksOnDate(today, userBirthDate, userName, deletedTasks)
+            .filterNot { it.occurrenceKey() in hiddenOccurrenceKeys }
+            .sortedBy { it.createdAt }
     }
     val actionableTasks = remember(todayTasks) { todayTasks.filter { !it.isBirthdayTask() } }
     val pendingScheduled = remember(todayTasks, subtasksByParent) {

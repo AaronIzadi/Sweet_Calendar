@@ -16,10 +16,21 @@ fun TaskEntity.occurrenceKey(): String = when {
     else -> "${seriesId ?: "t$id"}:$jalaliDate"
 }
 
+private const val VIRTUAL_DAY_BITS = 20
+private const val VIRTUAL_DAY_MASK = (1L shl VIRTUAL_DAY_BITS) - 1
+
+/** Negative synthetic id packing anchor task id + date (reversible). */
 fun virtualOccurrenceTaskId(anchorTaskId: Long, date: JalaliDate): Long {
-    val dayKey = date.year * 10_000 + date.month * 100 + date.day
-    val raw = anchorTaskId * 1_000_000L + dayKey
-    return if (raw == 0L) -1L else -raw
+    val safeAnchor = anchorTaskId.coerceAtLeast(1L)
+    val dayKey = (date.year * 372L + (date.month - 1) * 31L + (date.day - 1)) and VIRTUAL_DAY_MASK
+    return -((safeAnchor shl VIRTUAL_DAY_BITS) or dayKey)
+}
+
+/** Anchor row id encoded in a virtual occurrence id, or null if not virtual. */
+fun anchorTaskIdFromVirtual(virtualId: Long): Long? {
+    if (virtualId >= 0) return null
+    val anchor = (-virtualId) shr VIRTUAL_DAY_BITS
+    return anchor.takeIf { it > 0L }
 }
 
 /** Prefer the row stored for this calendar day; otherwise keep the occurrence passed in. */

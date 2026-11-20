@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,16 +32,17 @@ import com.sweetcalendar.ui.theme.PixelFont
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
+import kotlinx.coroutines.delay
 
 private val SnackbarTextColor = Color(0xFFFFF6EA)
 
 @Composable
-fun SweetRecoverSnackbar(
+fun SweetSnackbar(
     message: String,
     visible: Boolean,
-    onRecover: () -> Unit,
     modifier: Modifier = Modifier,
-    actionLabel: String = "RECOVER"
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     val colors = SweetTheme.colors
     val shape = RoundedCornerShape(mockupDp(MockupDimens.SNACKBAR_RADIUS))
@@ -92,19 +94,62 @@ fun SweetRecoverSnackbar(
                 color = SnackbarTextColor,
                 modifier = Modifier.weight(1f)
             )
-            Text(
-                actionLabel,
-                style = TextStyle(
-                    fontFamily = PixelFont,
-                    fontSize = mockupSp(MockupDimens.SNACKBAR_RECOVER),
-                    letterSpacing = mockupSp(0.5f),
-                    lineHeight = mockupSp(14f)
-                ),
-                color = colors.lemon,
-                modifier = Modifier
-                    .clickable(onClick = onRecover)
-                    .padding(start = mockupDp(10))
-            )
+            if (actionLabel != null && onAction != null) {
+                Text(
+                    actionLabel,
+                    style = TextStyle(
+                        fontFamily = PixelFont,
+                        fontSize = mockupSp(MockupDimens.SNACKBAR_RECOVER),
+                        letterSpacing = mockupSp(0.5f),
+                        lineHeight = mockupSp(14f)
+                    ),
+                    color = colors.lemon,
+                    modifier = Modifier
+                        .clickable(onClick = onAction)
+                        .padding(start = mockupDp(10))
+                )
+            }
         }
     }
+}
+
+@Composable
+fun SweetRecoverSnackbar(
+    message: String,
+    visible: Boolean,
+    onRecover: () -> Unit,
+    modifier: Modifier = Modifier,
+    actionLabel: String = "RECOVER"
+) {
+    SweetSnackbar(
+        message = message,
+        visible = visible,
+        modifier = modifier,
+        actionLabel = actionLabel,
+        onAction = onRecover,
+    )
+}
+
+/**
+ * Message-only snackbar that auto-dismisses after [visibleMs].
+ * Set [message] to show; clear via [onDismiss].
+ */
+@Composable
+fun SweetTimedSnackbar(
+    message: String?,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    visibleMs: Long = MockupDimens.SNACKBAR_MESSAGE_VISIBLE_MS,
+) {
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(visibleMs)
+            onDismiss()
+        }
+    }
+    SweetSnackbar(
+        message = message.orEmpty(),
+        visible = message != null,
+        modifier = modifier,
+    )
 }

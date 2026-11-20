@@ -1,6 +1,5 @@
 package com.sweetcalendar.ui.addtask
 
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -44,7 +43,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,7 +59,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusEvent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.graphics.Color
@@ -103,9 +100,11 @@ import com.sweetcalendar.ui.components.ThemeSparkleIcon
 import com.sweetcalendar.ui.theme.themeAddTaskButtonText
 import com.sweetcalendar.ui.theme.SecondaryTextWeight
 import com.sweetcalendar.ui.components.ClosePixelIcon
+import com.sweetcalendar.ui.components.ScrollColumnWithBottomAction
 import com.sweetcalendar.ui.components.SheetFooterBar
 import com.sweetcalendar.ui.components.sheetDialogTitlePaddingModifier
 import com.sweetcalendar.ui.components.SweetBigSaveButton
+import com.sweetcalendar.ui.components.SweetTimedSnackbar
 import com.sweetcalendar.data.local.TaskAlertEntity
 import com.sweetcalendar.ui.components.TaskCategory
 import com.sweetcalendar.ui.components.ThemeCategoryTaskIcon
@@ -235,7 +234,6 @@ fun TaskBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val colors = SweetTheme.colors
-    val context = LocalContext.current
     val isEdit = existingTask != null
     var title by remember(existingTask) { mutableStateOf(existingTask?.title.orEmpty()) }
     var notesField by remember(existingTask) {
@@ -316,26 +314,27 @@ fun TaskBottomSheet(
     var timePickerSeed by remember { mutableStateOf("14:30") }
     var showTitleError by remember { mutableStateOf(false) }
     var showHabitDaysError by remember { mutableStateOf(false) }
+    var errorSnackbarMessage by remember { mutableStateOf<String?>(null) }
     var habitCategory by remember { mutableStateOf(HabitCategory.Personal) }
     var habitPriority by remember { mutableStateOf(TaskPriority.Medium) }
     var habitDayReminders by remember(date) {
         mutableStateOf<Map<Int, String?>>(mapOf(date.weekdayIndex() to "08:00"))
     }
 
-    fun showSaveBlockedToast(message: String) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    fun showSaveBlockedError(message: String) {
+        errorSnackbarMessage = message
     }
 
     fun submitHabit() {
         val confirm = onConfirmHabit ?: return
         if (title.isBlank()) {
             showTitleError = true
-            showSaveBlockedToast("Please enter a title")
+            showSaveBlockedError("Please enter a title")
             return
         }
         if (habitDayReminders.isEmpty()) {
             showHabitDaysError = true
-            showSaveBlockedToast("Pick at least one day")
+            showSaveBlockedError("Pick at least one day")
             return
         }
         confirm(
@@ -355,7 +354,7 @@ fun TaskBottomSheet(
         }
         if (title.isBlank()) {
             showTitleError = true
-            showSaveBlockedToast("Please enter a title")
+            showSaveBlockedError("Please enter a title")
             return
         }
         val effectiveRecurrence = if (scheduleKind == TaskScheduleKind.TODO) {
@@ -570,16 +569,21 @@ fun TaskBottomSheet(
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(8),
-                        bottom = mockupDp(24)
+            ScrollColumnWithBottomAction(
+                scrollState = scrollState,
+                bottomAction = {
+                    SweetBigSaveButton(
+                        text = if (activityKind == ActivitySheetKind.HABIT) {
+                            themeAddTaskButtonText(isEdit = false)
+                        } else {
+                            themeAddTaskButtonText(isEdit)
+                        },
+                        onClick = {
+                            if (activityKind == ActivitySheetKind.HABIT) submitHabit()
+                            else submit()
+                        },
                     )
+                },
             ) {
                 AnimatedContent(
                     targetState = activityKind,
@@ -683,11 +687,6 @@ fun TaskBottomSheet(
                             timePickerTarget = TimePickerTarget.HabitDay(weekday)
                             showTimePicker = true
                         },
-                    )
-                    Spacer(Modifier.height(mockupDp(22)))
-                    SweetBigSaveButton(
-                        text = themeAddTaskButtonText(isEdit = false),
-                        onClick = { submitHabit() },
                     )
                     }
                 } else {
@@ -1121,16 +1120,9 @@ fun TaskBottomSheet(
                         showDatePicker = true
                     },
                 )
-
-                Spacer(Modifier.height(mockupDp(22)))
-                SweetBigSaveButton(
-                    text = themeAddTaskButtonText(isEdit),
-                    onClick = { submit() }
-                )
                 } // end task/todo Column
                 } // end task/todo branch
                 } // end AnimatedContent activityKind
-
             }
 
             SheetFooterBar(
@@ -1138,6 +1130,15 @@ fun TaskBottomSheet(
                 closeLabel = "DISCARD",
             )
         }
+
+        SweetTimedSnackbar(
+            message = errorSnackbarMessage,
+            onDismiss = { errorSnackbarMessage = null },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM + 56)),
+        )
     }
 
     val datePickerInitial = when (val target = datePickerTarget) {

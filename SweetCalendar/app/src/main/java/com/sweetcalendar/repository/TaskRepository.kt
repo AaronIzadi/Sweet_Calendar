@@ -15,10 +15,12 @@ import com.sweetcalendar.recurrence.RecurrenceEditScope
 import com.sweetcalendar.recurrence.RecurrenceEditor
 import com.sweetcalendar.recurrence.RecurrenceFreq
 import com.sweetcalendar.recurrence.RecurrenceMonthDay
+import com.sweetcalendar.recurrence.anchorTaskIdFromVirtual
 import com.sweetcalendar.recurrence.isVirtualOccurrence
 import com.sweetcalendar.recurrence.recurrenceFrequency
 import com.sweetcalendar.recurrence.withRecurrence
 import com.sweetcalendar.ui.addtask.TaskFormData
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 
 class TaskRepository(
@@ -111,18 +113,58 @@ class TaskRepository(
 
     suspend fun insertTask(task: TaskEntity): Long = dao.upsert(task)
 
-    /** Inserts a projected occurrence so complete/edit apply to the correct day. */
+    /**
+     * Assigns a stable [TaskEntity.seriesId] to every active recurring task that lacks one.
+     * Prevents virtual projections and spawned rows from drifting into duplicate series.
+     */
+    suspend fun ensureRecurringSeriesIds() {
+        dao.getAllActive()
+            .filter { it.recurrenceFrequency() != RecurrenceFreq.NONE && it.seriesId == null }
+            .forEach { orphan ->
+                dao.update(orphan.withRecurrence(orphan.recurrenceFrequency()))
+            }
+    }
+
+    /**
+     * Inserts a projected occurrence so complete/edit/delete apply to the correct day.
+     * Keeps the anchor's seriesId (assigning one if missing) so the day does not also
+     * keep a virtual duplicate.
+     */
     suspend fun materializeOccurrence(task: TaskEntity): TaskEntity {
         if (!task.isVirtualOccurrence()) return task
+        val freq = task.recurrenceFrequency()
+        val seriesId = ensureSeriesIdForVirtual(task, freq)
         val entity = task.copy(
             id = 0,
+            seriesId = seriesId,
             isDone = false,
             completedAt = null,
             deletedAt = null,
             isRecurrenceException = false,
-        ).withRecurrence(task.recurrenceFrequency(), count = task.recurrenceCount)
+            recurrenceFreq = freq.name,
+            recurrenceCount = if (freq == RecurrenceFreq.NONE) null else task.recurrenceCount,
+            repeatWeekly = freq == RecurrenceFreq.WEEKLY,
+        )
         val newId = dao.upsert(entity)
         return entity.copy(id = newId)
+    }
+
+    private suspend fun ensureSeriesIdForVirtual(
+        task: TaskEntity,
+        freq: RecurrenceFreq,
+    ): String? {
+        if (freq == RecurrenceFreq.NONE) return null
+        task.seriesId?.let { return it }
+        val newSeriesId = UUID.randomUUID().toString()
+        val anchorId = anchorTaskIdFromVirtual(task.id)
+        val anchor = anchorId?.let { dao.getById(it) }
+        if (anchor != null) {
+            val existing = anchor.seriesId
+            if (existing != null) return existing
+            dao.update(anchor.withRecurrence(freq, seriesId = newSeriesId))
+            return newSeriesId
+        }
+        return newSeriesId
     }
 
     suspend fun updateTask(task: TaskEntity) = dao.update(task.copy(deletedAt = null))
@@ -174,8 +216,31 @@ class TaskRepository(
         dao.softDelete(task.id, System.currentTimeMillis())
     }
 
-    suspend fun restoreTask(task: TaskEntity) {
-        dao.restore(task.id)
+    /**
+     * Restores a soft-deleted task. Virtual occurrence ids are never stored; those resolve
+     * to the materialized row created during delete (match by date + series).
+     */
+    suspend fun restoreTask(task: TaskEntity): TaskEntity? {
+        val id = resolveRestorableId(task) ?: return null
+        dao.restore(id)
+        return dao.getById(id)
+    }
+
+    private suspend fun resolveRestorableId(task: TaskEntity): Long? {
+        if (!task.isVirtualOccurrence()) return task.id
+        val dateIso = task.jalaliDate
+        val seriesId = task.seriesId
+            ?: anchorTaskIdFromVirtual(task.id)?.let { dao.getById(it)?.seriesId }
+        val deletedOnDate = dao.getAllIncludingDeleted()
+            .filter { it.deletedAt != null && it.jalaliDate == dateIso && it.id > 0 }
+        val match = when {
+            seriesId != null -> deletedOnDate.filter { it.seriesId == seriesId }
+            else -> deletedOnDate.filter {
+                it.title == task.title &&
+                    (it.seriesId != null || it.recurrenceFrequency() != RecurrenceFreq.NONE)
+            }
+        }.maxByOrNull { it.deletedAt ?: 0L }
+        return match?.id
     }
 
     suspend fun permanentlyDeleteTask(task: TaskEntity) {

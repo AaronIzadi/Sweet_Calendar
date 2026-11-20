@@ -8,14 +8,24 @@ import com.sweetcalendar.profile.isBirthdayTask
 
 /**
  * Materialized rows plus projected recurring occurrences (weekly / monthly) for calendar lists.
+ *
+ * [deletedTasks] suppresses virtual projections for series dates the user already removed,
+ * so a swipe-delete on one occurrence does not "come back" from the series rule.
  */
 fun List<TaskEntity>.tasksOnDate(
     date: JalaliDate,
     userBirthDate: JalaliDate? = null,
     userName: String = "Friend",
+    deletedTasks: List<TaskEntity> = emptyList(),
 ): List<TaskEntity> {
     val materialized = filter { it.parsedDate() == date && it.isDisplayedMaterializedOccurrence(date, this) }
     if (isEmpty() && userBirthDate == null) return emptyList()
+    val dateIso = date.formatIso()
+    val deletedSeriesOnDate = deletedTasks
+        .asSequence()
+        .filter { it.jalaliDate == dateIso && it.seriesId != null }
+        .mapNotNull { it.seriesId }
+        .toSet()
     val virtual = mutableListOf<TaskEntity>()
     val recurring = filter { it.recurrenceFrequency() != RecurrenceFreq.NONE && !it.isRecurrenceException }
     val groups = recurring.groupBy { it.seriesId ?: "solo-${it.id}" }
@@ -23,6 +33,9 @@ fun List<TaskEntity>.tasksOnDate(
     for ((_, members) in groups) {
         val root = members.minByOrNull { it.parsedDate() } ?: continue
         val seriesId = root.seriesId
+        if (seriesId != null && seriesId in deletedSeriesOnDate) {
+            continue
+        }
         if (materialized.any { it.parsedDate() == date && it.seriesId == seriesId && seriesId != null }) {
             continue
         }
@@ -61,7 +74,7 @@ fun List<TaskEntity>.tasksOnDate(
         virtual.add(
             anchorRoot.copy(
                 id = virtualOccurrenceTaskId(anchorRoot.id, date),
-                jalaliDate = date.formatIso(),
+                jalaliDate = dateIso,
                 isDone = false,
                 completedAt = null,
             )
@@ -80,12 +93,13 @@ fun List<TaskEntity>.tasksByDateInRange(
     end: JalaliDate,
     userBirthDate: JalaliDate? = null,
     userName: String = "Friend",
+    deletedTasks: List<TaskEntity> = emptyList(),
 ): Map<String, List<TaskEntity>> {
     if (start > end) return emptyMap()
     val map = linkedMapOf<String, List<TaskEntity>>()
     var day = start
     while (day <= end) {
-        val onDay = tasksOnDate(day, userBirthDate, userName)
+        val onDay = tasksOnDate(day, userBirthDate, userName, deletedTasks)
         if (onDay.isNotEmpty()) {
             map[day.formatIso()] = onDay
         }

@@ -3,7 +3,6 @@ package com.sweetcalendar.ui.snackbar
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +33,6 @@ import com.sweetcalendar.ui.archive.ArchiveFilterChip
 import com.sweetcalendar.ui.archive.ArchiveStatCard
 import com.sweetcalendar.ui.components.BackArrowMiniIcon
 import com.sweetcalendar.ui.components.SweetIconButton
-import com.sweetcalendar.ui.components.SweetRecoverSnackbar
 import com.sweetcalendar.ui.components.SweetTaskCard
 import com.sweetcalendar.ui.components.sweetTaskItemMotion
 import com.sweetcalendar.ui.motion.appearOnEnter
@@ -52,7 +49,6 @@ import com.sweetcalendar.ui.theme.MockupDimens
 import com.sweetcalendar.ui.theme.SweetTheme
 import com.sweetcalendar.ui.theme.mockupDp
 import com.sweetcalendar.ui.theme.mockupSp
-import kotlinx.coroutines.delay
 
 @Composable
 fun RecoverSnackbarScreen(
@@ -73,7 +69,6 @@ fun RecoverSnackbarScreen(
     }
     val emptyMessage = activityScope.recoverEmptyMessage()
     var filter by remember { mutableStateOf(ArchiveFilter.ThisWeek) }
-    var pendingRecover by remember { mutableStateOf<PendingRecover?>(null) }
     val filtered = remember(scopedDeleted, filter) { filterDeletedTasks(scopedDeleted, filter) }
     val grouped = remember(filtered) { groupDeletedTasksByDay(filtered) }
     val deletedThisWeek = remember(scopedDeleted) { countDeletedThisWeek(scopedDeleted) }
@@ -85,154 +80,124 @@ fun RecoverSnackbarScreen(
 
     BackHandler(onBack = onBack)
 
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             .background(colors.cream)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(16),
-                        bottom = mockupDp(4),
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                SweetIconButton(onClick = onBack) {
-                    BackArrowMiniIcon(
-                        size = mockupDp(14),
-                        color = colors.purpleDeep,
-                    )
-                }
-                Text(
-                    "Recover deleted",
-                    style = TextStyle(
-                        fontFamily = BodyFont,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = mockupSp(MockupDimens.DAY_DETAIL_TITLE),
-                        lineHeight = mockupSp(22f),
-                    ),
-                    color = colors.ink,
-                    modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP)),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(16),
+                    bottom = mockupDp(4),
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SweetIconButton(onClick = onBack) {
+                BackArrowMiniIcon(
+                    size = mockupDp(14),
+                    color = colors.purpleDeep,
                 )
             }
-            ActivityTypeFilterRow(
-                selected = activityScope,
-                onSelect = { activityScope = it },
-                modifier = Modifier.padding(
+            Text(
+                "Recover deleted",
+                style = TextStyle(
+                    fontFamily = BodyFont,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = mockupSp(MockupDimens.DAY_DETAIL_TITLE),
+                    lineHeight = mockupSp(22f),
+                ),
+                color = colors.ink,
+                modifier = Modifier.padding(start = mockupDp(MockupDimens.DAY_DETAIL_HEADER_GAP)),
+            )
+        }
+        ActivityTypeFilterRow(
+            selected = activityScope,
+            onSelect = { activityScope = it },
+            modifier = Modifier.padding(
+                start = mockupDp(18),
+                end = mockupDp(18),
+                top = mockupDp(10),
+            ),
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
                     start = mockupDp(18),
                     end = mockupDp(18),
                     top = mockupDp(10),
+                    bottom = mockupDp(4)
                 ),
-            )
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
+        ) {
+            ArchiveStatCard("$trashCount", "IN TRASH", modifier = Modifier.weight(1f))
+            ArchiveStatCard("$weekCount", "THIS WEEK", modifier = Modifier.weight(1f))
+            ArchiveStatCard("$expiringCount", "EXPIRING", modifier = Modifier.weight(1f))
+        }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(10),
-                        bottom = mockupDp(4)
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(mockupDp(10))
-            ) {
-                ArchiveStatCard("$trashCount", "IN TRASH", modifier = Modifier.weight(1f))
-                ArchiveStatCard("$weekCount", "THIS WEEK", modifier = Modifier.weight(1f))
-                ArchiveStatCard("$expiringCount", "EXPIRING", modifier = Modifier.weight(1f))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = mockupDp(18),
+                    end = mockupDp(18),
+                    top = mockupDp(14),
+                    bottom = mockupDp(4)
+                ),
+            horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
+        ) {
+            ArchiveFilter.entries.forEach { option ->
+                ArchiveFilterChip(
+                    label = option.label,
+                    selected = option == filter,
+                    onClick = { filter = option }
+                )
             }
+        }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = mockupDp(18),
-                        end = mockupDp(18),
-                        top = mockupDp(14),
-                        bottom = mockupDp(4)
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(mockupDp(8))
-            ) {
-                ArchiveFilter.entries.forEach { option ->
-                    ArchiveFilterChip(
-                        label = option.label,
-                        selected = option == filter,
-                        onClick = { filter = option }
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = mockupDp(18))
+        ) {
+            if (showingHabits || grouped.isEmpty()) {
+                item {
+                    Text(
+                        emptyMessage,
+                        style = TextStyle(
+                            fontFamily = BodyFont,
+                            fontWeight = SecondaryTextWeight,
+                            fontSize = mockupSp(12f),
+                            lineHeight = mockupSp(16f)
+                        ),
+                        color = colors.muted,
+                        modifier = Modifier.padding(vertical = mockupDp(24))
                     )
                 }
-            }
-
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = mockupDp(18))
-            ) {
-                if (showingHabits || grouped.isEmpty()) {
+            } else {
+                grouped.forEach { (label, dayTasks) ->
                     item {
-                        Text(
-                            emptyMessage,
-                            style = TextStyle(
-                                fontFamily = BodyFont,
-                                fontWeight = SecondaryTextWeight,
-                                fontSize = mockupSp(12f),
-                                lineHeight = mockupSp(16f)
-                            ),
-                            color = colors.muted,
-                            modifier = Modifier.padding(vertical = mockupDp(24))
+                        ArchiveDayLabel(label)
+                    }
+                    items(dayTasks, key = { it.id }) { task ->
+                        val isNew = remember(task.id) { isNewTask(task.id) }
+                        SweetTaskCard(
+                            task = task,
+                            modifier = sweetTaskItemMotion().appearOnEnter(isNew),
+                            style = TaskCardStyle.Mockup,
+                            showDate = true,
+                            onRecover = { onRestore(task) },
+                            onDelete = { onPermanentDelete(task) }
                         )
                     }
-                } else {
-                    grouped.forEach { (label, dayTasks) ->
-                        item {
-                            ArchiveDayLabel(label)
-                        }
-                        items(dayTasks, key = { it.id }) { task ->
-                            val isNew = remember(task.id) { isNewTask(task.id) }
-                            SweetTaskCard(
-                                task = task,
-                                modifier = sweetTaskItemMotion().appearOnEnter(isNew),
-                                style = TaskCardStyle.Mockup,
-                                showDate = true,
-                                onRecover = { onRestore(task) },
-                                onDelete = { pendingRecover = PendingRecover.PermanentDelete(task) }
-                            )
-                        }
-                    }
-                }
-                item { Spacer(Modifier.height(mockupDp(24))) }
-            }
-        }
-
-        pendingRecover?.let { pending ->
-            SweetRecoverSnackbar(
-                message = pending.message,
-                visible = true,
-                onRecover = { pendingRecover = null },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM))
-            )
-            LaunchedEffect(pending) {
-                delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
-                if (pendingRecover == pending) {
-                    when (pending) {
-                        is PendingRecover.PermanentDelete -> onPermanentDelete(pending.task)
-                    }
-                    pendingRecover = null
                 }
             }
+            item { Spacer(Modifier.height(mockupDp(24))) }
         }
-    }
-}
-
-private sealed class PendingRecover {
-    abstract val message: String
-
-    data class PermanentDelete(val task: TaskEntity) : PendingRecover() {
-        override val message: String = "\"${task.title}\" deleted"
     }
 }

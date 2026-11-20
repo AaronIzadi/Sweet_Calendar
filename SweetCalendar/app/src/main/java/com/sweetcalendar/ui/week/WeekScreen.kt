@@ -73,6 +73,7 @@ private fun weekChipDowColor(selected: Boolean): Color {
 @Composable
 fun WeekScreen(
     tasks: List<TaskEntity>,
+    deletedTasks: List<TaskEntity> = emptyList(),
     habits: List<HabitWithDays> = emptyList(),
     habitCompletions: List<HabitCompletionEntity> = emptyList(),
     userBirthDate: JalaliDate? = null,
@@ -101,9 +102,10 @@ fun WeekScreen(
     }
     val isNewHabit = rememberNewItemTracker(weekHabits.map { it.id })
 
-    val dayPendingHints = remember(tasks, habits, weekDays, userBirthDate, userName) {
+    val dayPendingHints = remember(tasks, deletedTasks, habits, weekDays, userBirthDate, userName) {
         weekDays.associateWith { day ->
-            val taskPending = tasks.tasksOnDate(day, userBirthDate, userName).count { !it.isDone }
+            val taskPending = tasks.tasksOnDate(day, userBirthDate, userName, deletedTasks)
+                .count { !it.isDone }
             val habitPending = if (habits.hasHabitOn(day)) 1 else 0
             (taskPending + habitPending).coerceAtMost(3)
         }

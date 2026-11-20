@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -62,6 +61,7 @@ import com.sweetcalendar.ui.components.PixelConfirmDialog
 import com.sweetcalendar.ui.components.SweetBottomNav
 import com.sweetcalendar.ui.components.SweetFab
 import com.sweetcalendar.ui.components.SweetRecoverSnackbar
+import com.sweetcalendar.ui.components.SweetSnackbar
 import com.sweetcalendar.ui.daydetail.DayDetailScreen
 import com.sweetcalendar.ui.habit.HabitBottomSheet
 import com.sweetcalendar.ui.habit.HabitDetailScreen
@@ -100,6 +100,17 @@ private sealed class SheetState {
     data class Add(val date: JalaliDate) : SheetState()
     data class Edit(val task: TaskEntity) : SheetState()
     data class EditHabit(val habit: HabitWithDays) : SheetState()
+}
+
+/** Undo target for the recover toast after delete. */
+private sealed class RecoverUndo {
+    abstract val task: TaskEntity
+
+    /** Swipe/list delete: still in DB; hide in UI until timeout then soft-delete. */
+    data class Pending(override val task: TaskEntity) : RecoverUndo()
+
+    /** Confirm/dialog delete: already soft-deleted; RECOVER calls restore. */
+    data class Restorable(override val task: TaskEntity) : RecoverUndo()
 }
 
 private sealed class OverlayState {
@@ -171,7 +182,7 @@ fun MainScreen(
     var pendingRecurrenceDelete by remember { mutableStateOf<TaskEntity?>(null) }
     var showWelcome by remember { mutableStateOf(!preferences.hasSeenWelcome) }
     var pendingNotificationPrompt by remember { mutableStateOf(false) }
-    var recoverTask by remember { mutableStateOf<TaskEntity?>(null) }
+    var recoverUndo by remember { mutableStateOf<RecoverUndo?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf(preferences.userName) }
@@ -179,6 +190,25 @@ fun MainScreen(
     var showHolidays by remember { mutableStateOf(preferences.showHolidays) }
     var weekStartsOn by remember { mutableStateOf(preferences.weekStartsOn) }
     var calendarSystem by remember { mutableStateOf(preferences.calendarSystem) }
+
+    // Pending swipe-deletes stay in DB until the toast times out; hide them in the UI so
+    // RECOVER is a local undo (no restore-id races with virtual occurrences).
+    val recoverTask = recoverUndo?.task
+    val hiddenOccurrenceKeys = remember(recoverUndo) {
+        val pending = recoverUndo as? RecoverUndo.Pending ?: return@remember emptySet()
+        setOf(pending.task.occurrenceKey())
+    }
+    val tasksForUi = remember(allTasks, recoverUndo) {
+        val pending = (recoverUndo as? RecoverUndo.Pending)?.task ?: return@remember allTasks
+        allTasks.filterNot { it.id == pending.id || it.sameOccurrenceAs(pending) }
+    }
+    val deletedForUi = remember(deletedTasks, recoverUndo) {
+        when (val undo = recoverUndo) {
+            is RecoverUndo.Pending ->
+                deletedTasks + undo.task.copy(deletedAt = undo.task.deletedAt ?: 1L)
+            is RecoverUndo.Restorable, null -> deletedTasks
+        }
+    }
 
     LaunchedEffect(showHolidays, weekStartsOn, calendarSystem) {
         preferences.showHolidays = showHolidays
@@ -195,20 +225,59 @@ fun MainScreen(
         viewModel.setUserName(userName)
     }
 
+    fun commitPendingRecoverDelete() {
+        val pending = recoverUndo as? RecoverUndo.Pending ?: return
+        viewModel.deleteTask(pending.task)
+        recoverUndo = null
+    }
+
     fun deleteWithRecover(task: TaskEntity) {
         if (task.isBirthdayTask()) return
-        viewModel.deleteTask(task)
-        recoverTask = task
+        val alreadyPending = (recoverUndo as? RecoverUndo.Pending)
+            ?.task?.occurrenceKey() == task.occurrenceKey()
+        if (alreadyPending) return
+        commitPendingRecoverDelete()
+        recoverUndo = RecoverUndo.Pending(task)
         if (overlay is OverlayState.TaskDetail) {
             overlay = (overlay as OverlayState.TaskDetail).returnTo
         }
     }
 
-    LaunchedEffect(recoverTask?.id) {
-        val task = recoverTask ?: return@LaunchedEffect
+    fun beginRestorableDelete(task: TaskEntity, scope: RecurrenceEditScope = RecurrenceEditScope.THIS_INSTANCE) {
+        commitPendingRecoverDelete()
+        recoverUndo = RecoverUndo.Restorable(task)
+        viewModel.deleteTask(task, scope) { deleted ->
+            if ((recoverUndo as? RecoverUndo.Restorable)?.task?.id == task.id ||
+                (recoverUndo as? RecoverUndo.Restorable)?.task?.id == deleted.id
+            ) {
+                recoverUndo = RecoverUndo.Restorable(deleted)
+            }
+        }
+    }
+
+    fun performRecover() {
+        when (val undo = recoverUndo) {
+            is RecoverUndo.Pending -> recoverUndo = null
+            is RecoverUndo.Restorable -> {
+                viewModel.restoreTask(undo.task)
+                recoverUndo = null
+            }
+            null -> Unit
+        }
+    }
+
+    LaunchedEffect(recoverUndo?.task?.occurrenceKey()) {
+        val undo = recoverUndo ?: return@LaunchedEffect
+        val key = undo.task.occurrenceKey()
         delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
-        if (recoverTask?.id == task.id) {
-            recoverTask = null
+        val still = recoverUndo
+        if (still?.task?.occurrenceKey() != key) return@LaunchedEffect
+        when (still) {
+            is RecoverUndo.Pending -> {
+                viewModel.deleteTask(still.task)
+                recoverUndo = null
+            }
+            is RecoverUndo.Restorable -> recoverUndo = null
         }
     }
 
@@ -265,7 +334,8 @@ fun MainScreen(
     fun completeTask(task: TaskEntity) {
         if (task.isBirthdayTask()) return
         val listDate = if (task.isToDo()) JalaliDate.today() else task.parsedDate()
-        val dayTasks = allTasks.tasksOnDate(listDate, userBirthDate, userName)
+        val dayTasks = tasksForUi.tasksOnDate(listDate, userBirthDate, userName, deletedForUi)
+            .filterNot { it.occurrenceKey() in hiddenOccurrenceKeys }
             .filter { !it.isBirthdayTask() }
         if (!task.isDone) {
             val willFillJar = dayTasks.all { it.isDone || it.sameOccurrenceAs(task) }
@@ -338,21 +408,20 @@ fun MainScreen(
                             .align(Alignment.BottomCenter)
                             .padding(bottom = snackbarBottom),
                     ) { data ->
-                        Snackbar(
-                            snackbarData = data,
-                            containerColor = if (colors.isDark) colors.bannerBg else colors.chocDeep,
-                            contentColor = if (colors.isDark) colors.ink else colors.cream,
-                            actionColor = colors.lemon
+                        SweetSnackbar(
+                            message = data.visuals.message,
+                            visible = true,
+                            actionLabel = data.visuals.actionLabel,
+                            onAction = data.visuals.actionLabel?.let {
+                                { data.performAction() }
+                            },
                         )
                     }
                     recoverTask?.let { task ->
                         SweetRecoverSnackbar(
                             message = "\"${task.title}\" deleted",
                             visible = true,
-                            onRecover = {
-                                viewModel.restoreTask(task)
-                                recoverTask = null
-                            },
+                            onRecover = { performRecover() },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = snackbarBottom),
@@ -423,7 +492,9 @@ fun MainScreen(
                     OverlayState.None -> {
                         when (key.destination) {
                             AppDestination.Today -> TodayScreen(
-                                tasks = allTasks,
+                                tasks = tasksForUi,
+                                deletedTasks = deletedForUi,
+                                hiddenOccurrenceKeys = hiddenOccurrenceKeys,
                                 habits = allHabits,
                                 habitCompletions = habitCompletions,
                                 subtasks = allSubtasks,
@@ -448,7 +519,8 @@ fun MainScreen(
                             )
                             AppDestination.Week -> WeekScreen(
                                 modifier = Modifier.fillMaxSize(),
-                                tasks = allTasks,
+                                tasks = tasksForUi,
+                                deletedTasks = deletedForUi,
                                 habits = allHabits,
                                 habitCompletions = habitCompletions,
                                 userBirthDate = userBirthDate,
@@ -627,7 +699,12 @@ fun MainScreen(
                         LaunchedEffect(current.date) {
                             viewModel.selectDate(current.date)
                         }
-                        val dayTasks = allTasks.tasksOnDate(current.date, userBirthDate, userName)
+                        val dayTasks = tasksForUi.tasksOnDate(
+                            current.date,
+                            userBirthDate,
+                            userName,
+                            deletedForUi,
+                        ).filterNot { it.occurrenceKey() in hiddenOccurrenceKeys }
                         val dayCompletedHabitIds = habitCompletions
                             .filter { it.jalaliDate == current.date.formatIso() }
                             .map { it.habitId }
@@ -850,10 +927,9 @@ fun MainScreen(
                 mode = RecurrenceScopeMode.DELETE,
                 onDismiss = { pendingRecurrenceDelete = null },
                 onSelect = { scope ->
-                    viewModel.deleteTask(task, scope)
+                    beginRestorableDelete(task, scope)
                     pendingRecurrenceDelete = null
                     overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                    recoverTask = task
                     showSnackbar("Task deleted")
                 }
             )
@@ -866,10 +942,9 @@ fun MainScreen(
                 confirmLabel = "Delete",
                 dismissLabel = "Keep",
                 onConfirm = {
-                    viewModel.deleteTask(task)
+                    beginRestorableDelete(task)
                     taskToDelete = null
                     overlay = (overlay as? OverlayState.TaskDetail)?.returnTo ?: OverlayState.None
-                    recoverTask = task
                 },
                 onDismiss = { taskToDelete = null }
             )

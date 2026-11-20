@@ -1025,7 +1025,7 @@ fun SweetBottomNav(
                 )
             }
             NavItem(
-                label = "SETTINGS",
+                label = "Personal Hub",
                 selected = selected == AppDestination.Settings,
                 onClick = { onSelect(AppDestination.Settings) },
                 modifier = Modifier.weight(1f),

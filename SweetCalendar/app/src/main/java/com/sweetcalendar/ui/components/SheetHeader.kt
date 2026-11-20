@@ -1,19 +1,29 @@
 package com.sweetcalendar.ui.components
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.Canvas
@@ -23,6 +33,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -235,6 +247,66 @@ fun SheetFooterCloseOnly(
                 onClick = onClose,
                 enabled = closeEnabled,
             )
+        }
+    }
+}
+
+/**
+ * Scrollable form body that pins [bottomAction] to the bottom of the viewport when
+ * there is spare space, and otherwise places it after the form so the user scrolls to it.
+ */
+@Composable
+fun ColumnScope.ScrollColumnWithBottomAction(
+    scrollState: ScrollState,
+    bottomAction: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(
+        start = mockupDp(18),
+        end = mockupDp(18),
+        top = mockupDp(8),
+        bottom = mockupDp(24),
+    ),
+    packedSpacing: Dp = mockupDp(22),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val density = LocalDensity.current
+    BoxWithConstraints(
+        modifier = modifier
+            .weight(1f)
+            .fillMaxWidth()
+    ) {
+        val viewportHeightPx = constraints.maxHeight
+        val paddingTopPx = with(density) { contentPadding.calculateTopPadding().roundToPx() }
+        val paddingBottomPx = with(density) { contentPadding.calculateBottomPadding().roundToPx() }
+        val packedSpacingPx = with(density) { packedSpacing.roundToPx() }
+        var contentHeightPx by remember { mutableIntStateOf(0) }
+        var actionHeightPx by remember { mutableIntStateOf(0) }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(contentPadding)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { contentHeightPx = it.height },
+                content = content,
+            )
+
+            val availablePx = viewportHeightPx - paddingTopPx - paddingBottomPx
+            val gapPx = (availablePx - contentHeightPx - actionHeightPx)
+                .coerceAtLeast(packedSpacingPx)
+            Spacer(Modifier.height(with(density) { gapPx.toDp() }))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { actionHeightPx = it.height }
+            ) {
+                bottomAction()
+            }
         }
     }
 }

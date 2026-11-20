@@ -79,8 +79,10 @@ fun SwipeToDeleteTaskCard(
         confirmValueChange = { value ->
             if (!enabled) return@rememberSwipeToDismissBoxState false
             if (value == SwipeToDismissBoxValue.EndToStart) {
+                // Reject staying dismissed so undo can remount a settled card. Parent
+                // hides the row immediately (pending delete) / removes it from the list.
                 onDelete()
-                true
+                false
             } else {
                 false
             }
