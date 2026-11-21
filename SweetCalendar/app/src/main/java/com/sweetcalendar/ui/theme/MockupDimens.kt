@@ -250,7 +250,9 @@ object MockupDimens {
     const val SNACKBAR_PAD_H = 14
     const val SNACKBAR_PAD_V = 12
     const val SNACKBAR_EDGE = 14
-    const val SNACKBAR_BOTTOM = 14
+    const val SNACKBAR_TOP = 14
+    const val SNACKBAR_STACK_GAP = 8
+    const val SNACKBAR_STACK_MAX = 3
     const val SNACKBAR_UNDO_VISIBLE_MS = 5_000L
     const val SNACKBAR_MESSAGE_VISIBLE_MS = 2_500L
     const val TRASH_BTN = 26

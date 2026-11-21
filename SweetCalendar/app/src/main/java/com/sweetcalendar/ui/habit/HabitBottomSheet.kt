@@ -400,9 +400,9 @@ fun HabitBottomSheet(
             message = errorSnackbarMessage,
             onDismiss = { errorSnackbarMessage = null },
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                .padding(bottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM + 56)),
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = mockupDp(MockupDimens.SNACKBAR_TOP)),
         )
     }
 

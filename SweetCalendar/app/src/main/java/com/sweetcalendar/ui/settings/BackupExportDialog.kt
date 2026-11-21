@@ -1,5 +1,6 @@
 package com.sweetcalendar.ui.settings
 
+import android.view.Gravity
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -61,6 +62,13 @@ fun BackupExportDialog(
     var selectedFormat by remember { mutableStateOf<ExportFormat?>(null) }
     var isWorking by remember { mutableStateOf(false) }
 
+    fun showTopToast(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).apply {
+            setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 0, 0)
+            show()
+        }
+    }
+
     fun runExport(action: (ExportCacheResult) -> Unit) {
         val format = selectedFormat ?: return
         if (isWorking) return
@@ -80,7 +88,7 @@ fun BackupExportDialog(
                 }
             } catch (_: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Export failed. Please try again.", Toast.LENGTH_SHORT).show()
+                    showTopToast("Export failed. Please try again.")
                 }
             } finally {
                 isWorking = false
@@ -142,15 +150,13 @@ fun BackupExportDialog(
                                 onClick = {
                                     runExport { result ->
                                         val saved = exportRunner.saveToDownloads(result.file, result.format)
-                                        Toast.makeText(
-                                            context,
+                                        showTopToast(
                                             if (saved) {
                                                 "Saved ${ExportFormatting.itemCountLabel(result.taskCount, result.todoCount, result.habitCount)} to Downloads"
                                             } else {
                                                 "Could not save file"
-                                            },
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                            }
+                                        )
                                         if (saved) onDismiss()
                                     }
                                 }
@@ -160,11 +166,9 @@ fun BackupExportDialog(
                                 onClick = {
                                     runExport { result ->
                                         exportRunner.share(result.file, result.format)
-                                        Toast.makeText(
-                                            context,
-                                            "Sharing ${ExportFormatting.itemCountLabel(result.taskCount, result.todoCount, result.habitCount)}",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        showTopToast(
+                                            "Sharing ${ExportFormatting.itemCountLabel(result.taskCount, result.todoCount, result.habitCount)}"
+                                        )
                                     }
                                 }
                             )

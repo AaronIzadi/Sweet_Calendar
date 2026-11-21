@@ -16,18 +16,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,8 +58,8 @@ import com.sweetcalendar.ui.calendar.MonthScreen
 import com.sweetcalendar.ui.components.PixelConfirmDialog
 import com.sweetcalendar.ui.components.SweetBottomNav
 import com.sweetcalendar.ui.components.SweetFab
-import com.sweetcalendar.ui.components.SweetRecoverSnackbar
-import com.sweetcalendar.ui.components.SweetSnackbar
+import com.sweetcalendar.ui.components.SweetToastData
+import com.sweetcalendar.ui.components.SweetToastStack
 import com.sweetcalendar.ui.daydetail.DayDetailScreen
 import com.sweetcalendar.ui.habit.HabitBottomSheet
 import com.sweetcalendar.ui.habit.HabitDetailScreen
@@ -93,7 +91,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.sweetcalendar.reminder.NotificationPermissionHelper
 import com.sweetcalendar.widget.SweetWidgets
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private sealed class SheetState {
     data object Hidden : SheetState()
@@ -112,6 +109,19 @@ private sealed class RecoverUndo {
     /** Confirm/dialog delete: already soft-deleted; RECOVER calls restore. */
     data class Restorable(override val task: TaskEntity) : RecoverUndo()
 }
+
+private data class MessageToast(
+    val id: Long,
+    val message: String,
+    val actionLabel: String? = null,
+    val onAction: (() -> Unit)? = null,
+    val durationMs: Long = MockupDimens.SNACKBAR_MESSAGE_VISIBLE_MS,
+)
+
+private data class RecoverToast(
+    val id: Long,
+    val undo: RecoverUndo,
+)
 
 private sealed class OverlayState {
     data object None : OverlayState()
@@ -182,9 +192,9 @@ fun MainScreen(
     var pendingRecurrenceDelete by remember { mutableStateOf<TaskEntity?>(null) }
     var showWelcome by remember { mutableStateOf(!preferences.hasSeenWelcome) }
     var pendingNotificationPrompt by remember { mutableStateOf(false) }
-    var recoverUndo by remember { mutableStateOf<RecoverUndo?>(null) }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    var recoverToasts by remember { mutableStateOf<List<RecoverToast>>(emptyList()) }
+    var messageToasts by remember { mutableStateOf<List<MessageToast>>(emptyList()) }
+    var nextToastId by remember { mutableLongStateOf(1L) }
     var userName by remember { mutableStateOf(preferences.userName) }
     var userBirthDate by remember { mutableStateOf(preferences.userBirthDate()) }
     var showHolidays by remember { mutableStateOf(preferences.showHolidays) }
@@ -193,21 +203,21 @@ fun MainScreen(
 
     // Pending swipe-deletes stay in DB until the toast times out; hide them in the UI so
     // RECOVER is a local undo (no restore-id races with virtual occurrences).
-    val recoverTask = recoverUndo?.task
-    val hiddenOccurrenceKeys = remember(recoverUndo) {
-        val pending = recoverUndo as? RecoverUndo.Pending ?: return@remember emptySet()
-        setOf(pending.task.occurrenceKey())
+    val pendingRecoverTasks = remember(recoverToasts) {
+        recoverToasts.mapNotNull { (it.undo as? RecoverUndo.Pending)?.task }
     }
-    val tasksForUi = remember(allTasks, recoverUndo) {
-        val pending = (recoverUndo as? RecoverUndo.Pending)?.task ?: return@remember allTasks
-        allTasks.filterNot { it.id == pending.id || it.sameOccurrenceAs(pending) }
+    val hiddenOccurrenceKeys = remember(pendingRecoverTasks) {
+        pendingRecoverTasks.map { it.occurrenceKey() }.toSet()
     }
-    val deletedForUi = remember(deletedTasks, recoverUndo) {
-        when (val undo = recoverUndo) {
-            is RecoverUndo.Pending ->
-                deletedTasks + undo.task.copy(deletedAt = undo.task.deletedAt ?: 1L)
-            is RecoverUndo.Restorable, null -> deletedTasks
+    val tasksForUi = remember(allTasks, pendingRecoverTasks) {
+        if (pendingRecoverTasks.isEmpty()) allTasks
+        else allTasks.filterNot { task ->
+            pendingRecoverTasks.any { pending -> task.id == pending.id || task.sameOccurrenceAs(pending) }
         }
+    }
+    val deletedForUi = remember(deletedTasks, pendingRecoverTasks) {
+        if (pendingRecoverTasks.isEmpty()) deletedTasks
+        else deletedTasks + pendingRecoverTasks.map { it.copy(deletedAt = it.deletedAt ?: 1L) }
     }
 
     LaunchedEffect(showHolidays, weekStartsOn, calendarSystem) {
@@ -225,59 +235,95 @@ fun MainScreen(
         viewModel.setUserName(userName)
     }
 
-    fun commitPendingRecoverDelete() {
-        val pending = recoverUndo as? RecoverUndo.Pending ?: return
-        viewModel.deleteTask(pending.task)
-        recoverUndo = null
+    fun removeMessageToast(id: Long) {
+        messageToasts = messageToasts.filterNot { it.id == id }
+    }
+
+    fun performRecoverToast(id: Long) {
+        val entry = recoverToasts.find { it.id == id } ?: return
+        when (val undo = entry.undo) {
+            is RecoverUndo.Pending -> Unit
+            is RecoverUndo.Restorable -> viewModel.restoreTask(undo.task)
+        }
+        recoverToasts = recoverToasts.filterNot { it.id == id }
+    }
+
+    fun dismissRecoverToast(id: Long) {
+        val entry = recoverToasts.find { it.id == id } ?: return
+        when (val undo = entry.undo) {
+            is RecoverUndo.Pending -> viewModel.deleteTask(undo.task)
+            is RecoverUndo.Restorable -> Unit
+        }
+        recoverToasts = recoverToasts.filterNot { it.id == id }
+    }
+
+    fun trimToastStack() {
+        while (messageToasts.size + recoverToasts.size > MockupDimens.SNACKBAR_STACK_MAX) {
+            val oldestMessage = messageToasts.firstOrNull()
+            val oldestRecover = recoverToasts.firstOrNull()
+            when {
+                oldestMessage != null &&
+                    (oldestRecover == null || oldestMessage.id < oldestRecover.id) -> {
+                    messageToasts = messageToasts.drop(1)
+                }
+                oldestRecover != null -> dismissRecoverToast(oldestRecover.id)
+                else -> return
+            }
+        }
     }
 
     fun deleteWithRecover(task: TaskEntity) {
         if (task.isBirthdayTask()) return
-        val alreadyPending = (recoverUndo as? RecoverUndo.Pending)
-            ?.task?.occurrenceKey() == task.occurrenceKey()
+        val alreadyPending = recoverToasts.any {
+            val pending = it.undo as? RecoverUndo.Pending ?: return@any false
+            pending.task.occurrenceKey() == task.occurrenceKey()
+        }
         if (alreadyPending) return
-        commitPendingRecoverDelete()
-        recoverUndo = RecoverUndo.Pending(task)
+        recoverToasts = recoverToasts + RecoverToast(
+            id = nextToastId++,
+            undo = RecoverUndo.Pending(task),
+        )
+        trimToastStack()
         if (overlay is OverlayState.TaskDetail) {
             overlay = (overlay as OverlayState.TaskDetail).returnTo
         }
     }
 
     fun beginRestorableDelete(task: TaskEntity, scope: RecurrenceEditScope = RecurrenceEditScope.THIS_INSTANCE) {
-        commitPendingRecoverDelete()
-        recoverUndo = RecoverUndo.Restorable(task)
+        val id = nextToastId++
+        recoverToasts = recoverToasts + RecoverToast(
+            id = id,
+            undo = RecoverUndo.Restorable(task),
+        )
+        trimToastStack()
         viewModel.deleteTask(task, scope) { deleted ->
-            if ((recoverUndo as? RecoverUndo.Restorable)?.task?.id == task.id ||
-                (recoverUndo as? RecoverUndo.Restorable)?.task?.id == deleted.id
-            ) {
-                recoverUndo = RecoverUndo.Restorable(deleted)
+            recoverToasts = recoverToasts.map { entry ->
+                if (entry.id != id) return@map entry
+                val current = entry.undo as? RecoverUndo.Restorable ?: return@map entry
+                if (current.task.id == task.id || current.task.id == deleted.id) {
+                    entry.copy(undo = RecoverUndo.Restorable(deleted))
+                } else {
+                    entry
+                }
             }
         }
     }
 
-    fun performRecover() {
-        when (val undo = recoverUndo) {
-            is RecoverUndo.Pending -> recoverUndo = null
-            is RecoverUndo.Restorable -> {
-                viewModel.restoreTask(undo.task)
-                recoverUndo = null
+    recoverToasts.forEach { toast ->
+        key(toast.id) {
+            LaunchedEffect(toast.id) {
+                delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
+                dismissRecoverToast(toast.id)
             }
-            null -> Unit
         }
     }
 
-    LaunchedEffect(recoverUndo?.task?.occurrenceKey()) {
-        val undo = recoverUndo ?: return@LaunchedEffect
-        val key = undo.task.occurrenceKey()
-        delay(MockupDimens.SNACKBAR_UNDO_VISIBLE_MS)
-        val still = recoverUndo
-        if (still?.task?.occurrenceKey() != key) return@LaunchedEffect
-        when (still) {
-            is RecoverUndo.Pending -> {
-                viewModel.deleteTask(still.task)
-                recoverUndo = null
+    messageToasts.forEach { toast ->
+        key(toast.id) {
+            LaunchedEffect(toast.id) {
+                delay(toast.durationMs)
+                removeMessageToast(toast.id)
             }
-            is RecoverUndo.Restorable -> recoverUndo = null
         }
     }
 
@@ -300,16 +346,45 @@ fun MainScreen(
     }
 
     fun showSnackbar(message: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
-        scope.launch {
-            val result = snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = actionLabel,
-                duration = if (actionLabel != null) SnackbarDuration.Long else SnackbarDuration.Short
-            )
-            if (result == SnackbarResult.ActionPerformed) {
-                onAction?.invoke()
+        messageToasts = messageToasts + MessageToast(
+            id = nextToastId++,
+            message = message,
+            actionLabel = actionLabel,
+            onAction = onAction,
+            durationMs = if (actionLabel != null) {
+                MockupDimens.SNACKBAR_UNDO_VISIBLE_MS
+            } else {
+                MockupDimens.SNACKBAR_MESSAGE_VISIBLE_MS
+            },
+        )
+        trimToastStack()
+    }
+
+    val stackedToasts = remember(messageToasts, recoverToasts) {
+        buildList {
+            messageToasts.forEach { toast ->
+                add(
+                    SweetToastData(
+                        id = toast.id,
+                        message = toast.message,
+                        actionLabel = toast.actionLabel,
+                        onAction = toast.onAction,
+                        onDismiss = { removeMessageToast(toast.id) },
+                    )
+                )
             }
-        }
+            recoverToasts.forEach { toast ->
+                add(
+                    SweetToastData(
+                        id = toast.id,
+                        message = "\"${toast.undo.task.title}\" deleted",
+                        actionLabel = "RECOVER",
+                        onAction = { performRecoverToast(toast.id) },
+                        onDismiss = { dismissRecoverToast(toast.id) },
+                    )
+                )
+            }
+        }.sortedBy { it.id }
     }
 
     fun finishWelcome() {
@@ -399,36 +474,7 @@ fun MainScreen(
 
         Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
-            snackbarHost = {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    val snackbarBottom = mockupDp(MockupDimens.SNACKBAR_BOTTOM)
-                    SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = snackbarBottom),
-                    ) { data ->
-                        SweetSnackbar(
-                            message = data.visuals.message,
-                            visible = true,
-                            actionLabel = data.visuals.actionLabel,
-                            onAction = data.visuals.actionLabel?.let {
-                                { data.performAction() }
-                            },
-                        )
-                    }
-                    recoverTask?.let { task ->
-                        SweetRecoverSnackbar(
-                            message = "\"${task.title}\" deleted",
-                            visible = true,
-                            onRecover = { performRecover() },
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .padding(bottom = snackbarBottom),
-                        )
-                    }
-                }
-            },
+            snackbarHost = {},
             containerColor = colors.cream,
             bottomBar = {
                 if (showMainChrome) {
@@ -895,6 +941,14 @@ fun MainScreen(
                 }
             }
         }
+
+        SweetToastStack(
+            toasts = stackedToasts,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .statusBarsPadding()
+                .padding(top = mockupDp(MockupDimens.SNACKBAR_TOP)),
+        )
 
         pendingRecurrenceEdit?.let { (task, form) ->
             RecurrenceEditScopeDialog(
